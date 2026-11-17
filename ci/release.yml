@@ -3,7 +3,9 @@
 #   verify-release -> release-bridge-image, release-packages, release-pkg-macos (optional)
 #   -> release (GitLab release with asset links) -> mirror-github
 #   release-sbom-parent (prepare), release-sbom-bridge, release-sbom-ci-image (scan): upload the released images to PatchWatch/dTrack
-#   as version vX.Y.Z (profile distribution, delta report against the previous release).
+#   as version vX.Y.Z (profile distribution, delta report against the previous release). The third-party
+#   images (sbom-* in ci/components.yml) run on tags too. release-sbom-project writes one CycloneDX SBOM of the
+#   whole project (repository + all images) that the release lists as an asset.
 # CI/CD variables: PATCHWATCH_MACOS_RUNNER=true (enables the .pkg job, needs a runner tagged "macos"),
 # GITHUB_MIRROR_URL and GITHUB_MIRROR_TOKEN (both optional; without them the mirror job is skipped).
 
@@ -43,6 +45,14 @@ include:
       images: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
       allow_failure: true
       run_if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/ && $PATCHWATCH_MR_FEEDBACK != "true" && $CI_PIPELINE_SOURCE != "schedule"
+
+# Tag pipelines run the third-party scans of ci/components.yml as well; like the release-sbom-* jobs they
+# must not block the release when Dependency-Track is unavailable (later include wins over components.yml).
+sbom-dtrack-apiserver: {allow_failure: true}
+sbom-dtrack-frontend: {allow_failure: true}
+sbom-postgres: {allow_failure: true}
+sbom-trivy: {allow_failure: true}
+sbom-gateway: {allow_failure: true}
 
 .release-rules:
   rules:
@@ -118,6 +128,37 @@ release-pkg-macos:
     paths: [dist-macos/]
     expire_in: 1 year
 
+# One CycloneDX 1.6 SBOM for the whole project: repository dependencies plus the own images and every
+# third-party image of compose.yaml in a single document (no upload; Dependency-Track gets the per-component
+# versions above). Required for the release: a release without its SBOM is incomplete.
+release-sbom-project:
+  stage: scan
+  rules: !reference [.release-rules, rules]
+  image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+  needs: [release-bridge-image]
+  timeout: 30m
+  variables:
+    PATCHWATCH_SCAN_PATHS: .
+    PATCHWATCH_BSI_MODE: report  # Alpine base packages lack concluded licences, see sbom-bridge
+    PATCHWATCH_SBOM_OUTPUT: patchwatch-sbom.cdx.json
+  script:
+    - |
+      third_party="$(python - <<'PY'
+      import re
+      text = open("compose.yaml").read()
+      images = dict.fromkeys(m for m in re.findall(r"^\s+image: ['\"]?([^\s'\"$]+)", text, re.M) if "patchwatch" not in m)
+      print(" ".join(images))
+      PY
+      )"
+      test -n "$third_party"
+    - export PATCHWATCH_IMAGES="$CI_REGISTRY_IMAGE/bridge:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA $third_party"
+    - echo "Images:$PATCHWATCH_IMAGES"
+    - cd /opt/patchwatch && python -m patchwatch.ci --dry-run
+  artifacts:
+    paths: [patchwatch-sbom.cdx.json, patchwatch-bsi-report.json]
+    when: always
+    expire_in: never
+
 release:
   stage: deploy
   rules: !reference [.release-rules, rules]
@@ -125,6 +166,7 @@ release:
   needs:
     - release-bridge-image
     - release-packages
+    - release-sbom-project
     - job: release-pkg-macos
       optional: true
   script:
@@ -135,6 +177,8 @@ release:
       for name in patchwatch-agent.pyz "patchwatch-agent_${version}_all.deb" SHA256SUMS; do
         links="$links --assets-link {\"name\":\"$name\",\"url\":\"$base/$name\"}"
       done
+      sbom="$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/patchwatch-sbom.cdx.json?job=release-sbom-project"
+      links="$links --assets-link {\"name\":\"patchwatch-sbom.cdx.json\",\"url\":\"$sbom\",\"link_type\":\"other\"}"
       if [ "$PATCHWATCH_MACOS_RUNNER" = "true" ]; then
         for name in "patchwatch-agent-$version.pkg" SHA256SUMS-macos; do
           links="$links --assets-link {\"name\":\"$name\",\"url\":\"$base/$name\"}"
@@ -142,7 +186,7 @@ release:
       fi
       # shellcheck disable=SC2086
       release-cli create --name "PatchWatch $CI_COMMIT_TAG" --tag-name "$CI_COMMIT_TAG" \
-        --description "Bridge image: $CI_REGISTRY_IMAGE/bridge:$version. Agent packages are listed as assets; checksums in SHA256SUMS." \
+        --description "Bridge image: $CI_REGISTRY_IMAGE/bridge:$version. Agent packages and the project SBOM (CycloneDX 1.6) are listed as assets; checksums in SHA256SUMS." \
         $links
 
 # The GitLab history is never pushed. Each release becomes one commit in the GitHub repository, made from

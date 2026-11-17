@@ -16,7 +16,9 @@ Die Pipeline (`ci/release.yml`) führt nach den Tests aus:
 | `release-packages` | `patchwatch-agent.pyz`, `.deb`, `SHA256SUMS` in der generischen Paketablage (`packages/generic/patchwatch-agent/X.Y.Z`) |
 | `release-pkg-macos` | macOS-`.pkg`, nur mit `PATCHWATCH_MACOS_RUNNER=true` und einem Runner mit Tag `macos`; unsigniert |
 | `release-sbom-parent`, `release-sbom-bridge`, `release-sbom-ci-image` | Sammelprojekt und Version `vX.Y.Z` der Bridge und des CI-Images in PatchWatch/Dependency-Track (Profil `distribution`, Delta-Bericht zum vorherigen Release); `allow_failure`, ein dTrack-Ausfall blockiert das Release nicht |
-| `release` | GitLab-Release mit Download-Links |
+| `sbom-dtrack-*`, `sbom-postgres`, `sbom-trivy`, `sbom-gateway` | Drittanbieter-Images als Version `vX.Y.Z` in dTrack (laufen bei Tags ebenfalls, `allow_failure`) |
+| `release-sbom-project` | Eine CycloneDX-1.6-SBOM für das gesamte Projekt (Repository plus Bridge, CI-Image und alle Images aus `compose.yaml`), Artefakt `patchwatch-sbom.cdx.json` ohne Ablauf |
+| `release` | GitLab-Release mit Download-Links, darunter die SBOM |
 | `mirror-github` | Push von Standardbranch und Tag nach GitHub |
 
 ## GitHub-Mirror
