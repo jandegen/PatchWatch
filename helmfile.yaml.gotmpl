@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: Apache-2.0
+repositories:
+  - name: dtrack
+    url: https://dependencytrack.github.io/helm-charts
+helmDefaults:
+  wait: true
+  atomic: true
+  timeout: 900
+  createNamespace: false
+releases:
+  - name: patchwatch
+    namespace: {{ env "KUBE_NAMESPACE" | default "patchwatch" }}
+    chart: ./deploy/helm/patchwatch
+    values:
+      - {{ env "PATCHWATCH_ENV_DIR" | default "deploy/environments" }}/infra.yaml
+      - bridge:
+          image: {{ requiredEnv "BRIDGE_IMAGE" | quote }}
+  - name: dtrack
+    namespace: {{ env "KUBE_NAMESPACE" | default "patchwatch" }}
+    chart: dtrack/dependency-track
+    version: 2.9.0
+    postRenderer: ./scripts/helm-postrender.sh
+    needs:
+      - {{ env "KUBE_NAMESPACE" | default "patchwatch" }}/patchwatch
+    values:
+      - {{ env "PATCHWATCH_ENV_DIR" | default "deploy/environments" }}/dtrack.yaml

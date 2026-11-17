@@ -1,0 +1,71 @@
+# SPDX-License-Identifier: Apache-2.0
+# Run on a protected default branch, with protected credentials unavailable to MR pipelines.
+spec:
+  inputs:
+    project_id:
+      type: number
+      default: 0
+      description: Numeric target project ID; 0 uses the current project.
+    job_name:
+      default: patchwatch-mr-feedback
+    scan_job:
+      default: patchwatch-mr-sbom
+    component:
+      default: ''
+    branch_scan_job:
+      default: ''
+      description: Scan job of ci-templates/branch-sbom.yml. When set, unprotected feature branches get a dTrack version named like the branch; empty disables it.
+    baseline:
+      default: scan
+      options: [branch, scan]
+      description: scan compares with the paired scan of the target branch (same policies and triage state on both sides). branch reuses the target branch's regular dTrack version while it is current; its production policies and triage differ from the MR scan and show up as changes.
+    stage:
+      default: test
+    image:
+    bsi_mode:
+      default: enforce
+      options: [enforce, report]
+      description: Revalidate producer SBOMs before upload; report permits non-conforming inventories during migration.
+    sbom_creator:
+      default: ''
+    component_creator:
+      default: ''
+    distribution_license:
+      default: ''
+---
+$[[ inputs.job_name ]]:
+  stage: $[[ inputs.stage ]]
+  image: $[[ inputs.image ]]
+  timeout: 1h
+  before_script: []
+  after_script: []
+  services: []
+  dependencies: []
+  environment:
+    name: patchwatch-mr-feedback
+    action: access
+  # Serialize all component workers for this target project, including retries.
+  resource_group: patchwatch-mr-$[[ inputs.project_id ]]
+  rules:
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $PATCHWATCH_MR_FEEDBACK == "true" && $CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $PATCHWATCH_MR_FEEDBACK == "true" && $CI_PIPELINE_SOURCE == "web"'
+  variables:
+    GIT_STRATEGY: empty
+    PATCHWATCH_MR_PROJECT: '$[[ inputs.project_id ]]'
+    PATCHWATCH_MR_SCAN_JOB: '$[[ inputs.scan_job ]]'
+    PATCHWATCH_COMPONENT: '$[[ inputs.component ]]'
+    PATCHWATCH_BRANCH_SCAN_JOB: '$[[ inputs.branch_scan_job ]]'
+    PATCHWATCH_MR_BASELINE: '$[[ inputs.baseline ]]'
+    PATCHWATCH_BSI_MODE: '$[[ inputs.bsi_mode ]]'
+    PATCHWATCH_SBOM_CREATOR: '$[[ inputs.sbom_creator ]]'
+    PATCHWATCH_COMPONENT_CREATOR: '$[[ inputs.component_creator ]]'
+    PATCHWATCH_DISTRIBUTION_LICENSE: '$[[ inputs.distribution_license ]]'
+  script:
+    - if [ "$PATCHWATCH_MR_PROJECT" = "0" ]; then export PATCHWATCH_MR_PROJECT="$CI_PROJECT_ID"; fi
+    - cd /opt/patchwatch && python -m patchwatch.ci.mr worker --project "$PATCHWATCH_MR_PROJECT" --job "$PATCHWATCH_MR_SCAN_JOB" --component "$PATCHWATCH_COMPONENT" --branch-job "$PATCHWATCH_BRANCH_SCAN_JOB" --baseline "$PATCHWATCH_MR_BASELINE" --output-dir "$CI_PROJECT_DIR/patchwatch-mr-reports"
+  artifacts:
+    paths: [patchwatch-mr-reports/]
+    reports:
+      annotations: patchwatch-mr-reports/patchwatch-annotations.json
+    when: always
+    expire_in: 1 week

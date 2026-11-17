@@ -1,0 +1,21 @@
+{{- range $name, $size := dict "postgresql" .Values.postgresql.storage "bridge" .Values.bridge.storage "backup" .Values.backup.storage }}
+{{- if or (ne $name "backup") $.Values.backup.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: patchwatch-{{ $name }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "patchwatch.labels" $ | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- if $.Values.storageClass }}
+  storageClassName: {{ $.Values.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $size }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,85 @@
+# SPDX-License-Identifier: Apache-2.0
+# One PatchWatch inventory (= one Dependency-Track project) per component of PatchWatch itself.
+# Each include is an independent job; override a single job by redefining it in .gitlab-ci.yml.
+# The agent is not listed on purpose: it has no third-party packages (stdlib only), and the
+# Python it runs on is covered by the bridge image. See docs/usage/ci-integration.md.
+include:
+  # Container project (this project) that the components below hang under. A separate job in
+  # an earlier stage: DTrack does not create a missing parent, and parallel jobs would race for it.
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-parent
+      stage: prepare
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      mode: parent
+      run_if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  # Own images: every pipeline of the default branch, right after they were built.
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-bridge
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      component: bridge
+      scan_paths: ''
+      bsi_mode: report  # Alpine base packages lack concluded licences; non-conforming until fixed
+      images: $CI_REGISTRY_IMAGE/bridge:$CI_COMMIT_SHA
+      run_if: $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-ci-image
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      component: ci-image
+      scan_paths: ''
+      bsi_mode: report  # Alpine base packages lack concluded licences; non-conforming until fixed
+      images: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      run_if: $CI_PIPELINE_SOURCE != "schedule" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+  # Third-party images: versions only change with a commit, so a schedule (or a manual pipeline) is
+  # enough; new CVEs for an unchanged version are matched by Dependency-Track itself.
+  # The image references must equal compose.yaml (tests/test_components.py).
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-dtrack-apiserver
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:v1
+      component: dtrack-apiserver
+      scan_paths: ''
+      images: ghcr.io/dependencytrack/apiserver:5.2.1
+      run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-dtrack-frontend
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:v1
+      component: dtrack-frontend
+      scan_paths: ''
+      images: ghcr.io/dependencytrack/frontend:5.2.1
+      run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-postgres
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:v1
+      component: postgres
+      scan_paths: ''
+      images: postgres:17.7-alpine
+      run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-trivy
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:v1
+      component: trivy
+      scan_paths: ''
+      images: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+      run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: sbom-gateway
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:v1
+      component: gateway
+      scan_paths: ''
+      images: nginxinc/nginx-unprivileged:1.28.0-alpine
+      run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"

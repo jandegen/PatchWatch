@@ -1,0 +1,139 @@
+# SPDX-License-Identifier: Apache-2.0
+# Release pipeline: runs for tags vX.Y.Z only. See docs/operations/release.md.
+#   verify-release -> release-bridge-image, release-packages, release-pkg-macos (optional)
+#   -> release (GitLab release with asset links) -> mirror-github
+# CI/CD variables: PATCHWATCH_MACOS_RUNNER=true (enables the .pkg job, needs a runner tagged "macos"),
+# GITHUB_MIRROR_URL and GITHUB_MIRROR_TOKEN (both optional; without them the mirror job is skipped).
+
+.release-rules:
+  rules:
+    - if: '$PATCHWATCH_MR_FEEDBACK == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+verify-release:
+  stage: test
+  rules: !reference [.release-rules, rules]
+  image: python:3.14.0-alpine3.22
+  script:
+    - version="${CI_COMMIT_TAG#v}"
+    - test "$(python -c 'from patchwatch import __version__; print(__version__)')" = "$version"
+    - grep -q "^version = \"$version\"$" pyproject.toml
+
+release-bridge-image:
+  extends: .docker-build
+  stage: build
+  rules: !reference [.release-rules, rules]
+  needs: [verify-release]
+  script:
+    - printf '%s' "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - version="${CI_COMMIT_TAG#v}"
+    - docker build --pull --label "org.opencontainers.image.version=$version" --label "org.opencontainers.image.revision=$CI_COMMIT_SHA" --tag "$CI_REGISTRY_IMAGE/bridge:$version" .
+    - for tag in "${version%.*}" latest; do docker tag "$CI_REGISTRY_IMAGE/bridge:$version" "$CI_REGISTRY_IMAGE/bridge:$tag"; done
+    - docker push --all-tags "$CI_REGISTRY_IMAGE/bridge"
+
+release-packages:
+  stage: build
+  rules: !reference [.release-rules, rules]
+  needs: [verify-release]
+  image: python:3.14.0-alpine3.22
+  script:
+    - apk add --no-cache curl git
+    - PACKAGE_URL="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/patchwatch-agent/${CI_COMMIT_TAG#v}"
+    - export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+    - python packaging/build.py pyz
+    - python packaging/build.py deb
+    - (cd dist && sha256sum * > SHA256SUMS && cat SHA256SUMS)
+    - |
+      for file in dist/*; do
+        curl --fail --silent --show-error --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          --upload-file "$file" "$PACKAGE_URL/$(basename "$file")"
+      done
+  artifacts:
+    paths: [dist/]
+    expire_in: 1 year
+
+# Needs a macOS runner tagged "macos" (shell executor with Xcode command line tools); enable with
+# PATCHWATCH_MACOS_RUNNER=true. The .pkg is not signed or notarized here.
+release-pkg-macos:
+  stage: build
+  tags: [macos]
+  rules:
+    - if: '$PATCHWATCH_MACOS_RUNNER != "true"'
+      when: never
+    - !reference [.release-rules, rules]
+  needs: [verify-release]
+  script:
+    - PACKAGE_URL="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/patchwatch-agent/${CI_COMMIT_TAG#v}"
+    - export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+    - python3 packaging/build.py pkg --output dist-macos
+    - (cd dist-macos && shasum -a 256 *.pkg > SHA256SUMS-macos)
+    - |
+      for file in dist-macos/*; do
+        curl --fail --silent --show-error --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+          --upload-file "$file" "$PACKAGE_URL/$(basename "$file")"
+      done
+  artifacts:
+    paths: [dist-macos/]
+    expire_in: 1 year
+
+release:
+  stage: deploy
+  rules: !reference [.release-rules, rules]
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - release-bridge-image
+    - release-packages
+    - job: release-pkg-macos
+      optional: true
+  script:
+    - |
+      version="${CI_COMMIT_TAG#v}"
+      base="$CI_API_V4_URL/projects/$CI_PROJECT_ID/packages/generic/patchwatch-agent/$version"
+      links=""
+      for name in patchwatch-agent.pyz "patchwatch-agent_${version}_all.deb" SHA256SUMS; do
+        links="$links --assets-link {\"name\":\"$name\",\"url\":\"$base/$name\"}"
+      done
+      if [ "$PATCHWATCH_MACOS_RUNNER" = "true" ]; then
+        for name in "patchwatch-agent-$version.pkg" SHA256SUMS-macos; do
+          links="$links --assets-link {\"name\":\"$name\",\"url\":\"$base/$name\"}"
+        done
+      fi
+      # shellcheck disable=SC2086
+      release-cli create --name "PatchWatch $CI_COMMIT_TAG" --tag-name "$CI_COMMIT_TAG" \
+        --description "Bridge image: $CI_REGISTRY_IMAGE/bridge:$version. Agent packages are listed as assets; checksums in SHA256SUMS." \
+        $links
+
+# The GitLab history is never pushed. Each release becomes one commit in the GitHub repository, made from
+# the tagged tree (git archive), after a scan for installation-specific strings. Needs the CI/CD variables
+# GITHUB_MIRROR_URL, GITHUB_MIRROR_TOKEN and MIRROR_FORBIDDEN_PATTERNS (extended regex, e.g. your domain and
+# GitLab user names; kept in the variable because the strings must not appear in this repository).
+mirror-github:
+  stage: deploy
+  rules:
+    - if: '$GITHUB_MIRROR_URL == null || $GITHUB_MIRROR_TOKEN == null'
+      when: never
+    - !reference [.release-rules, rules]
+  needs: [release]
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]
+  script:
+    - test -n "$MIRROR_FORBIDDEN_PATTERNS" || { echo "MIRROR_FORBIDDEN_PATTERNS is required"; exit 1; }
+    - mkdir snapshot && git archive "$CI_COMMIT_SHA" | tar -x -C snapshot
+    - |
+      if grep -rIiE -l "$MIRROR_FORBIDDEN_PATTERNS" snapshot; then
+        echo "Installation-specific data found in the files above; refusing to mirror."; exit 1
+      fi
+    - auth="$(printf 'x-access-token:%s' "$GITHUB_MIRROR_TOKEN" | base64 | tr -d '\n')"
+    - |
+      git -c "http.extraHeader=Authorization: Basic $auth" clone "$GITHUB_MIRROR_URL" mirror
+    - cd mirror
+    - git rm -rq --ignore-unmatch . && cp -a ../snapshot/. .
+    - git add -A
+    - git -c user.name="Patchwatch contributors" -c user.email="noreply@invalid" commit --allow-empty -q -m "Release $CI_COMMIT_TAG"
+    - git tag "$CI_COMMIT_TAG"
+    - |
+      git -c "http.extraHeader=Authorization: Basic $auth" push origin HEAD "refs/tags/$CI_COMMIT_TAG"

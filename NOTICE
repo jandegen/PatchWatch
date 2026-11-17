@@ -1,0 +1,8 @@
+Patchwatch
+Copyright 2026 Patchwatch contributors
+SPDX-License-Identifier: Apache-2.0
+
+Patchwatch source is licensed under the Apache License, Version 2.0.
+Dependency-Track, Syft, PostgreSQL, Python and nginx are separate projects
+with their own licenses. Their images and source code are not vendored here.
+See patchwatch.spdx.json and docs/reference/licenses.md for scope and attribution.

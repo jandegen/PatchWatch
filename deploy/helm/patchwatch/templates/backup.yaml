@@ -1,0 +1,66 @@
+{{- if .Values.backup.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patchwatch-backup-script
+data:
+  backup.sh: |
+{{ .Files.Get "files/backup.sh" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: patchwatch-backup
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels: {app: patchwatch-backup, app.kubernetes.io/part-of: patchwatch}
+        spec:
+          restartPolicy: Never
+          dnsConfig:
+            options: [{name: ndots, value: "1"}]
+          automountServiceAccountToken: false
+          securityContext:
+            runAsUser: 70
+            runAsGroup: 70
+            runAsNonRoot: true
+            fsGroup: 70
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: backup
+              image: {{ .Values.postgresql.image }}
+              command: [/bin/sh, /scripts/backup.sh]
+              env:
+                - {name: PGHOST, value: patchwatch-postgresql}
+                - {name: BACKUP_RETENTION_DAYS, value: {{ .Values.backup.retentionDays | quote }}}
+              resources:
+                requests: {cpu: 100m, memory: 128Mi}
+                limits: {memory: 512Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+              volumeMounts:
+                - {name: backups, mountPath: /backups}
+                - {name: script, mountPath: /scripts, readOnly: true}
+                - {name: secrets, mountPath: /run/secrets, readOnly: true}
+          volumes:
+            - name: backups
+              persistentVolumeClaim: {claimName: patchwatch-backup}
+            - name: script
+              configMap: {name: patchwatch-backup-script}
+            - name: secrets
+              secret:
+                secretName: {{ .Values.existingSecret }}
+                items: [{key: postgres_password, path: postgres_password}]
+{{- end }}

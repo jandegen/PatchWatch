@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>eu.patchwatch.agent</string>
+  <key>ProgramArguments</key><array>
+    <string>/usr/local/bin/patchwatch-agent</string>
+    <string>--config</string><string>/etc/patchwatch/agent.json</string>
+  </array>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string></dict>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>3</integer><key>Minute</key><integer>0</integer></dict>
+  <key>RunAtLoad</key><true/>
+  <key>ProcessType</key><string>Background</string>
+  <key>LowPriorityIO</key><true/>
+  <key>Nice</key><integer>15</integer>
+  <key>StandardOutPath</key><string>/var/log/patchwatch-agent.log</string>
+  <key>StandardErrorPath</key><string>/var/log/patchwatch-agent.log</string>
+</dict></plist>

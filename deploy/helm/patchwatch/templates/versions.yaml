@@ -1,0 +1,48 @@
+{{- if .Values.versions.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: patchwatch-versions
+spec:
+  schedule: {{ .Values.versions.schedule | quote }}
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels: {app: patchwatch-versions, app.kubernetes.io/part-of: patchwatch}
+        spec:
+          {{- include "patchwatch.pullSecrets" . | nindent 10 }}
+          restartPolicy: Never
+          dnsConfig:
+            options: [{name: ndots, value: "1"}]
+          automountServiceAccountToken: false
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
+            runAsNonRoot: true
+            seccompProfile: {type: RuntimeDefault}
+          containers:
+            - name: versions
+              image: {{ .Values.bridge.image | quote }}
+              command: [python, -m, patchwatch.dtrack.versions]
+              env:
+                - {name: DT_URL, value: 'http://dtrack-api-server:8080'}
+                - {name: ALLOW_HTTP, value: 'true'}
+                - name: DT_API_KEY
+                  valueFrom:
+                    secretKeyRef: {name: {{ .Values.versions.existingSecret }}, key: api_key}
+              resources:
+                requests: {cpu: 50m, memory: 64Mi}
+                limits: {memory: 128Mi}
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities: {drop: [ALL]}
+{{- end }}

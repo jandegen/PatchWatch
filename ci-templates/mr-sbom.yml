@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: Apache-2.0
+# Paired target/merge-result scan without dTrack or bot credentials.
+spec:
+  inputs:
+    job_name:
+      default: patchwatch-mr-sbom
+    stage:
+      default: test
+    image:
+    scan_paths:
+      default: .
+    images:
+      default: ''
+    exclude:
+      default: ''
+    bsi_metadata:
+      default: ''
+      description: Reviewed BSI metadata in each scanned tree; the worker revalidates before upload.
+    sbom_creator:
+      default: ''
+    component_creator:
+      default: ''
+    distribution_license:
+      default: ''
+    dockerfiles:
+      default: ''
+      description: Space-separated Dockerfile paths; built separately from target and merge-result trees.
+    compose_images:
+      default: ''
+      description: Space-separated file:service selectors; resolve each image from its own tree.
+---
+$[[ inputs.job_name ]]:
+  stage: $[[ inputs.stage ]]
+  image: $[[ inputs.image ]]
+  timeout: 1h
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  variables:
+    GIT_DEPTH: "0"
+    PATCHWATCH_SCAN_PATHS: '$[[ inputs.scan_paths ]]'
+    PATCHWATCH_IMAGES: '$[[ inputs.images ]]'
+    PATCHWATCH_EXCLUDE: '$[[ inputs.exclude ]]'
+    PATCHWATCH_BSI_METADATA: '$[[ inputs.bsi_metadata ]]'
+    PATCHWATCH_SBOM_CREATOR: '$[[ inputs.sbom_creator ]]'
+    PATCHWATCH_COMPONENT_CREATOR: '$[[ inputs.component_creator ]]'
+    PATCHWATCH_DISTRIBUTION_LICENSE: '$[[ inputs.distribution_license ]]'
+    PATCHWATCH_DOCKERFILES: '$[[ inputs.dockerfiles ]]'
+    PATCHWATCH_COMPOSE_IMAGES: '$[[ inputs.compose_images ]]'
+  script:
+    - cd /opt/patchwatch && python -m patchwatch.ci.mr scan
+  artifacts:
+    expose_as: Patchwatch SBOM-Rohdaten
+    paths: [patchwatch-mr.json]
+    expire_in: 1 week

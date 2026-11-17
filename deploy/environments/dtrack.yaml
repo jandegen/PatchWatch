@@ -1,0 +1,98 @@
+# SPDX-License-Identifier: Apache-2.0
+# Dependency-Track 5.x with the official chart 2.x.
+fullnameOverride: dtrack
+enableServiceLinks: false
+image:
+  registry: ghcr.io
+database:
+  jdbcUrl: 'jdbc:postgresql://patchwatch-postgresql:5432/dtrack?reWriteBatchedInserts=true'
+  existingSecret:
+    name: patchwatch-dtrack-db  # created by scripts/deploy.sh from patchwatch-secrets
+    usernameKey: username
+    passwordKey: password
+secretManagement:
+  provider: database
+  database:
+    kek:
+      mode: config
+      existingSecret:
+        name: patchwatch-dtrack-kek  # generated once by scripts/deploy.sh; never rotate or delete it
+        key: kek
+fileStorage:
+  provider: local
+  local:
+    storageClassName: longhorn
+    size: 10Gi
+apiServer:
+  topology: monolith
+  web:
+    replicaCount: 1
+    resources:
+      requests: {cpu: '1', memory: 3Gi}
+      limits: {memory: 5Gi}
+    extraEnv:
+      # v5 blocks outbound traffic to private networks by default: allow only the internal integrations.
+      - {name: DT_OUTBOUND_ALLOWED_DESTINATIONS, value: 'external,patchwatch-bridge,patchwatch-trivy'}
+      - {name: DT_CORS_ENABLED, value: 'false'}
+      - {name: DT_OIDC_ENABLED, value: 'true'}
+      - {name: DT_OIDC_ISSUER, value: 'https://keycloak.example.com/realms/example'}
+      - {name: DT_OIDC_CLIENT_ID, value: patchwatch}
+      - {name: DT_OIDC_USERNAME_CLAIM, value: preferred_username}
+      - {name: DT_OIDC_USER_PROVISIONING, value: 'true'}
+      - {name: DT_OIDC_TEAM_SYNCHRONIZATION, value: 'true'}
+      - {name: DT_OIDC_TEAMS_CLAIM, value: groups}
+      - {name: JAVA_TOOL_OPTIONS, value: '-Djavax.net.ssl.trustStore=/var/run/oidc-trust/cacerts -Djavax.net.ssl.trustStorePassword=changeit'}
+  # Preserve the image's public roots and add the private root CA on every pod start.
+  initContainers:
+    - name: oidc-truststore
+      image: ghcr.io/dependencytrack/apiserver:5.2.1
+      command: [sh, -ec]
+      args:
+        - |
+          cp "$JAVA_HOME/lib/security/cacerts" /var/run/oidc-trust/cacerts
+          keytool -importcert -noprompt -trustcacerts -alias private-root \
+            -file /var/run/private-ca/root.pem \
+            -keystore /var/run/oidc-trust/cacerts -storepass changeit
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        allowPrivilegeEscalation: false
+        capabilities: {drop: [ALL]}
+      volumeMounts:
+        - {name: oidc-truststore, mountPath: /var/run/oidc-trust}
+        - {name: private-ca, mountPath: /var/run/private-ca, readOnly: true}
+  additionalVolumes:
+    - name: oidc-truststore
+      emptyDir: {}
+    - name: private-ca
+      configMap:
+        name: patchwatch-oidc-ca
+  additionalVolumeMounts:
+    - {name: oidc-truststore, mountPath: /var/run/oidc-trust, readOnly: true}
+  probes:
+    startup:
+      failureThreshold: 90
+  image:
+    tag: 5.2.1
+frontend:
+  image:
+    tag: 5.2.1
+  apiBaseUrl: https://patchwatch.example.com
+  extraEnv:
+    - {name: OIDC_ISSUER, value: 'https://keycloak.example.com/realms/example'}
+    - {name: OIDC_CLIENT_ID, value: patchwatch}
+    - {name: OIDC_SCOPE, value: 'openid profile email'}
+    - {name: OIDC_FLOW, value: code}
+    - {name: OIDC_LOGIN_BUTTON_TEXT, value: 'Mit Keycloak anmelden'}
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hostname: patchwatch.example.com
+  annotations:
+    cert-manager.io/cluster-issuer: example-ca-issuer
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: 128m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '300'
+  tls:
+    - secretName: patchwatch-tls
+      hosts: [patchwatch.example.com]

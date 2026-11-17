@@ -1,0 +1,85 @@
+{{- if .Values.trivy.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: patchwatch-trivy
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "patchwatch.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- if .Values.storageClass }}
+  storageClassName: {{ .Values.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.trivy.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: patchwatch-trivy
+spec:
+  selector: {app: patchwatch-trivy}
+  ports: [{name: http, port: 4954, targetPort: 4954}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patchwatch-trivy
+  labels:
+    {{- include "patchwatch.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: patchwatch-trivy}
+  template:
+    metadata:
+      labels: {app: patchwatch-trivy, app.kubernetes.io/part-of: patchwatch}
+    spec:
+      automountServiceAccountToken: false
+      dnsConfig:
+        options: [{name: ndots, value: '1'}]
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: trivy
+          image: {{ .Values.trivy.image | quote }}
+          args: [server, --listen, '0.0.0.0:4954', --cache-dir, /data]
+          env:
+            - {name: HOME, value: /tmp}
+            - name: TRIVY_TOKEN
+              valueFrom:
+                secretKeyRef: {name: {{ .Values.trivy.existingSecret }}, key: token}
+          ports: [{name: http, containerPort: 4954}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources: {{- toYaml .Values.trivy.resources | nindent 12 }}
+          startupProbe:
+            httpGet: {path: /healthz, port: 4954}
+            periodSeconds: 10
+            failureThreshold: 90
+          readinessProbe:
+            httpGet: {path: /healthz, port: 4954}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /healthz, port: 4954}
+            periodSeconds: 30
+            failureThreshold: 5
+          volumeMounts:
+            - {name: cache, mountPath: /data}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: cache
+          persistentVolumeClaim: {claimName: patchwatch-trivy}
+        - name: tmp
+          emptyDir: {sizeLimit: 512Mi}
+{{- end }}

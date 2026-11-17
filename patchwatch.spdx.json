@@ -1,0 +1,3813 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "patchwatch-1.0.3",
+  "documentNamespace": "https://spdx.org/spdxdocs/patchwatch-1.0.3-2d16472b30f11e6872aa53ae00d0461df68ce99c",
+  "creationInfo": {
+    "created": "2026-11-13T00:00:00Z",
+    "creators": [
+      "Tool: patchwatch-spdx-0.1.0"
+    ],
+    "licenseListVersion": "3.26.0"
+  },
+  "packages": [
+    {
+      "name": "patchwatch",
+      "SPDXID": "SPDXRef-Patchwatch",
+      "versionInfo": "1.0.3",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": true,
+      "packageVerificationCode": {
+        "packageVerificationCodeValue": "2d16472b30f11e6872aa53ae00d0461df68ce99c",
+        "packageVerificationCodeExcludedFiles": [
+          "./patchwatch.spdx.json"
+        ]
+      },
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "primaryPackagePurpose": "APPLICATION",
+      "licenseInfoFromFiles": [
+        "Apache-2.0"
+      ]
+    },
+    {
+      "name": "Trivy",
+      "SPDXID": "SPDXRef-Trivy",
+      "versionInfo": "0.76.2",
+      "downloadLocation": "https://github.com/aquasecurity/trivy/releases/tag/v0.76.2",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "DockerCLI",
+      "SPDXID": "SPDXRef-DockerCLI",
+      "versionInfo": "29.9.3",
+      "downloadLocation": "https://github.com/docker/cli/releases/tag/v29.9.3",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "Syft",
+      "SPDXID": "SPDXRef-Syft",
+      "versionInfo": "1.57.1",
+      "downloadLocation": "https://github.com/anchore/syft/releases/tag/v1.57.1",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "DependencyTrack",
+      "SPDXID": "SPDXRef-DependencyTrack",
+      "versionInfo": "5.2.1",
+      "downloadLocation": "https://github.com/DependencyTrack/dependency-track/releases/tag/5.2.1",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "DependencyTrackFrontend",
+      "SPDXID": "SPDXRef-DependencyTrackFrontend",
+      "versionInfo": "5.2.1",
+      "downloadLocation": "https://github.com/DependencyTrack/frontend/releases/tag/5.2.1",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "DependencyTrackHelmChart",
+      "SPDXID": "SPDXRef-DependencyTrackHelmChart",
+      "versionInfo": "2.9.0",
+      "downloadLocation": "https://github.com/DependencyTrack/helm-charts/releases/tag/dependency-track-2.9.0",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "PostgreSQL",
+      "SPDXID": "SPDXRef-PostgreSQL",
+      "versionInfo": "17.7",
+      "downloadLocation": "https://www.postgresql.org/ftp/source/v17.7/",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "PostgreSQL",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "Python",
+      "SPDXID": "SPDXRef-Python",
+      "versionInfo": "3.14.0",
+      "downloadLocation": "https://www.python.org/downloads/release/python-3140/",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Python-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    },
+    {
+      "name": "NginxUnprivileged",
+      "SPDXID": "SPDXRef-NginxUnprivileged",
+      "versionInfo": "1.28.0-alpine",
+      "downloadLocation": "https://github.com/nginx/docker-nginx-unprivileged",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "copyrightText": "NOASSERTION",
+      "comment": "Declared deployment dependency; transitive dependencies and container OS layers are not analyzed by this source inventory."
+    }
+  ],
+  "files": [
+    {
+      "SPDXID": "SPDXRef-File-2f754321d62f08ba8392b9b1",
+      "fileName": "./.dockerignore",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "972ef2ea42a8bc84eea7fe7856cc1a81863bcf81"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "68e219e306ca9b3a58c36fa2f9f42e423868d23e3ec3b9edfe6f8d05e33af34a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-a3046da0d15a27e89f2afe63",
+      "fileName": "./.env.example",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "ebcb9a10809a08b0a18efedbe381724baa1a8754"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "57368e6d08fb622764f133ea581121ee6c795945c2d01ec2dfc6af9e29f4dcfe"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-bc37d034bad564583790a46f",
+      "fileName": "./.gitignore",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "aac8203487d68c2bee72344f970170c7cb3a5bb0"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "231666b45d824d802c7a9844597f86a52ea5e5cf4ea4ebcfee5b7902dbea4c99"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-037ea159eb0a7cb0ac23b851",
+      "fileName": "./.gitlab-ci.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "b8bfef84f5e099534e4415c203b11736b1aa216c"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4a3dbda9f0fd7a574ade60579e48b3a639c0dba450b43398734486e7bf682df7"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-dd2c0eb6ea5cfc6c4bd4eac3",
+      "fileName": "./Dockerfile",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3e1c954eb4bb078089e66d5531dc5ce50d2f2419"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bb2c1cca0b297b377f55fbc63126d6ee80168a2777df6a334256afa69a64faff"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-3aaadfe559b0ea24d6dc905d",
+      "fileName": "./Dockerfile.ci",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3bf3e43027b51fa2ebb8cd2e3c81bbe906572486"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4b95ab74128a38ac2a737c068b67c45499156f5c69d325164663767107bf6083"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c693279643b8cd5d248172d9",
+      "fileName": "./LICENSE",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "be561fe6eb626c2566b9a6c0885554b4ee4e6b74"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-dfb14fbb9e7d095209ec4cfd",
+      "fileName": "./NOTICE",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "67888534957780b77aeadd06f84f0e206985de79"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7d9aebb85d5fb1f1f3c833af96a8711e5a7c9546d6b104a809f936cab148ecf9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-b335630551682c19a781afeb",
+      "fileName": "./README.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c3623d1baa177a109ebd31f7f8a6fdc53766a578"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "785d820ae3680b424cad2e9fee3cae8b10f70fc6f9a8363043a634de1ba2cf73"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-a9d2fe8b924c07e0abbedbea",
+      "fileName": "./agent/agent.example.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "90ddc8e1a4219911f63f59091d5a315ca05f4bc4"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9e94ea7eff7b8019971b154cbead32182f1736821a72a6b17fdc8c816b52763c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-a49b6c59553e1d7b96dc6d90",
+      "fileName": "./agent/launchd/eu.patchwatch.agent.plist",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "0033b851ab15e36142806bb7de7ae09dc58b4af9"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "66ad9b7d935cf6dbec45cc17e7b572218aae2b62cf86acbbf97cac1fc18f19aa"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-284df82efb5685609d8d9183",
+      "fileName": "./agent/systemd/patchwatch-agent.service",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "cbac31f2ad76d7b54d5e955ab36f9c3a9b6cad1e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d8ff8b056e1161c2b25e334b59b954897f9e9203264b3eea88aa4df345d38fa7"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-a5a0b122ced05f7322e1500a",
+      "fileName": "./agent/systemd/patchwatch-agent.timer",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "7fe4d53549e5a905ebdd73235b7d08aed31e5997"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ccef7cf66f0d170f548f4a4721781d558e252a401dd9e1128ea0056401576dc8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-451a3a6d8a4f57b4c97f95c2",
+      "fileName": "./ci-templates/branch-sbom.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "b58ed8938bee5bb5c03c53060a60d76bbcae721d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "95c76227fecba00b737e9878bdb27409771c7b57482143bfc8e389e981046eae"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-08a5f643e13aa4cc29daef1e",
+      "fileName": "./ci-templates/mr-feedback.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c93936acc8ea001985b127add26651bb23f641c7"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a36725cdde2aaa82f21ab997684f6f3bcab6f4e433e44507e70feb7d9c15c301"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-5a73dddcba623a8894b3c2c4",
+      "fileName": "./ci-templates/mr-sbom.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "e54b49d20e495e7fba1e36735a7e09bfa108f027"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b4e9d1f37eb0b8e062c963b7c388b8590caa30a1ea2133c45dc4e931ee3e9b7d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-5038eb717c55781b15a733a8",
+      "fileName": "./ci-templates/sbom.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "74dbaca12a83a7b02cc3f0da8f08ae3f66ac5d16"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c825fec397644d39ae4d5e0695417e77d3ab5c74fe07e94bbbc6b8cebfecc7ef"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-26594715c2abcee7903e33f4",
+      "fileName": "./ci/branch-components.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "4adb96791aaecf34c06ab17ac0e0899551597b19"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b9957b6ea5565882d59f33b112b9f955e812d709d81751384fe87721d57ece0e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-73eb69aa8c9e602bedf9b11a",
+      "fileName": "./ci/components.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "37ca4c2edfd12e7ba2170bc976edda0c773c8d92"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "291c1a1f5f55a0ac8602297e1c91e630163df5ec21d3d53a92efdb860b3def08"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-5dd694c91374c3fde7fca39e",
+      "fileName": "./ci/install-tools.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "f01bfbc369c90c4d26975e6d12b0673dbb472b2d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "62c55934f48e2bcb89bcc5dd0767d93d2b0337167f6f210ff83ae1e6d133ce2e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-a3656ebf318dbfde884b6bdb",
+      "fileName": "./ci/mr-components.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "cecdb9b2404ad43314897a903b9ea6703592ce9f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fe1351e702421322e01e3ced8b2b2890125f97625d8c9489f0eab8b648658c82"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-33d0d8ffb826886d490c1427",
+      "fileName": "./ci/mr-feedback.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "00c7f7a0238067458fc9d199bebb7780375976c9"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3010e19e2339d35c00d9d3063a892afbea110a067de187afb7da13d3b3dc3ab8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-eb9a22fa062df75e444d4b1b",
+      "fileName": "./ci/release.yml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "43810580a610859cc2879c9d371bc1c14e9882f9"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "16284202d7b9ac2ba6f4172dd7caaca40105454efd0ffba6ea835ee9696ba47f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2130c11d625a270b5139d386",
+      "fileName": "./ci/validate-yaml.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "343de50a8a9f0e488d2baf70779901f27771aca0"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7bfc6b0f0c09dc5a3320655a5bc6f172ea1d276af3a81d8be52c01886735f87b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-facaded51b7d1c9656ae43b4",
+      "fileName": "./compose.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "77ed531d1184f9dec29ba54f370d4232dddff483"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "16c3b6dbcda3461c21be7dcaa6a9959887fd383e6857059d8ac6d8b7cb2380b5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-b13a304147ffa0ccff47f5bc",
+      "fileName": "./deploy/compose/nginx-tls.conf",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a3a7b1433be1ab10046d643ee5f4c8ed106cf7db"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1abd8b32532a438c28579a8c7a8957b2f43aec6118430b4879646d4911641ae3"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-d19fb7cee11f775ccb118332",
+      "fileName": "./deploy/compose/nginx.conf",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "f908a8ed6ab922567b69d7e85b6280e327b4e2df"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "37962f643da747ca9cb0ce6461b3541df16ca9416243405bc0c219e8c2c130df"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-32a2b6d979e2ad2265364293",
+      "fileName": "./deploy/compose/trivy-entrypoint.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "aaeac4b55e0605a45c7241e5a77dce6b53a7672a"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "277d431ac5b3776e8ff24cfd34a4b636d59ade29fe1323071015bcb1c57e2b07"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-eb7278ff9f810064e3868d8b",
+      "fileName": "./deploy/environments/dtrack.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "9c51d34da3c7fb5538a599210265480b8bf80b9b"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f65b1917ab7468846cb7d162d863ab082df2e48456f5af3fa967503431b267f6"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-1826885a6286e2e0bde11ec8",
+      "fileName": "./deploy/environments/infra.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "1e7b217fb0441314f08632b6acb5f92eb92193b1"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f0915ee70a0229760bd3d21a6d6fe2b7a32726c6b14c6deec9909a5dbf6a0511"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-b5d4356a38fe410b9505b958",
+      "fileName": "./deploy/environments/oidc-teams.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "2abb585b2acfabb5251c2cfd6074f4aed4cc9e29"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "080f525f75d0cf95858918c955ce1079fa1642edb56ed84ebf8871c4a0f0c559"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-249f6a68ef22927e1ec06f62",
+      "fileName": "./deploy/helm/patchwatch/Chart.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "f908dfcdb152ae4a12c3e5b467ea55f540597728"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4a80f94c7352e8dfc669e0cc7395a0be03e768e46f390c99c636f3cf4678bf7f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-de112696e1450cb6410aa569",
+      "fileName": "./deploy/helm/patchwatch/files/backup.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "33c3d746a2f6e4f1ab731c2c1528f2e159fa29eb"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d3d1f93e29995d535b37d07a1759a672252454f9eca5e0d859bd58af1fd9b7c5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2dc38cf24d501ce52eb0060a",
+      "fileName": "./deploy/helm/patchwatch/templates/_helpers.tpl",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "35838ab356a836b6f6e4eadfc3333822bd193325"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d3c575abae95c7e7104ae9ac2ee05520a3df8a1af3d4bf0b092d2885c18dd8d1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-64c03f0b828f7f5bab785751",
+      "fileName": "./deploy/helm/patchwatch/templates/backup.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "626eb21779755934bd91d0ae1f764df27e24544f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7882f664ad0b16a1a209e807cfe3b9ff9b05f853dd4e08d7e1fdde9e3b0609f2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-732b57ae69405920644cc048",
+      "fileName": "./deploy/helm/patchwatch/templates/bridge.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c0cd1240e47825b23dba8f279ff051a4188b1c6a"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bdbc3f2dbf9a55f59f0c15c59e78eafe193333f4c7fbe7b47306251148f4efe4"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-e3d06f49e400ad35a0725f36",
+      "fileName": "./deploy/helm/patchwatch/templates/monitor.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "cb8266e112511fb5075ba5e4d5596602629e1cd4"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7f03722a4003bebab2aacdb3ef9930bc56958aaae4f2936f3e0e50df2bafc9a8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-15a028375ec767b358b47345",
+      "fileName": "./deploy/helm/patchwatch/templates/networkpolicy.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "61fdd5bc0b1955d53d3f6c34070df050f834d468"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "29b68ee21c06731dd47807da0989fdeeb66e71282130badc61adfd6b730edef0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-e9011c2d53609e291f770622",
+      "fileName": "./deploy/helm/patchwatch/templates/oidc-ca.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a484c499a134abfec83e46d09789fb3fcc853597"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "268a7e006d7fa8c639d805ef1e47be406e3421eb050e94e9a68d5a0dbeb196be"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-1ddfb5983c0e1fbfa4fa978b",
+      "fileName": "./deploy/helm/patchwatch/templates/postgresql.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c03abf7f624589dc14e2580f4b988d56b9e27569"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5ca996aac5030493a5b84868470a3a9e8feb41b036d68e61d571b254e242c04d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-54a2f34f32fe2bc66b653d8d",
+      "fileName": "./deploy/helm/patchwatch/templates/storage.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "ac66429921757dcdca10215c20ab9d75d9c78556"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "69db4425c86c72874b3f27dcaadb8b61367fd8d68217d5bea4a147abc4da11c2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-314c34b0ceae83b912bfaea0",
+      "fileName": "./deploy/helm/patchwatch/templates/trivy.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "4f14e4ae2b321f4c5cce95e0f308be8d467513cc"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "604b86b62bbb3cbd5eafcd3aa58c92364cdd707a1a982f7a3f88f5ca5298e1bc"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-db58c57de55ecc14e885e3bf",
+      "fileName": "./deploy/helm/patchwatch/templates/versions.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "296e66bf576bea9be7ffa26a812e23a77fe8f45a"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "68849a3af1ccc16f677cd7016954b1728c46b11a332c7e13aab82e975ca1d422"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-da7d31c8c865213426697ee3",
+      "fileName": "./deploy/helm/patchwatch/values.yaml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "9f5030817f94552c453f3a7bbcff231ea8f96cb4"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6ac454d352952a62cacbd8e07afcf3142dd6668f1fe68557faa3db75600731e9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-0b5ca119d2be595aa307d345",
+      "fileName": "./docs/README.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "bf082940c7ea2398c56069219f565c72fc00f1a2"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3e224004785a377271d1f82c25dc37af95d4773af545015664ecd47503cc29db"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-5a454121f1d3c48e1b62d9a7",
+      "fileName": "./docs/assets/architecture.svg",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "7f9baeb97794c219e9f4a7e527fdea16ff54b0f4"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0cc381dfc1a1222361a82d149290445cb226b9282fa8008bee08ce0c99cd73a2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-070551942fb71dbcd2546332",
+      "fileName": "./docs/configuration/alerting.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "d79eec5d73262f75f4be910e2a2122f0d0287415"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3e8846741830c6c84f5d5c7782dab695449d4947c2edaefc125ec770eead4214"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-cd5b34b28590a0f5ef9acf19",
+      "fileName": "./docs/configuration/oidc.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c15bf9f1ea575d36a6cf6cbeeb7862c3b3499e36"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7c36540489932afe73c174c1f2cc5130dedc265c9d11b20315cda4a03555ae21"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-b2ea48b6c736eed38e8d63a7",
+      "fileName": "./docs/configuration/policies.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "6654a6bc1dff217bb2b25706427542e1975af844"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "510b1d00f4a735299d17c407ab2b1178eb53bc6c45756c8cdfcc819d1ae4b72b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2de3943db635008064097b13",
+      "fileName": "./docs/configuration/trivy.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "288f0a7237aa69688065cd14efa8cc930228039b"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6ec998ea9b3f761a8f22653b3aa925ebf27d76993448a76da99df5a6b8337a9c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c435a658e946facf16aac956",
+      "fileName": "./docs/design/README.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "f01329e6101f2c1cbddb42a957216a686704959e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1a0df9c5d6d262841ab864c637380861e47907447a0ab2a583bef1f37ca263f5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-d261ca2b506e8b69478205b1",
+      "fileName": "./docs/design/agent-distribution.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c06948df71ddf7d3273bc43970260ccbc01e3c0e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "93a8e114ed296b8341a3a84f13ab94151007c3f4edcd31cd6c0993f50a01f43f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c87daf0d177df1c53eee1654",
+      "fileName": "./docs/design/enrollment-architecture.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3dd0ad142c8f5749fda9d32de2254ed08933728a"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "61db4f8c520253ecc0bcdca8a1445b42b4b0eee7dbb9fa141be636771e3fd829"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-0c16ae777131004bb6c0e0f5",
+      "fileName": "./docs/design/enrollment.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "b73421ab1e1ca39e5438018191a83662e7af3acc"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "24dde4d2cfc260ee850effad89717fad607e269dd37767055283045f2923ac16"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-e777c0a87a031c83692869b4",
+      "fileName": "./docs/design/roadmap.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "4c702d19cdeec112303290340e787874cc2af473"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5d61214cedaa5fa40641fd697f95572e10940f03463ef52129e8e958b908ee59"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-31bcba2ccafa41d46fbbd6d1",
+      "fileName": "./docs/getting-started.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "75887432448df7988cef488a80a7aa74832e449b"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6ad23825ba7423104c524cddbf7c2fe93d2f04f35358386c23002558c85f1e68"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-f9de1ce941694ad3931dbe99",
+      "fileName": "./docs/installation/compose.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "86fb18cc5295618ce220f8dd76e5da4020cb63c6"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ce7a266254d0cb3534e4a3b16b6bf9ea282226739fcd7bf3475e453f51ba3c31"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-0ee8c74b9750fc45f50f1de0",
+      "fileName": "./docs/installation/customization.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "10fd495560db843e0a0665f672a054ec4fc8b3d9"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4f97194e5ddc0922c949cd6c3e62be07190ae0fb701947b066567e8a8e13f1ac"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-1bd22fe42e71efeb0c3a9787",
+      "fileName": "./docs/installation/index.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a624977b00eaf07b9fc0401e0ec515a0e46dc860"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "05222e37e4b32d204d79560d12db033bf65fdaa65a549a3ace7409a7b904ca6b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-18156caadc6d113b18dc1e8e",
+      "fileName": "./docs/installation/kubernetes.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "7a7e6e7b957e33a7daff58b62d88b2f17a001f5c"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "69ae99266963c20e246d599adc2bd572a4a93d8d797d937a5aa0398e9fbfdf0c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-72bbbcb832b83ee14e849b47",
+      "fileName": "./docs/operations/index.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3fccd2a02bcae4798c0c812ce9e07202685ebd49"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c53a1054a5e6f5fccaf9153a250a49a6d51f6275013ebd177e1d16e06e70587e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-a426703c462dd239e12f4c99",
+      "fileName": "./docs/operations/release.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "ed012d3ba317d948abe98baaddd7fd247e9d321d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e854c8a5f431221eedf648ea62cdbc2aac924bc768ddb5c889b52c9c72e71f2c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c46a10526e5eab5e6c9167b1",
+      "fileName": "./docs/reference/architecture.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "8c78076543d31d403611f639eb694eaaa0022f8d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7e934186b5e3ce1c09e7e734c39c95f484e8384199dfb37b497f35e9131dd022"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-ff0a237f10b2a186874a5b4e",
+      "fileName": "./docs/reference/licenses.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c6f4b9a5e165e82ff4cf05a304df1d5a049c27ee"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "de5bfcd8eab7043937fcdde9496671780ff0eda80998cd273ad1de97f7a71a51"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-7e4b5dc92e8b51ff91ede704",
+      "fileName": "./docs/usage/agent.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c8bff073956f60ac0f87a0c706d9e71c968c9eed"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d148b53165d92ee276433ad73390182d803e3cb947b153e107d1156238bdefbd"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-4a412db2fd1547df055bb7ea",
+      "fileName": "./docs/usage/bsi-sbom.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "bedc5e3cfc113e6d069a8858f5ab8b1c002d15fc"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a75763ef9f7190fd41e5df1fade7983cc808b1ad24d5912df6d8dcd4a928cd60"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-7d0985ade0ae3ec727c86fb3",
+      "fileName": "./docs/usage/ci-integration.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "60c0bf07fb0a71c45ff6b2f16fe96243c2d95b0f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "35b17c30e3f1d69708301d4c47258a491a6f75e49581292aab6ea77be6b73b85"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c03f1e54f6236ec0ab9474f4",
+      "fileName": "./docs/usage/delta-reports.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "6f76f24819b71db658f77c4e4c200ecf62ee59d0"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "96e607411c9d0f6c4a4219003d51f532d5a2d3f562d565da96f848738736488d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-0a0915941022361687298c01",
+      "fileName": "./docs/usage/inventory.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "8e901500cb0bd18b110d2baac290a015a98bd120"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cdbd68a3e701f4d0c1db13bf15e69fdf0da092dd4db9c52ee549d217272cb12a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-34e9057de9672e42ba6679c0",
+      "fileName": "./docs/usage/mr-feedback.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "cc4ef5b08b83554e3553e69c283e960aa41310b8"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6ac99c61b3cece1091cfff197925035c911df967559a311702d879a42f2f2821"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-3f7613f413a4526b64514d9d",
+      "fileName": "./docs/usage/services.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "8532dff404bbede04928c271fcb181e4b7906cc6"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1a702108117004a98c8d14b35e8a982155852145cf7ac5f048d57e79798563d6"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-97d62336cbdc6e5b56cd9e5f",
+      "fileName": "./helmfile.yaml.gotmpl",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "7b8fa4b15f13de4a810f8e1e3a2769fe33da7d1c"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "05e8dc352dc41c6d7501b5cdbcdeac5ac350d78d6dd9582b830d527d5ad7656f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-1d35599c3630412b573fe922",
+      "fileName": "./packaging/build.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "0b05e4a9e5329786138a7af133380ed4d2ad414e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c4e95e47ab6fdd6e2939df3f07e5b7d29b76848ec7f34e4db12b639f0374b88c"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-fa60186404514b3342fcb84b",
+      "fileName": "./patchwatch/__init__.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "13e53c4672cd838f5f9816929c6f8ad747d70a93"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "06e5fc23a8763f6c94d0068f442952a0628f831e914c6a453a3b6a4fc0ce2419"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-87f6b5f51d6bd3c4ff192586",
+      "fileName": "./patchwatch/agent/__init__.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c5a784d94e5530b65ff06d87fe86673e764651d5"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c1f41f6e168d5c5dc4b5fbf38891ddfe0b6fa4d17c0434b08b42816e09ff83a8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-5849e638c64226b28cfd857b",
+      "fileName": "./patchwatch/agent/__main__.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "ade75aabe052bc68e21852a13aef19a562612fa2"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1610167a7822f3151722b0ef3aec1d99ccb3f99c51e3391f247b0a229dfff038"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-e44b83c3996425cf16364507",
+      "fileName": "./patchwatch/agent/cli.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "28f54d46291f4b5e58e13b497b4c3621f5a8f710"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7a4daffa5d521db3a5c0e4c57adb75b3eb85c6af6a04b2e3e774fdbcb25b10bc"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2e9b69db8b69e5ff1af3f84e",
+      "fileName": "./patchwatch/agent/config.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "8fc9eb7b8f36c07456ce1c1a51e3009d6daa82a8"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "57563a0fe98baab37a114597431ef02b1050c35c44a52d26bab7b90dabdba56a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-8cd4716155f5f9a06d018195",
+      "fileName": "./patchwatch/agent/extensions.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "6ed57e2afe4d60c1edc6088dc59aaf9e970dcb90"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "50a1e679148f286e7364dfd2d5785d144b41ac5986f28bc044209acb2a5934a1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-248df843e08a2c1391be0794",
+      "fileName": "./patchwatch/agent/profile.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "232cdb2d1a5bf195a80ed4c499605f0b925a5a8c"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "352fce21effc5fbe6e061738e1720102a07234856a51975b470fbd012c042de8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2a57547a80ea4ff1d9fb4421",
+      "fileName": "./patchwatch/agent/runner.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c8e0b9b84608b1bfae0c65f938c2c4faf0cb69e5"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fff472fc93c1b0d8962dd9935abf30e06cbe793bfc843b6bae1fdf8775411a34"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-bb563cdece979c0c65f70f4f",
+      "fileName": "./patchwatch/agent/scanner.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "4a2df948bb0c0a4be4468ef27b63797e8634c9f0"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "51f38c91140a14601178a4c60c17b21f07ceb1e83ed3c129d12da8f114a61bd2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-6dffaba8edf3c99e07286200",
+      "fileName": "./patchwatch/bridge.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "53d8c4893a02c9ee40de772ef215b44c71a93d93"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "36136cd24640173ef295d97449e5d95e103d079b24bdf99b3b60bce896cc5233"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-08edb561df556b50ddb3dacb",
+      "fileName": "./patchwatch/ci/__init__.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "83d83cd8d02d9ddf936f40e8e1792126190b1f99"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ffad2d1bbe34970e17395e65db4a7463e65d6251e92b3c3e3737ed627dea136e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2d4467b6ee7666149d7e3ac5",
+      "fileName": "./patchwatch/ci/__main__.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "52f887ef11d41fdae1a4559998ab3edd01d41650"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7fb675b73f4c90eac85b92fdc925ac360a407791432e3b409ba53a687c7c07ef"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-fa04f2b0ceb18299734b9285",
+      "fileName": "./patchwatch/ci/bsi.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "efb0f9a8e20bb6bfd427dd2afcc86e672c933303"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1348541e43fc3650e7ec63092a9b748864810dbc84433652c2620d80ef37bc85"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-8ea48ca3b254545e1d7b929b",
+      "fileName": "./patchwatch/ci/delta.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "9060b87f3f9cd3050843b67b96213bf5db812e53"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "584beba702eec8f8c233c73b064e9971c99dd8d06d5892ff6e26a67e6e03d6ba"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-585ec0f1786d7829631c7d07",
+      "fileName": "./patchwatch/ci/mr.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "55de98c53adfb0c3bbc9ae739cc387d8b4748718"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f971f909a640deb9581a442b592679dd34ce7d5a9947356e2e0e9b11529a9867"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-34d7ad82c300f4927b1f867a",
+      "fileName": "./patchwatch/ci/pipeline.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "87180d6ec538031b567cd89ce7d524280e2c6ec5"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "29fb45b2cc945192a6c8c0d728492dca8b0876e3196c1568fa6eb95683296e37"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-e0deda92b64bf85f4dcab183",
+      "fileName": "./patchwatch/ci/schemas/README.md",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "cb209aa0876d867c60b8afa0dc858d09b3be1544"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b590cd75b27bd0f70872d02ca840fac8619284a90bc3d8c0c67bb02591363063"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-9e3543b8e651ae9732162ec9",
+      "fileName": "./patchwatch/ci/schemas/bom-1.6.schema.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "39e915854d8f67c0c9c044f77d9046323d5b9cd9"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3e92dddbc30cf7f6a02b80f0942b1a4cfd4fb1c26f1dfc4310afa9d613cafb93"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-62ddf1783e6d9d4aecb50bdd",
+      "fileName": "./patchwatch/ci/schemas/jsf-0.82.schema.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "d14dade7481df8e19c47dbdcc1b38c2e51f593a1"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8bae002c25e723db7ee1f26afde680ae1a2b1a8f6b4b4b0fd65dc3becb090aae"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-d5766ab45fed1ddfb51fae1d",
+      "fileName": "./patchwatch/ci/schemas/license-exceptions.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "1ca108bf0c1b3a0ccfb3e3589dec2ab9a40fb347"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "88e1d01bbdcfa67fd1b971ee13f1cc1d0847e00f85d3bf699d7f999caa1fe4e5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-dd927b24fa4b03268a5b2609",
+      "fileName": "./patchwatch/ci/schemas/spdx.schema.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "eb96c73c8205c6670150bb0bbee2ec63658ebc63"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "baa9d3bd1ed57b6751b0887edead6b5063ff53ff7429cf85d476c6c94af0166e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-cfe8f6d4a854c247a7be37d6",
+      "fileName": "./patchwatch/core/__init__.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "f812d9cb95ca6224e14d396f69c4ed7bd6706502"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "82baa6595a7cbb911359c41d7c8713aa30323b85ead9c07894c20444dcbbdb05"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-b47cf93e5e29f4b232b0d752",
+      "fileName": "./patchwatch/core/http.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "0f5d5bc5162650e2b85df9783c96da912864cfaf"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "46ee03e19783fd2cfdee1d1afc21c00294301af30324dae12c7ffa40dec80ee2"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-ec830b665aece8d03e50ad62",
+      "fileName": "./patchwatch/core/quality.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "68e4dca8024b3c77cf775fc9837547ae5d418180"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "99302fea3e061424d17abfabb117dcf8e7ae32acfc8356a069bebd99613aee3e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-08d7af8bbcfc402dc8065501",
+      "fileName": "./patchwatch/core/sbom.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "55d1915b89699adce389728c03d04eae0b4ab80c"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2e282c6a861a8be0606df6ca4a731d421e2f63f6462d31b1417b87810ae72360"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-25a00614afa57b06810b9342",
+      "fileName": "./patchwatch/core/services.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3e65486ee170c641c2ddf7c8aa2cf66687de7ce2"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ede42d2df61212f7742693efd1d6303e951469e031a4dcd8615e46276ffbd629"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-73b0a43b7c59356f34fe3748",
+      "fileName": "./patchwatch/core/tags.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c168f83f9716388b574aa74118cc48a0782398fa"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ed083fae233e5b7d7f354a5e8b7dfe77d37045b050a07764b0f80242735daffb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-4ebe1ce2f89b9bb4a92b1b53",
+      "fileName": "./patchwatch/dtrack/__init__.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "faeb55432e06fa4bf108e8320358475b0e486d38"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9ba4d94f98e17a70a7c61996528dff474d8c0e39591f5e1d8ba7e2123a3eccf8"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-0bbaa40ee54b368115f0f9ed",
+      "fileName": "./patchwatch/dtrack/client.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a3fd002e5bfd34a875a4c2ad6d36e185b9786b0f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "eb9c35a1089c533a23e935dc99f9d44e3d772a46ea45e575e620e8f1fa4172b7"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-906f4fdb399c15df1373a044",
+      "fileName": "./patchwatch/dtrack/compliance.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "9508f33bf4352fd1d9171dd2e724a4a7e1bcfc3b"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e827e042de3fd622c512d26c9bfaa0f0e7e0bb96797da148c06a7055e58cbe02"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-5e7490495b4920dfa359c365",
+      "fileName": "./patchwatch/dtrack/data/default-license-groups.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "9a7c8ecbef1109ec95669298dc3261767676f31e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5e6dfeb9d6caaa317d2e42421c2cfe84e8680e8f5822e2f6119fbc868842ecc0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-a4e3ee10b84a429653591ba9",
+      "fileName": "./patchwatch/dtrack/data/default-policies.json",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "99f22abc74ed5672be91d620696cca435115425f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a71e58fa0e049ab183a6856d7be570faec0ff06c28cf9f06ad8b071ca1b927e0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-55a03fe29192d797a7d6a183",
+      "fileName": "./patchwatch/dtrack/groups.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "529f8bd1855b7987872bae69b87afa496d22f54d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3fdcb21f844a2be032a23e2b70a39bdf1b82998a803a13c05f0aef2148db3bf5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-4160cfa894c2fafc8e4a0c97",
+      "fileName": "./patchwatch/dtrack/legacy.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c892f93a2b39181a9a37c52d0ed07b8d3155d764"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "63ab3db2492caf0f17efecbfc1cad4cfccaa26f106598a4f5378a2fd54f3b525"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-b9796f341f465d172172b1c5",
+      "fileName": "./patchwatch/dtrack/monitor.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "489db1b146782ae596687e234283798ace4e1392"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d0b939edf89977909e6501c46d41f0e63bd6e85f248b9a80cca20e68ae10d376"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-3b06a398d619625baf1d9f77",
+      "fileName": "./patchwatch/dtrack/policies.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "5be333eff566c102b44ba102b4254679c9eef21d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e6a634cf3a5cad952c3dff1aced3c95f06b7838d902f5ebe4a9a2494a4363def"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-af51ce15b2f51d8d25317402",
+      "fileName": "./patchwatch/dtrack/register.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a700f7c4d338ce4b5efbe67ce41ce183da8c702f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a07d4917812c7550b332195308f01de8a5abe6bfbf4dbc9a9ebe7fed7724882a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-99606e8809abbda7074cf492",
+      "fileName": "./patchwatch/dtrack/scopes.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "6c66db32f4225c37a5e92398aa389dc7a989444b"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c8bb184377faa8261e65751c18217265e6a66c7cd1d79f8b5cf18ead97947b1a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-fe502c6b4583371eb408c985",
+      "fileName": "./patchwatch/dtrack/setup.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "8eb91309a81313024f7f5451819458971ae0b799"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f33d52316a7f0d44d6bb317d5c05ebb75dce2acf8fb8a9c1105b7ca87b439857"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c972dfe50554002a4bc204bd",
+      "fileName": "./patchwatch/dtrack/versions.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3ac8a168c7836176655d6719b726f51a303e786e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ac8de95ffb3db40b67fd5fd350464f30e8fae63e9e5f77a5a8433e1401f270fd"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-50c86b7ed8ac2cf95bd48334",
+      "fileName": "./pyproject.toml",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "ab8fb319bbcb8482980e3b7c6d42b02b844648dd"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bd4cfcc50cc683515db119ad65a3508fb7355de919d481d3582733678dd18ebf"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2481baed523de9f07631e555",
+      "fileName": "./scripts/backup.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "33c3d746a2f6e4f1ab731c2c1528f2e159fa29eb"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d3d1f93e29995d535b37d07a1759a672252454f9eca5e0d859bd58af1fd9b7c5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-776718ca5cb4364b02f81ec8",
+      "fileName": "./scripts/bootstrap-cluster.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "da7d7d582f24b20ea1b992dcb3e14187defb911e"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "abdebbd6c0628a7c1973605c8ebdc454f78d4eb88783c5054a0a2f04e38c454f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-d14b94d1c5812c61f12f4c08",
+      "fileName": "./scripts/configure-cluster.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "b761eb00100c5942cd80de1dae41ce4cf60a7319"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6400495a53a086f8c4c6befdc398888f4ec2060a909a3736a2f814e598d23264"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-37cb4e5e5a1884f592479151",
+      "fileName": "./scripts/deploy.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a3e4fdffeeeb28245290b01721bf2e7e2706af70"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7f8cac87e6c90248d14d120b5406f1ac52e0a09ebbe07d9e3073b5f400074cbb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-ea8b8c283d59afc06fd7a674",
+      "fileName": "./scripts/helm-postrender.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "158891b4495a9e3da33f5eb0e248b3816ab24587"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7e26ed5d25bc3a2016ed0143b8e74faf85c9806b37307bd39eebda9778142339"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-471d1b38518a201fa51cbc84",
+      "fileName": "./scripts/init-compose.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "1e7aee21b71ab6c994b53d258bb7b29d4f6eaaff"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bbfa4c3b4336c432f984329703c16c79b7eb8151efe05f3702cc6a71127759cb"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-846b973e05240bee70e91315",
+      "fileName": "./scripts/install-agent.sh",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "1268700eb7f761ec838d4d6526bde26417304b19"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0211a073d9fd4c123174816c97011301a6133cd3e6cfb194a9033f3f353b2902"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c3bef09c7a052ebb5b3793f4",
+      "fileName": "./scripts/setup-ci.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "77248faa7dbc1cda1f4fb9d909d748f0ff9ae086"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5c8c5a6ef7bc53b695a9b3035b390cd436bc8763933de4722350b5b800e2fab1"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-7b92b31459ebaeacf1ff2a14",
+      "fileName": "./scripts/setup-mr-feedback.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "e0b334b9ee1a3416c0aad032cf32862ea7aa8f6f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f5832bebc24daee325c455a676dda160e9ecc8cb02cadcde2350d05f5b899bd0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-047e8f82b347d80c60660776",
+      "fileName": "./scripts/smoke-compose.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "ea20be29393de78b49939a18cf6cb56633a1a7bb"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c7066326bac66e3e537e8d6166c99430df57001397c2297556ab90d151a4ad45"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-cdf5480fc24ca01bcbabbfd1",
+      "fileName": "./scripts/smoke-trivy.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "de13386867971747b76bac62c452c487adcb54b8"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "63c6df5b4f3ea94d581d04558bb6cf9d700c132e9837fd641297154f1592eb99"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-9122028682ed92187f0077a2",
+      "fileName": "./scripts/spdx.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "e90bdc9b3fb5709581101a5e51f617d23012209f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5f65196f1375121f56c753f3acd861edcf067616aa9bcf7462052b3f7fabd90a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-359c72157a993d9c94d8e17f",
+      "fileName": "./tests/test_agent.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "c9df12784a141d28f780e9596c775b8e3fc43bba"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c578ecdab6cb5e67df4164fd765f66b89648e82f0c1abe031b10a243d80a6834"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-558f99a85d61683d7d8718f4",
+      "fileName": "./tests/test_agent_config.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "fab932dac4eef194b03e92886a8cb3201fc38446"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c2df26b20fc8878f3dee8384e57b114a01959616740395fb2db249d50201161e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-aea0a7f3530272d3baa8f8bf",
+      "fileName": "./tests/test_boundaries.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "8351ecf3734c35cefcbbeb07694d11dfabcff039"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b5ada20e568b3913c61f332c11f606a78d306d1224bc6866f9a42f40ea187434"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-bbed67ef08f916a5e51d56c0",
+      "fileName": "./tests/test_bridge.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "464ccf538e241160823ff1f2494d728efae396bd"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "06486db14aa26c6176a7649fbf8aeff6df28addafc0637d8e79dac3b133a63c5"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-707fb81cab195410b4951c71",
+      "fileName": "./tests/test_ci.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "7ac0a1ec6626f0ca1dbbc6551cd8252a2e5c2547"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a6b312834a38d78a0fe64e7d61d633d438a8226876bd1c1cc2347f98a6890a6d"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-11af8675f572bb1496f4cec6",
+      "fileName": "./tests/test_ci_sbom.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "108374d28033680cbd13774b9438640ca7e19fb4"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "92989206b2a02968bab8caf0abb7120b0c759366f6f4d1d9b40e7b1704687aed"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-9e97ec9b417a63de57b0d35f",
+      "fileName": "./tests/test_components.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "b27e8a17b0d314956b915cbae5a0dcb99309b741"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ddc1dfde34352693c07acb21a832a69ddbbc58c2af8bab1cbbb3e71b1ab216ab"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-88c1a4e0a49a73c7956ac536",
+      "fileName": "./tests/test_delta.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "a99317c6a1b417c14250f66e9967faf864d34fa3"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "09f629c9c68877c90429128b3b6e611119c8864b47150a42c62519e226c4f22a"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-ccc51f80a64aeee8d534d2c3",
+      "fileName": "./tests/test_dtrack_client.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "b2f969e54355be55f2de9f5d7211f0c8267b203c"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "297c205d27dfa0663506498a7d31ac93f064d5dcb82c807e5f8c368523ff0f40"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-2155b115d700e8f39a57e254",
+      "fileName": "./tests/test_extensions.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "5a5731be1c225bd53e836409e8f8046e9fbb15ba"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3f536a770affc8668f0b8127503b1b74ab52c74c9ba4341eea9874232532fcb9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-99cf94dd4571b0782931c649",
+      "fileName": "./tests/test_groups.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "2ba9c1ad560f4f5dd690c75b1e7a9598b53e402a"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5fdc9043bbefbf9a57bb93abfce7ab4aad7504281d241cb0fee702f87be21a10"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-c004679546311e65d99f8cf5",
+      "fileName": "./tests/test_http.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "91f56dca03f68f937beeb49fd91a5ea97c4e9032"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aae961ed51a718b7dd7662da1948b18d9d69fdd84e19dd222cf51a54c180248b"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-4a8f8e87992471c780edac84",
+      "fileName": "./tests/test_inventory.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "01caf469240d403a1c3d8d8beb153234d4fbf7d2"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "99a2765110d19866a0d6f0fc76f4821a5cf92c7d6db7d0f428960b521700c6cd"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-817cb0a5517169b6f6c9c352",
+      "fileName": "./tests/test_legacy.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "87ec97804034e00b6ca85b5cd8ba1496cb451c74"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "12acb75502d9275807d066d315f1b2c4e11105ccc379d2febd1f09b1533777f3"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-4fa9465e1c06c9eca53b9ca5",
+      "fileName": "./tests/test_monitor.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "f2bed882ddc9cb7e78ca269d2b9336f44b78e654"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "064dde5e571628783b6d92f12e36d4cd7b2a92cad65dfd567484a7dc9c172d30"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-fedf002abd9bfcb77fe87844",
+      "fileName": "./tests/test_mr.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "0c918f3d252354dd18e4928da8b3128706ace485"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "96076df02fef68bd999f5d3bd026ab70f5bac3dc09132dd3cf39e5d33a14d7e0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-5b9b0767b5fbb1e78f866e9e",
+      "fileName": "./tests/test_mr_setup.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "64ceb43c292e5a9d08289606054d927a9387f093"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "26d7768cc8937b32073e497cde079228b2711d6565e58c9dd8621f3e3815fa23"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-514d3a66d6a0c4721884e853",
+      "fileName": "./tests/test_oidc.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3b7d1fc2918a57f3e4636f462f796c51d756fbbe"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8b719d526eaaa2a6697a8321683c3f6fc4f0c022b82ce8271c1dd251d5fc8d0e"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-696274777d5a91430c6fd4f0",
+      "fileName": "./tests/test_packaging.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "72ab3b3bc56b6b740007c3a64f4b8bc8d205dbf6"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e5c7965a3ea86d180a0ba9363836411176f8f2f9d74fdb68b161e4941de1f8a3"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-6275f2e1614ad2958309bd62",
+      "fileName": "./tests/test_policies.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "d137be843777f132d813070ea4a41973c3f7f97d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a3168534c288e986240cfeedb27412844e5d44aec51382dafba05724c14233a9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-e8363b6898616275a6d3ce06",
+      "fileName": "./tests/test_quality.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3181ca7143c16a12468e1c591747d1c0281e2840"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a6b0fee0d7274e915a3aea6d9cc424a60f3a2d73a846169fd04ebe6f6f3bddae"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-4682147ca75340613cbb9d69",
+      "fileName": "./tests/test_register.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "208bcae07b5ca118711abceec22ae4353013e7f6"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "76d0b6203d0802d490bf0b1a63a7bfc11e1fa5b3644d65a61b44a7398d1d28f7"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-6569c51fc4cd671270055fc9",
+      "fileName": "./tests/test_sbom.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "f1b8737a2b6ffce0b99acbe95b90d2146cd5584d"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "67a874a243bb60715d3884b095f229beca710f9cad7818795bde36fcf1f69b10"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-8c74eb52225ce100eb3518cc",
+      "fileName": "./tests/test_trivy.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "6b4935b608474a2ef55dbea73008074c8e023c6a"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3a666c1a149f61b6a850e4c107d88a30989595fa357c165d6db7aa1649b122ab"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-edd4a379522a69ca55db8251",
+      "fileName": "./tests/test_versions.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "5f1cff4709237ecf0b13d67eee4de08704a70984"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "25abeed2357b6aa58e52f714756f6367361664bca7d6e6e692f96a30b71be07f"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-Patchwatch"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Trivy"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-DockerCLI"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Syft"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-DependencyTrack"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-DependencyTrackFrontend"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-DependencyTrackHelmChart"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-PostgreSQL"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-Python"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "DEPENDS_ON",
+      "relatedSpdxElement": "SPDXRef-NginxUnprivileged"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2f754321d62f08ba8392b9b1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-a3046da0d15a27e89f2afe63"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-bc37d034bad564583790a46f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-037ea159eb0a7cb0ac23b851"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-dd2c0eb6ea5cfc6c4bd4eac3"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-3aaadfe559b0ea24d6dc905d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c693279643b8cd5d248172d9"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-dfb14fbb9e7d095209ec4cfd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-b335630551682c19a781afeb"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-a9d2fe8b924c07e0abbedbea"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-a49b6c59553e1d7b96dc6d90"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-284df82efb5685609d8d9183"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-a5a0b122ced05f7322e1500a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-451a3a6d8a4f57b4c97f95c2"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-08a5f643e13aa4cc29daef1e"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-5a73dddcba623a8894b3c2c4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-5038eb717c55781b15a733a8"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-26594715c2abcee7903e33f4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-73eb69aa8c9e602bedf9b11a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-5dd694c91374c3fde7fca39e"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-a3656ebf318dbfde884b6bdb"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-33d0d8ffb826886d490c1427"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-eb9a22fa062df75e444d4b1b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2130c11d625a270b5139d386"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-facaded51b7d1c9656ae43b4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-b13a304147ffa0ccff47f5bc"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-d19fb7cee11f775ccb118332"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-32a2b6d979e2ad2265364293"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-eb7278ff9f810064e3868d8b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-1826885a6286e2e0bde11ec8"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-b5d4356a38fe410b9505b958"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-249f6a68ef22927e1ec06f62"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-de112696e1450cb6410aa569"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2dc38cf24d501ce52eb0060a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-64c03f0b828f7f5bab785751"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-732b57ae69405920644cc048"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-e3d06f49e400ad35a0725f36"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-15a028375ec767b358b47345"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-e9011c2d53609e291f770622"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-1ddfb5983c0e1fbfa4fa978b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-54a2f34f32fe2bc66b653d8d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-314c34b0ceae83b912bfaea0"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-db58c57de55ecc14e885e3bf"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-da7d31c8c865213426697ee3"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-0b5ca119d2be595aa307d345"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-5a454121f1d3c48e1b62d9a7"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-070551942fb71dbcd2546332"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-cd5b34b28590a0f5ef9acf19"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-b2ea48b6c736eed38e8d63a7"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2de3943db635008064097b13"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c435a658e946facf16aac956"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-d261ca2b506e8b69478205b1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c87daf0d177df1c53eee1654"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-0c16ae777131004bb6c0e0f5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-e777c0a87a031c83692869b4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-31bcba2ccafa41d46fbbd6d1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-f9de1ce941694ad3931dbe99"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-0ee8c74b9750fc45f50f1de0"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-1bd22fe42e71efeb0c3a9787"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-18156caadc6d113b18dc1e8e"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-72bbbcb832b83ee14e849b47"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-a426703c462dd239e12f4c99"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c46a10526e5eab5e6c9167b1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-ff0a237f10b2a186874a5b4e"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-7e4b5dc92e8b51ff91ede704"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-4a412db2fd1547df055bb7ea"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-7d0985ade0ae3ec727c86fb3"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c03f1e54f6236ec0ab9474f4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-0a0915941022361687298c01"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-34e9057de9672e42ba6679c0"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-3f7613f413a4526b64514d9d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-97d62336cbdc6e5b56cd9e5f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-1d35599c3630412b573fe922"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-fa60186404514b3342fcb84b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-87f6b5f51d6bd3c4ff192586"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-5849e638c64226b28cfd857b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-e44b83c3996425cf16364507"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2e9b69db8b69e5ff1af3f84e"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-8cd4716155f5f9a06d018195"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-248df843e08a2c1391be0794"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2a57547a80ea4ff1d9fb4421"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-bb563cdece979c0c65f70f4f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-6dffaba8edf3c99e07286200"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-08edb561df556b50ddb3dacb"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2d4467b6ee7666149d7e3ac5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-fa04f2b0ceb18299734b9285"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-8ea48ca3b254545e1d7b929b"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-585ec0f1786d7829631c7d07"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-34d7ad82c300f4927b1f867a"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-e0deda92b64bf85f4dcab183"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-9e3543b8e651ae9732162ec9"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-62ddf1783e6d9d4aecb50bdd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-d5766ab45fed1ddfb51fae1d"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-dd927b24fa4b03268a5b2609"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-cfe8f6d4a854c247a7be37d6"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-b47cf93e5e29f4b232b0d752"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-ec830b665aece8d03e50ad62"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-08d7af8bbcfc402dc8065501"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-25a00614afa57b06810b9342"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-73b0a43b7c59356f34fe3748"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-4ebe1ce2f89b9bb4a92b1b53"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-0bbaa40ee54b368115f0f9ed"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-906f4fdb399c15df1373a044"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-5e7490495b4920dfa359c365"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-a4e3ee10b84a429653591ba9"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-55a03fe29192d797a7d6a183"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-4160cfa894c2fafc8e4a0c97"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-b9796f341f465d172172b1c5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-3b06a398d619625baf1d9f77"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-af51ce15b2f51d8d25317402"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-99606e8809abbda7074cf492"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-fe502c6b4583371eb408c985"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c972dfe50554002a4bc204bd"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-50c86b7ed8ac2cf95bd48334"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2481baed523de9f07631e555"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-776718ca5cb4364b02f81ec8"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-d14b94d1c5812c61f12f4c08"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-37cb4e5e5a1884f592479151"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-ea8b8c283d59afc06fd7a674"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-471d1b38518a201fa51cbc84"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-846b973e05240bee70e91315"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c3bef09c7a052ebb5b3793f4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-7b92b31459ebaeacf1ff2a14"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-047e8f82b347d80c60660776"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-cdf5480fc24ca01bcbabbfd1"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-9122028682ed92187f0077a2"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-359c72157a993d9c94d8e17f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-558f99a85d61683d7d8718f4"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-aea0a7f3530272d3baa8f8bf"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-bbed67ef08f916a5e51d56c0"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-707fb81cab195410b4951c71"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-11af8675f572bb1496f4cec6"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-9e97ec9b417a63de57b0d35f"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-88c1a4e0a49a73c7956ac536"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-ccc51f80a64aeee8d534d2c3"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-2155b115d700e8f39a57e254"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-99cf94dd4571b0782931c649"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-c004679546311e65d99f8cf5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-4a8f8e87992471c780edac84"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-817cb0a5517169b6f6c9c352"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-4fa9465e1c06c9eca53b9ca5"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-fedf002abd9bfcb77fe87844"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-5b9b0767b5fbb1e78f866e9e"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-514d3a66d6a0c4721884e853"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-696274777d5a91430c6fd4f0"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-6275f2e1614ad2958309bd62"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-e8363b6898616275a6d3ce06"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-4682147ca75340613cbb9d69"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-6569c51fc4cd671270055fc9"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-8c74eb52225ce100eb3518cc"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-edd4a379522a69ca55db8251"
+    }
+  ]
+}

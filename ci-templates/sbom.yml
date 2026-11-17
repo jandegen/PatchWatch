@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: Apache-2.0
+# GitLab CI template: SBOM of this repository (and optionally its images) into PatchWatch.
+# Usage and inputs: docs/usage/ci-integration.md
+spec:
+  inputs:
+    job_name:
+      default: patchwatch-sbom
+    stage:
+      default: test
+      description: Stage of the job. Choose a stage after the build when images are scanned.
+    image:
+      description: Job image with Syft and the PatchWatch CI module (built from Dockerfile.ci).
+    team:
+      default: ''
+      description: Owning team (tag team:<value>, routes alerts). Empty uses the top-level GitLab group.
+    environment:
+      default: ''
+      description: Optional environment tag, e.g. production.
+    scan_paths:
+      default: .
+      description: Space-separated directories inside the repository. Empty scans only the images.
+    images:
+      default: ''
+      description: Space-separated image references to scan, e.g. $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA.
+    exclude:
+      default: ''
+      description: Space-separated Syft exclude globs, e.g. ./docs/** ./**/testdata/**.
+    component:
+      default: ''
+      description: Suffix for monorepos with several inventories (project name becomes group/project/component). The name services is reserved.
+    bsi_mode:
+      default: enforce
+      options: [enforce, report]
+      description: enforce refuses uploads with missing BSI fields; report is explicitly non-conforming inventory migration mode.
+    bsi_metadata:
+      default: ''
+      description: Repository-relative JSON file with reviewed root and per-component BSI metadata.
+    sbom_creator:
+      default: ''
+      description: SBOM creator email or URL; empty uses CI_PROJECT_URL.
+    component_creator:
+      default: ''
+      description: Primary component creator email or URL; empty uses CI_PROJECT_URL. Never applied to dependencies.
+    distribution_license:
+      default: ''
+      description: Reviewed SPDX distribution licence expression of the primary component.
+    fail_on:
+      default: none
+      options: [none, warn, fail]
+      description: Fail the job on unsuppressed policy violations of this project. Needs PATCHWATCH_READ_KEY.
+    mode:
+      default: inventory
+      options: [inventory, parent]
+      description: parent creates an empty aggregation parent and uploads services to a separate /services child.
+    services:
+      default: ''
+      description: Additional service names (space-separated) listed as CycloneDX services. Compose files in scan_paths are detected automatically.
+    detect_services:
+      type: boolean
+      default: true
+      description: List the services of Compose files below scan_paths as CycloneDX services (Services tab).
+    branches:
+      default: ''
+      description: Additional branch names allowed to upload (space-separated, exact matches). Latest is selected server-side; additional branches do not replace the default branch. Also adjust run_if to start these jobs.
+    run_if:
+      default: $CI_COMMIT_TAG || ($CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH)
+      description: GitLab rules:if expression for job scheduling. Additional upload branches also need branches. Use double quotes inside, e.g. $CI_PIPELINE_SOURCE == "schedule".
+    delta:
+      type: boolean
+      default: true
+      description: Report licenses, vulnerabilities and policy violations against the previous version. Needs PATCHWATCH_READ_KEY.
+    delta_baseline:
+      default: ''
+      description: Version to compare with. Empty uses the previous release automatically.
+    delta_notify:
+      default: relevant
+      options: [relevant, always, never]
+      description: When to send the delta report to the webhook/e-mail targets (PATCHWATCH_DELTA_WEBHOOK, PATCHWATCH_DELTA_SMTP_HOST).
+    allow_failure:
+      type: boolean
+      default: false
+      description: Let the pipeline continue when the job fails.
+---
+$[[ inputs.job_name ]]:
+  stage: $[[ inputs.stage ]]
+  image: $[[ inputs.image ]]
+  timeout: 30m
+  rules:
+    - if: '$[[ inputs.run_if ]]'
+  allow_failure: $[[ inputs.allow_failure ]]
+  variables:
+    PATCHWATCH_TEAM: '$[[ inputs.team ]]'
+    PATCHWATCH_ENVIRONMENT: '$[[ inputs.environment ]]'
+    PATCHWATCH_SCAN_PATHS: '$[[ inputs.scan_paths ]]'
+    PATCHWATCH_IMAGES: '$[[ inputs.images ]]'
+    PATCHWATCH_EXCLUDE: '$[[ inputs.exclude ]]'
+    PATCHWATCH_COMPONENT: '$[[ inputs.component ]]'
+    PATCHWATCH_BSI_MODE: '$[[ inputs.bsi_mode ]]'
+    PATCHWATCH_BSI_METADATA: '$[[ inputs.bsi_metadata ]]'
+    PATCHWATCH_SBOM_CREATOR: '$[[ inputs.sbom_creator ]]'
+    PATCHWATCH_COMPONENT_CREATOR: '$[[ inputs.component_creator ]]'
+    PATCHWATCH_DISTRIBUTION_LICENSE: '$[[ inputs.distribution_license ]]'
+    PATCHWATCH_BRANCHES: '$[[ inputs.branches ]]'
+    PATCHWATCH_FAIL_ON: '$[[ inputs.fail_on ]]'
+    PATCHWATCH_MODE: '$[[ inputs.mode ]]'
+    PATCHWATCH_DELTA: '$[[ inputs.delta ]]'
+    PATCHWATCH_DELTA_BASELINE: '$[[ inputs.delta_baseline ]]'
+    PATCHWATCH_DELTA_NOTIFY: '$[[ inputs.delta_notify ]]'
+    PATCHWATCH_SERVICES: '$[[ inputs.services ]]'
+    PATCHWATCH_DETECT_SERVICES: '$[[ inputs.detect_services ]]'
+  script:
+    # Not from the workspace: python -m must not import a patchwatch/ directory of the scanned repository.
+    - cd /opt/patchwatch && python -m patchwatch.ci
+  artifacts:
+    paths: [patchwatch-sbom.json, patchwatch-bsi-report.json, patchwatch-report.json, patchwatch-delta.md, patchwatch-delta.json]
+    when: always
+    expire_in: 1 week

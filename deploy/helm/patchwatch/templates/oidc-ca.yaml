@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+{{- if .Values.oidcTrust.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: patchwatch-oidc-ca
+data:
+  root.pem: |
+    {{- .Values.oidcTrust.caPem | nindent 4 }}
+{{- end }}

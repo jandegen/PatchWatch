@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "patchwatch"
+version = "1.0.3"
+description = "Developer software inventory and Dependency-Track notification bridge"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{name = "Patchwatch contributors"}]
+dependencies = []
+
+[project.optional-dependencies]
+ci = ["jsonschema==4.25.1"]
+
+[project.scripts]
+patchwatch-agent = "patchwatch.agent.cli:main"
+patchwatch-bridge = "patchwatch.bridge:main"
+patchwatch-setup = "patchwatch.dtrack.setup:main"
+patchwatch-groups = "patchwatch.dtrack.groups:main"
+patchwatch-ci = "patchwatch.ci.pipeline:main"
+patchwatch-delta = "patchwatch.ci.delta:main"
+patchwatch-register = "patchwatch.dtrack.register:main"
+patchwatch-stale = "patchwatch.dtrack.monitor:main"
+
+[tool.setuptools.packages.find]
+include = ["patchwatch*"]
+
+[tool.setuptools.package-data]
+"patchwatch.dtrack" = ["data/*.json"]
+"patchwatch.ci" = ["schemas/*.json", "schemas/README.md"]

@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: Apache-2.0
+# Feature-branch scans: same inputs as ci/mr-components.yml, so a branch version and the MR
+# comparison use identical scan settings. The protected mr-feedback workers upload the results
+# as dTrack versions named like the branch (branch_scan_job in ci/mr-feedback.yml).
+include:
+  - local: ci-templates/branch-sbom.yml
+    inputs:
+      job_name: branch-sbom-bridge
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      dockerfiles: Dockerfile
+  - local: ci-templates/branch-sbom.yml
+    inputs:
+      job_name: branch-sbom-ci-image
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      dockerfiles: Dockerfile.ci
+  - local: ci-templates/branch-sbom.yml
+    inputs:
+      job_name: branch-sbom-dtrack-apiserver
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:apiserver
+  - local: ci-templates/branch-sbom.yml
+    inputs:
+      job_name: branch-sbom-dtrack-frontend
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:frontend
+  - local: ci-templates/branch-sbom.yml
+    inputs:
+      job_name: branch-sbom-postgres
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:postgresql
+  - local: ci-templates/branch-sbom.yml
+    inputs:
+      job_name: branch-sbom-trivy
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:trivy
+  - local: ci-templates/branch-sbom.yml
+    inputs:
+      job_name: branch-sbom-gateway
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:gateway
+
+# These two scans build images in an isolated branch job; the protected worker never builds code.
+branch-sbom-bridge:
+  extends: .docker-build
+  before_script:
+    - docker info > /dev/null
+branch-sbom-ci-image:
+  extends: .docker-build
+  before_script:
+    - docker info > /dev/null

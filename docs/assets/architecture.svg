@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="340" viewBox="0 0 1000 340" role="img" aria-labelledby="title description">
+  <title id="title">Patchwatch-Architektur</title>
+  <desc id="description">Agenten und GitLab CI erzeugen mit Syft CycloneDX-SBOMs und übertragen sie über HTTPS an Dependency-Track mit Weboberfläche und PostgreSQL. Dependency-Track nutzt Trivy und Schwachstellenquellen zur Analyse und meldet Findings per Webhook an die Patchwatch-Bridge für JIRA, Slack und Teams.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#475569"/>
+    </marker>
+  </defs>
+  <rect width="1000" height="340" rx="16" fill="#f8fafc"/>
+  <g font-family="system-ui, -apple-system, sans-serif" text-anchor="middle">
+    <g stroke="#cbd5e1" stroke-width="1.5" fill="#ffffff">
+      <rect x="24" y="65" width="220" height="140" rx="12"/>
+      <rect x="344" y="65" width="280" height="140" rx="12" fill="#eff6ff" stroke="#93c5fd"/>
+      <rect x="724" y="65" width="252" height="140" rx="12"/>
+      <rect x="344" y="268" width="280" height="52" rx="12"/>
+    </g>
+    <g fill="#0f172a" font-size="19" font-weight="600">
+      <text x="134" y="105">Agent / GitLab CI</text>
+      <text x="484" y="105">Dependency-Track</text>
+      <text x="850" y="105">Patchwatch-Bridge</text>
+    </g>
+    <g fill="#334155" font-size="16">
+      <text x="134" y="141">Syft</text>
+      <text x="134" y="171">CycloneDX-SBOM</text>
+      <text x="484" y="141">API + Weboberfläche</text>
+      <text x="484" y="171">PostgreSQL</text>
+      <text x="850" y="141">Filter + Zustellversuche</text>
+      <text x="850" y="171">JIRA · Slack · Teams</text>
+      <text x="484" y="300">Trivy · OSV · NVD · weitere</text>
+    </g>
+    <g fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)">
+      <path d="M 253 135 H 333"/>
+      <path d="M 633 135 H 713"/>
+      <path d="M 484 257 V 216" marker-start="url(#arrow)"/>
+    </g>
+    <g fill="#475569" font-size="14">
+      <text x="294" y="120">HTTPS</text>
+      <text x="674" y="120">Webhook</text>
+      <text x="583" y="240">Analyse / Abgleich</text>
+    </g>
+  </g>
+</svg>

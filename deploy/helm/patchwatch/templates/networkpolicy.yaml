@@ -1,0 +1,73 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: patchwatch-default-ingress
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: patchwatch-public
+spec:
+  podSelector:
+    matchLabels: {app.kubernetes.io/instance: dtrack}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels: {kubernetes.io/metadata.name: ingress-nginx}
+      ports: [{port: 8080, protocol: TCP}]
+    - from:
+        - podSelector: {matchLabels: {app: patchwatch-monitor}}
+        - podSelector: {matchLabels: {app: patchwatch-versions}}
+      ports: [{port: 8080, protocol: TCP}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: patchwatch-postgresql
+spec:
+  podSelector:
+    matchLabels: {app: patchwatch-postgresql}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/component: api-server, app.kubernetes.io/instance: dtrack}
+        - podSelector: {matchLabels: {app: patchwatch-backup}}
+      ports: [{port: 5432, protocol: TCP}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: patchwatch-bridge
+spec:
+  podSelector:
+    matchLabels: {app: patchwatch-bridge}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/component: api-server, app.kubernetes.io/instance: dtrack}
+      ports: [{port: 8080, protocol: TCP}]
+{{- if .Values.trivy.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: patchwatch-trivy
+spec:
+  podSelector:
+    matchLabels: {app: patchwatch-trivy}
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels: {app.kubernetes.io/component: api-server, app.kubernetes.io/instance: dtrack}
+      ports: [{port: 4954, protocol: TCP}]
+{{- end }}
+{{- end }}

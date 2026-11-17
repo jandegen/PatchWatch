@@ -1,0 +1,17 @@
+{
+  "url": "https://patchwatch.example.org",
+  "host_id": "replace-with-stable-asset-id",
+  "api_key_file": "/etc/patchwatch/api-key",
+  "roots": [
+    "/usr",
+    "/opt"
+  ],
+  "images": [],
+  "scan_extensions": true,
+  "tags": [],
+  "excludes": [],
+  "detect_services": true,
+  "scan_timeout": 7200,
+  "lock_file": "/var/lib/patchwatch/agent.lock",
+  "agent_scope": "system"
+}

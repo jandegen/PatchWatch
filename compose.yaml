@@ -1,0 +1,198 @@
+# SPDX-License-Identifier: Apache-2.0
+name: patchwatch
+services:
+  trivy-cache-init:
+    image: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+    user: '0:0'
+    entrypoint: [/bin/sh, -c]
+    command: ['chown 10001:10001 /data']
+    volumes: [trivy:/data]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN]
+    security_opt: [no-new-privileges:true]
+    restart: 'no'
+
+  trivy:
+    image: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+    restart: unless-stopped
+    user: '10001:10001'
+    depends_on:
+      trivy-cache-init: {condition: service_completed_successfully}
+    entrypoint: [/bin/sh, /scripts/trivy-entrypoint.sh]
+    environment:
+      HOME: /tmp
+    secrets: [trivy_token]
+    volumes:
+      - trivy:/data
+      - ./deploy/compose/trivy-entrypoint.sh:/scripts/trivy-entrypoint.sh:ro
+    tmpfs: [/tmp]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1536m
+    cpus: 1
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:4954/healthz']
+      interval: 15s
+      timeout: 5s
+      start_period: 300s
+      retries: 40
+
+  postgresql:
+    image: postgres:17.7-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dtrack
+      POSTGRES_DB: dtrack
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    secrets: [postgres_password]
+    volumes: [postgresql:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U dtrack -d dtrack']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 1g
+    security_opt: [no-new-privileges:true]
+
+  apiserver:
+    image: ghcr.io/dependencytrack/apiserver:5.2.1
+    restart: unless-stopped
+    depends_on:
+      postgresql: {condition: service_healthy}
+    environment:
+      DT_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/dtrack?reWriteBatchedInserts=true
+      DT_DATASOURCE_USERNAME: dtrack
+      DT_DATASOURCE_PASSWORD: $${file::/run/secrets/postgres_password}
+      # Integration secrets live encrypted in the database; the key must survive container re-creation.
+      DT_SECRET_MANAGEMENT_DATABASE_KEK: $${file::/run/secrets/dt_kek}
+      # v5 blocks outbound traffic to private networks by default: allow only the internal integrations.
+      DT_OUTBOUND_ALLOWED_DESTINATIONS: external,bridge,trivy
+      DT_CORS_ENABLED: 'false'
+    secrets: [postgres_password, dt_kek]
+    volumes: [dtrack:/data]
+    mem_limit: 5g
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      # Management port 9000; the v5 image ships wget, not curl.
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:9000/health/ready']
+      interval: 15s
+      timeout: 5s
+      start_period: 300s
+      retries: 20
+
+  frontend:
+    image: ghcr.io/dependencytrack/frontend:5.2.1
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: ${PUBLIC_URL:-http://localhost:8080}
+    depends_on:
+      apiserver: {condition: service_healthy}
+    mem_limit: 128m
+    security_opt: [no-new-privileges:true]
+
+  gateway:
+    image: nginxinc/nginx-unprivileged:1.28.0-alpine
+    restart: unless-stopped
+    depends_on: [frontend]
+    ports: ['${HTTP_BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8080}:8080']
+    volumes: ['./deploy/compose/nginx.conf:/etc/nginx/conf.d/default.conf:ro']
+    mem_limit: 128m
+    security_opt: [no-new-privileges:true]
+
+  gateway-tls:
+    image: nginxinc/nginx-unprivileged:1.28.0-alpine
+    profiles: [tls]
+    restart: unless-stopped
+    depends_on: [frontend]
+    ports: ['${HTTPS_BIND_ADDRESS:-127.0.0.1}:${HTTPS_PORT:-8443}:8443']
+    volumes:
+      - ./deploy/compose/nginx-tls.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${SECRETS_DIR:-./.secrets}/tls.crt:/run/secrets/tls.crt:ro
+      - ${SECRETS_DIR:-./.secrets}/tls.key:/run/secrets/tls.key:ro
+    mem_limit: 128m
+    security_opt: [no-new-privileges:true]
+
+  bridge:
+    image: patchwatch-bridge:local
+    build: .
+    restart: unless-stopped
+    environment:
+      WEBHOOK_TOKEN_FILE: /run/secrets/webhook_token
+      ROUTES_FILE: /run/secrets/routes.json
+      MIN_SEVERITY: ${MIN_SEVERITY:-HIGH}
+      KEV_ENABLED: ${ENRICHMENT_ENABLED:-true}
+      EPSS_ENABLED: ${ENRICHMENT_ENABLED:-true}
+      KEV_URL: ${KEV_URL:-https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json}
+      EPSS_URL: ${EPSS_URL:-https://api.first.org/data/v1/epss}
+    secrets: [webhook_token, routes.json]
+    volumes: [bridge:/data]
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 256m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  backup:
+    image: postgres:17.7-alpine
+    profiles: [operations]
+    restart: unless-stopped
+    depends_on:
+      postgresql: {condition: service_healthy}
+    entrypoint: [/bin/sh, -c]
+    command: ['while true; do /bin/sh /scripts/backup.sh || exit 1; sleep 86400; done']
+    secrets: [postgres_password]
+    volumes:
+      - ./scripts/backup.sh:/scripts/backup.sh:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+    security_opt: [no-new-privileges:true]
+
+  versions:
+    image: patchwatch-bridge:local
+    build: .
+    profiles: [operations]
+    restart: unless-stopped
+    command: [python, -m, patchwatch.dtrack.versions, --interval, '300']
+    environment:
+      DT_URL: http://apiserver:8080
+      ALLOW_HTTP: 'true'
+      DT_API_KEY_FILE: /run/secrets/versions_key
+    volumes: ['${SECRETS_DIR:-./.secrets}/versions_key:/run/secrets/versions_key:ro']
+    depends_on:
+      apiserver: {condition: service_healthy}
+    read_only: true
+    mem_limit: 128m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  monitor:
+    image: patchwatch-bridge:local
+    build: .
+    profiles: [monitoring]
+    restart: 'no'
+    command: [python, -m, patchwatch.dtrack.monitor]
+    environment:
+      DT_URL: http://apiserver:8080
+      ALLOW_HTTP: 'true'
+      DT_API_KEY_FILE: /run/secrets/monitor_key
+    volumes: ['${SECRETS_DIR:-./.secrets}/monitor_key:/run/secrets/monitor_key:ro']
+    depends_on:
+      apiserver: {condition: service_healthy}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  trivy:
+  postgresql:
+  dtrack:
+  bridge:
+secrets:
+  trivy_token: {file: '${SECRETS_DIR:-./.secrets}/trivy_token'}
+  postgres_password: {file: '${SECRETS_DIR:-./.secrets}/postgres_password'}
+  dt_kek: {file: '${SECRETS_DIR:-./.secrets}/dt_kek'}
+  webhook_token: {file: '${SECRETS_DIR:-./.secrets}/webhook_token'}
+  routes.json: {file: '${SECRETS_DIR:-./.secrets}/routes.json'}

@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: patchwatch-bridge
+spec:
+  selector: {app: patchwatch-bridge}
+  ports: [{name: http, port: 8080, targetPort: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patchwatch-bridge
+  labels:
+    {{- include "patchwatch.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector:
+    matchLabels: {app: patchwatch-bridge}
+  template:
+    metadata:
+      labels: {app: patchwatch-bridge, app.kubernetes.io/part-of: patchwatch}
+    spec:
+      {{- include "patchwatch.pullSecrets" . | nindent 6 }}
+      dnsConfig:
+        options: [{name: ndots, value: "1"}]
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: bridge
+          image: {{ .Values.bridge.image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports: [{containerPort: 8080}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          env:
+            - {name: WEBHOOK_TOKEN_FILE, value: /run/secrets/webhook_token}
+            - {name: DT_URL, value: 'http://dtrack-api-server:8080'}
+            - {name: ALLOW_HTTP, value: 'true'}
+            - name: DT_API_KEY
+              valueFrom:
+                secretKeyRef: {name: patchwatch-monitor-key, key: api_key, optional: true}
+            - {name: ROUTES_FILE, value: /run/secrets/routes.json}
+            - {name: MIN_SEVERITY, value: {{ .Values.bridge.minimumSeverity | quote }}}
+            - {name: KEV_ENABLED, value: {{ .Values.bridge.enrichment.enabled | quote }}}
+            - {name: KEV_URL, value: {{ .Values.bridge.enrichment.kevUrl | quote }}}
+            - {name: EPSS_ENABLED, value: {{ .Values.bridge.enrichment.enabled | quote }}}
+            - {name: EPSS_URL, value: {{ .Values.bridge.enrichment.epssUrl | quote }}}
+          envFrom:
+            - secretRef: {name: patchwatch-integrations, optional: true}
+          resources: {{- toYaml .Values.bridge.resources | nindent 12 }}
+          readinessProbe:
+            httpGet: {path: /health, port: 8080}
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          volumeMounts:
+            - {name: data, mountPath: /data}
+            - {name: secrets, mountPath: /run/secrets, readOnly: true}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: patchwatch-bridge}
+        - name: secrets
+          secret:
+            secretName: {{ .Values.existingSecret }}
+            items:
+              - {key: webhook_token, path: webhook_token}
+              - {key: routes.json, path: routes.json}

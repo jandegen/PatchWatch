@@ -1,0 +1,63 @@
+# SPDX-License-Identifier: Apache-2.0
+# Each MR job scans both the target tree and its actual merge result.
+# Literal service references are resolved separately from each tree's Compose file.
+include:
+  - local: ci-templates/mr-sbom.yml
+    inputs:
+      job_name: mr-sbom-bridge
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      dockerfiles: Dockerfile
+  - local: ci-templates/mr-sbom.yml
+    inputs:
+      job_name: mr-sbom-ci-image
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      dockerfiles: Dockerfile.ci
+  - local: ci-templates/mr-sbom.yml
+    inputs:
+      job_name: mr-sbom-dtrack-apiserver
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:apiserver
+  - local: ci-templates/mr-sbom.yml
+    inputs:
+      job_name: mr-sbom-dtrack-frontend
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:frontend
+  - local: ci-templates/mr-sbom.yml
+    inputs:
+      job_name: mr-sbom-postgres
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:postgresql
+  - local: ci-templates/mr-sbom.yml
+    inputs:
+      job_name: mr-sbom-trivy
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:trivy
+  - local: ci-templates/mr-sbom.yml
+    inputs:
+      job_name: mr-sbom-gateway
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      scan_paths: ''
+      compose_images: compose.yaml:gateway
+
+# These two scans build images in an isolated MR job; the protected worker never builds code.
+mr-sbom-bridge:
+  extends: .docker-build
+  before_script:
+    - docker info > /dev/null
+mr-sbom-ci-image:
+  extends: .docker-build
+  before_script:
+    - docker info > /dev/null

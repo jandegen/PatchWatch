@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: Apache-2.0
+# Protected feedback jobs for Patchwatch itself; reusable worker in ci-templates/mr-feedback.yml.
+# Pin the include ref and pass a reviewed immutable worker image.
+spec:
+  inputs:
+    image:
+      description: Trusted PatchWatch CI image pinned to a reviewed commit or digest.
+---
+include:
+  - local: ci-templates/mr-feedback.yml
+    inputs:
+      image: $[[ inputs.image ]]
+      project_id: 120
+      job_name: mr-feedback-bridge
+      scan_job: mr-sbom-bridge
+      branch_scan_job: branch-sbom-bridge
+      component: bridge
+      bsi_mode: report  # image base packages lack concluded licences; non-conforming until fixed
+  - local: ci-templates/mr-feedback.yml
+    inputs:
+      image: $[[ inputs.image ]]
+      project_id: 120
+      job_name: mr-feedback-ci-image
+      scan_job: mr-sbom-ci-image
+      branch_scan_job: branch-sbom-ci-image
+      component: ci-image
+      bsi_mode: report  # image base packages lack concluded licences; non-conforming until fixed
+  - local: ci-templates/mr-feedback.yml
+    inputs:
+      image: $[[ inputs.image ]]
+      project_id: 120
+      job_name: mr-feedback-dtrack-apiserver
+      scan_job: mr-sbom-dtrack-apiserver
+      branch_scan_job: branch-sbom-dtrack-apiserver
+      component: dtrack-apiserver
+      bsi_mode: report  # image base packages lack concluded licences; non-conforming until fixed
+  - local: ci-templates/mr-feedback.yml
+    inputs:
+      image: $[[ inputs.image ]]
+      project_id: 120
+      job_name: mr-feedback-dtrack-frontend
+      scan_job: mr-sbom-dtrack-frontend
+      branch_scan_job: branch-sbom-dtrack-frontend
+      component: dtrack-frontend
+      bsi_mode: report  # image base packages lack concluded licences; non-conforming until fixed
+  - local: ci-templates/mr-feedback.yml
+    inputs:
+      image: $[[ inputs.image ]]
+      project_id: 120
+      job_name: mr-feedback-postgres
+      scan_job: mr-sbom-postgres
+      branch_scan_job: branch-sbom-postgres
+      component: postgres
+      bsi_mode: report  # image base packages lack concluded licences; non-conforming until fixed
+  - local: ci-templates/mr-feedback.yml
+    inputs:
+      image: $[[ inputs.image ]]
+      project_id: 120
+      job_name: mr-feedback-trivy
+      scan_job: mr-sbom-trivy
+      branch_scan_job: branch-sbom-trivy
+      component: trivy
+      bsi_mode: report  # image base packages lack concluded licences; non-conforming until fixed
+  - local: ci-templates/mr-feedback.yml
+    inputs:
+      image: $[[ inputs.image ]]
+      project_id: 120
+      job_name: mr-feedback-gateway
+      scan_job: mr-sbom-gateway
+      branch_scan_job: branch-sbom-gateway
+      component: gateway
+      bsi_mode: report  # image base packages lack concluded licences; non-conforming until fixed

@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: Apache-2.0
+# Credential-free SBOM of a pushed feature branch. A protected mr-feedback worker with
+# branch_scan_job set uploads it to dTrack as the version named like the branch.
+spec:
+  inputs:
+    job_name:
+      default: patchwatch-branch-sbom
+    stage:
+      default: test
+    image:
+    scan_paths:
+      default: .
+    images:
+      default: ''
+    exclude:
+      default: ''
+    bsi_metadata:
+      default: ''
+      description: Reviewed BSI metadata in the scanned tree; the worker revalidates before upload.
+    sbom_creator:
+      default: ''
+    component_creator:
+      default: ''
+    distribution_license:
+      default: ''
+    dockerfiles:
+      default: ''
+      description: Space-separated Dockerfile paths; built from the branch tree.
+    compose_images:
+      default: ''
+      description: Space-separated file:service selectors; resolve each image from the branch tree.
+---
+$[[ inputs.job_name ]]:
+  stage: $[[ inputs.stage ]]
+  image: $[[ inputs.image ]]
+  timeout: 1h
+  # The default branch and tags upload through the regular inventory job; protected branches too.
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"'
+  variables:
+    PATCHWATCH_SCAN_PATHS: '$[[ inputs.scan_paths ]]'
+    PATCHWATCH_IMAGES: '$[[ inputs.images ]]'
+    PATCHWATCH_EXCLUDE: '$[[ inputs.exclude ]]'
+    PATCHWATCH_BSI_METADATA: '$[[ inputs.bsi_metadata ]]'
+    PATCHWATCH_SBOM_CREATOR: '$[[ inputs.sbom_creator ]]'
+    PATCHWATCH_COMPONENT_CREATOR: '$[[ inputs.component_creator ]]'
+    PATCHWATCH_DISTRIBUTION_LICENSE: '$[[ inputs.distribution_license ]]'
+    PATCHWATCH_DOCKERFILES: '$[[ inputs.dockerfiles ]]'
+    PATCHWATCH_COMPOSE_IMAGES: '$[[ inputs.compose_images ]]'
+  script:
+    - cd /opt/patchwatch && python -m patchwatch.ci.mr branch-scan
+  artifacts:
+    expose_as: Patchwatch Branch-SBOM
+    paths: [patchwatch-branch.json]
+    expire_in: 1 week

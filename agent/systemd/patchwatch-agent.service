@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+[Unit]
+Description=Patchwatch software inventory upload
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/patchwatch-agent --config /etc/patchwatch/agent.json
+User=root
+UMask=0077
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=4h
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+StateDirectory=patchwatch
+ReadWritePaths=/var/lib/patchwatch
+
+[Install]
+WantedBy=multi-user.target

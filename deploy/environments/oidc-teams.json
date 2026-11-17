@@ -1,0 +1,74 @@
+[
+  {
+    "team": "Patchwatch Viewers",
+    "group": "patchwatch-viewers",
+    "permissions": [
+      "VIEW_PORTFOLIO",
+      "VIEW_VULNERABILITY",
+      "VIEW_POLICY_VIOLATION"
+    ]
+  },
+  {
+    "team": "Patchwatch Administrators",
+    "group": "patchwatch-admins",
+    "permissions": [
+      "VIEW_PORTFOLIO",
+      "VIEW_VULNERABILITY",
+      "VIEW_POLICY_VIOLATION",
+      "PORTFOLIO_ACCESS_CONTROL_BYPASS",
+      "PORTFOLIO_MANAGEMENT",
+      "BOM_UPLOAD",
+      "VULNERABILITY_ANALYSIS",
+      "VULNERABILITY_MANAGEMENT",
+      "POLICY_VIOLATION_ANALYSIS",
+      "ACCESS_MANAGEMENT",
+      "SECRET_MANAGEMENT",
+      "SYSTEM_CONFIGURATION",
+      "POLICY_MANAGEMENT",
+      "TAG_MANAGEMENT"
+    ]
+  },
+  {
+    "team": "Patchwatch Security Analysts",
+    "group": "patchwatch-security-analysts",
+    "permissions": [
+      "VIEW_PORTFOLIO",
+      "VIEW_VULNERABILITY",
+      "VIEW_POLICY_VIOLATION",
+      "VULNERABILITY_ANALYSIS"
+    ]
+  },
+  {
+    "team": "Patchwatch Compliance Reviewers",
+    "group": "patchwatch-compliance-reviewers",
+    "permissions": [
+      "VIEW_PORTFOLIO",
+      "VIEW_VULNERABILITY",
+      "VIEW_POLICY_VIOLATION",
+      "POLICY_VIOLATION_ANALYSIS"
+    ]
+  },
+  {
+    "team": "Patchwatch Maintainers",
+    "group": "patchwatch-maintainers",
+    "permissions": [
+      "VIEW_PORTFOLIO",
+      "VIEW_VULNERABILITY",
+      "VIEW_POLICY_VIOLATION",
+      "PORTFOLIO_MANAGEMENT_UPDATE",
+      "BOM_UPLOAD"
+    ]
+  },
+  {
+    "team": "Patchwatch Policy Managers",
+    "group": "patchwatch-policy-managers",
+    "permissions": [
+      "VIEW_PORTFOLIO",
+      "VIEW_VULNERABILITY",
+      "VIEW_POLICY_VIOLATION",
+      "POLICY_MANAGEMENT_CREATE",
+      "POLICY_MANAGEMENT_READ",
+      "POLICY_MANAGEMENT_UPDATE"
+    ]
+  }
+]

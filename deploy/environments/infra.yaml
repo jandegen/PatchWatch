@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: Apache-2.0
+# Generic reference profile. Real installations keep their own copy outside this repository and point
+# PATCHWATCH_ENV_DIR at it (docs/installation/customization.md).
+storageClass: ''
+imagePullSecrets: []
+oidcTrust:
+  enabled: false
+  caPem: ""   # PEM of your private root CA when you enable this (never commit it)
+backup:
+  enabled: true
+  schedule: '15 1 * * *'
+monitor:
+  enabled: true # API key is provisioned automatically after Dependency-Track is ready.
+networkPolicy:
+  enabled: true

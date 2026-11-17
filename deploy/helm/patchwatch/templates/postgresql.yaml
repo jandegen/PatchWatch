@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: patchwatch-postgresql
+spec:
+  selector: {app: patchwatch-postgresql}
+  ports: [{name: postgres, port: 5432, targetPort: 5432}]
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: patchwatch-postgresql
+  labels:
+    {{- include "patchwatch.labels" . | nindent 4 }}
+spec:
+  serviceName: patchwatch-postgresql
+  replicas: 1
+  selector:
+    matchLabels: {app: patchwatch-postgresql}
+  template:
+    metadata:
+      labels: {app: patchwatch-postgresql, app.kubernetes.io/part-of: patchwatch}
+    spec:
+      dnsConfig:
+        options: [{name: ndots, value: "1"}]
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 70
+        runAsGroup: 70
+        runAsNonRoot: true
+        fsGroup: 70
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: postgresql
+          image: {{ .Values.postgresql.image }}
+          ports: [{containerPort: 5432}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          env:
+            - {name: POSTGRES_DB, value: dtrack}
+            - {name: POSTGRES_USER, value: dtrack}
+            - {name: PGDATA, value: /var/lib/postgresql/data/pgdata}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: {{ .Values.existingSecret }}, key: postgres_password}
+          resources: {{- toYaml .Values.postgresql.resources | nindent 12 }}
+          readinessProbe:
+            exec: {command: [pg_isready, -U, dtrack, -d, dtrack]}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec: {command: [pg_isready, -U, dtrack, -d, dtrack]}
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql/data}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: patchwatch-postgresql}
