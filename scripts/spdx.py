@@ -29,7 +29,7 @@ def document():
                       "licenseConcluded": "Apache-2.0", "licenseInfoInFiles": ["Apache-2.0"],
                       "copyrightText": "NOASSERTION"})
     verification = hashlib.sha1("".join(sorted(sha1s)).encode()).hexdigest()
-    packages = [{"name": "patchwatch", "SPDXID": "SPDXRef-Patchwatch", "versionInfo": "1.0.3",
+    packages = [{"name": "patchwatch", "SPDXID": "SPDXRef-Patchwatch", "versionInfo": "1.0.4",
                  "downloadLocation": "NOASSERTION",
                  "filesAnalyzed": True, "packageVerificationCode": {"packageVerificationCodeValue": verification,
                  "packageVerificationCodeExcludedFiles": ["./patchwatch.spdx.json"]},
@@ -54,7 +54,7 @@ def document():
         relationships.append({"spdxElementId": "SPDXRef-Patchwatch", "relationshipType": "DEPENDS_ON", "relatedSpdxElement": ref})
     relationships += [{"spdxElementId": "SPDXRef-Patchwatch", "relationshipType": "CONTAINS", "relatedSpdxElement": f["SPDXID"]} for f in files]
     return {"spdxVersion": "SPDX-2.3", "dataLicense": "CC0-1.0", "SPDXID": "SPDXRef-DOCUMENT",
-            "name": "patchwatch-1.0.3", "documentNamespace": "https://spdx.org/spdxdocs/patchwatch-1.0.3-" + verification,
+            "name": "patchwatch-1.0.4", "documentNamespace": "https://spdx.org/spdxdocs/patchwatch-1.0.4-" + verification,
             "creationInfo": {"created": "2026-11-13T00:00:00Z", "creators": ["Tool: patchwatch-spdx-0.1.0"], "licenseListVersion": "3.26.0"},
             "packages": packages, "files": files, "relationships": relationships}
 

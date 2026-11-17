@@ -17,7 +17,7 @@ Der Generator erfasst versionierte und noch nicht ignorierte Quelldateien. Das S
 selbst ist wegen der Prüfsummen-Selbstreferenz ausgeschlossen. Ignorierte Secrets, virtuelle
 Umgebungen und Build-Artefakte werden nicht erfasst. Die CI prüft die genaue Inventur.
 Dokument-Namespace und Package Verification Code hängen reproduzierbar vom Quellstand ab;
-das Erstellungsdatum ist auf den Projektbeginn gesetzt. Projektversion: `1.0.3`.
+das Erstellungsdatum ist auf den Projektbeginn gesetzt. Projektversion: `1.0.4`.
 
 | Fremdkomponente | Deklarierte Lizenz |
 |---|---|

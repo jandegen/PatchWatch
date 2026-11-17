@@ -2,8 +2,37 @@
 # Release pipeline: runs for tags vX.Y.Z only. See docs/operations/release.md.
 #   verify-release -> release-bridge-image, release-packages, release-pkg-macos (optional)
 #   -> release (GitLab release with asset links) -> mirror-github
+#   release-sbom-bridge, release-sbom-ci-image (stage scan): upload the released images to PatchWatch/dTrack
+#   as version vX.Y.Z (profile distribution, delta report against the previous release).
 # CI/CD variables: PATCHWATCH_MACOS_RUNNER=true (enables the .pkg job, needs a runner tagged "macos"),
 # GITHUB_MIRROR_URL and GITHUB_MIRROR_TOKEN (both optional; without them the mirror job is skipped).
+
+# Release inventories in PatchWatch (Dependency-Track): one version vX.Y.Z per own image, so the release
+# shows up with licences, vulnerabilities, policy result and the delta to the previous release.
+# allow_failure: a dTrack outage must not block the release, the GitHub mirror or the assets.
+include:
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: release-sbom-bridge
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      component: bridge
+      scan_paths: ''
+      bsi_mode: report  # same as sbom-bridge in ci/components.yml
+      images: $CI_REGISTRY_IMAGE/bridge:$CI_COMMIT_SHA
+      allow_failure: true
+      run_if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/ && $PATCHWATCH_MR_FEEDBACK != "true" && $CI_PIPELINE_SOURCE != "schedule"
+  - local: ci-templates/sbom.yml
+    inputs:
+      job_name: release-sbom-ci-image
+      stage: scan
+      image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      component: ci-image
+      scan_paths: ''
+      bsi_mode: report
+      images: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
+      allow_failure: true
+      run_if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/ && $PATCHWATCH_MR_FEEDBACK != "true" && $CI_PIPELINE_SOURCE != "schedule"
 
 .release-rules:
   rules:
@@ -31,7 +60,7 @@ release-bridge-image:
     - printf '%s' "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - version="${CI_COMMIT_TAG#v}"
     - docker build --pull --label "org.opencontainers.image.version=$version" --label "org.opencontainers.image.revision=$CI_COMMIT_SHA" --tag "$CI_REGISTRY_IMAGE/bridge:$version" .
-    - for tag in "${version%.*}" latest; do docker tag "$CI_REGISTRY_IMAGE/bridge:$version" "$CI_REGISTRY_IMAGE/bridge:$tag"; done
+    - for tag in "${version%.*}" latest "$CI_COMMIT_SHA"; do docker tag "$CI_REGISTRY_IMAGE/bridge:$version" "$CI_REGISTRY_IMAGE/bridge:$tag"; done
     - docker push --all-tags "$CI_REGISTRY_IMAGE/bridge"
 
 release-packages:

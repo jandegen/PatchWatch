@@ -15,6 +15,7 @@ Die Pipeline (`ci/release.yml`) führt nach den Tests aus:
 | `release-bridge-image` | `bridge:X.Y.Z`, `bridge:X.Y`, `bridge:latest` in der Registry (das CI-Image baut `build-ci-image`) |
 | `release-packages` | `patchwatch-agent.pyz`, `.deb`, `SHA256SUMS` in der generischen Paketablage (`packages/generic/patchwatch-agent/X.Y.Z`) |
 | `release-pkg-macos` | macOS-`.pkg`, nur mit `PATCHWATCH_MACOS_RUNNER=true` und einem Runner mit Tag `macos`; unsigniert |
+| `release-sbom-bridge`, `release-sbom-ci-image` | Version `vX.Y.Z` der Bridge und des CI-Images in PatchWatch/Dependency-Track (Profil `distribution`, Delta-Bericht zum vorherigen Release); `allow_failure`, ein dTrack-Ausfall blockiert das Release nicht |
 | `release` | GitLab-Release mit Download-Links |
 | `mirror-github` | Push von Standardbranch und Tag nach GitHub |
 
