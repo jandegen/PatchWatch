@@ -12,7 +12,7 @@ python3 packaging/build.py pyz                 # dist/patchwatch-agent.pyz
 python3 packaging/build.py deb                 # dist/patchwatch-agent_<Version>_all.deb
 python3 packaging/build.py deb --syft ./syft   # Syft mitliefern (architekturspezifisch)
 python3 packaging/build.py pkg                 # macOS: dist/patchwatch-agent-<Version>.pkg
-sudo apt install ./dist/patchwatch-agent_1.0.4_all.deb
+sudo apt install ./dist/patchwatch-agent_1.0.5_all.deb
 ```
 
 Das Paket installiert den Starter `patchwatch-agent`, das Zipapp unter `/usr/lib/patchwatch/`, die
