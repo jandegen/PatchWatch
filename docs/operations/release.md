@@ -1,95 +1,98 @@
 # Release
 
-Ein Release entsteht durch einen Tag `vX.Y.Z` (muss zu `version` in `pyproject.toml` und
-`patchwatch/__init__.py` passen):
+A release is created by a tag `vX.Y.Z` (must match `version` in `pyproject.toml` and
+`patchwatch/__init__.py`):
 
 ```bash
 git tag v0.2.0 && git push origin v0.2.0
 ```
 
-Die Pipeline (`ci/release.yml`) führt nach den Tests aus:
+After the tests, the pipeline (`ci/release.yml`) runs:
 
-| Job | Ergebnis |
+| Job | Result |
 |---|---|
-| `verify-release` | Tag und Projektversion stimmen überein |
-| `release-bridge-image` | `bridge:X.Y.Z`, `bridge:X.Y`, `bridge:latest` in der Registry (das CI-Image baut `build-ci-image`) |
-| `release-packages` | `patchwatch-agent.pyz`, `.deb`, `SHA256SUMS` in der generischen Paketablage (`packages/generic/patchwatch-agent/X.Y.Z`) |
-| `release-pkg-macos` | macOS-`.pkg`, nur mit `PATCHWATCH_MACOS_RUNNER=true` und einem Runner mit Tag `macos`; unsigniert |
-| `release-sbom-parent`, `release-sbom-bridge`, `release-sbom-ci-image` | Sammelprojekt und Version `vX.Y.Z` der Bridge und des CI-Images in PatchWatch/Dependency-Track (Profil `distribution`, Delta-Bericht zum vorherigen Release); `allow_failure`, ein dTrack-Ausfall blockiert das Release nicht |
-| `sbom-dtrack-*`, `sbom-postgres`, `sbom-trivy`, `sbom-gateway` | Drittanbieter-Images als Version `vX.Y.Z` in dTrack (laufen bei Tags ebenfalls, `allow_failure`) |
-| `release-sbom-project` | Eine CycloneDX-1.6-SBOM für das gesamte Projekt (Repository plus Bridge, CI-Image und alle Images aus `compose.yaml`), Artefakt `patchwatch-sbom.cdx.json` ohne Ablauf |
-| `release` | GitLab-Release mit Download-Links, darunter die SBOM |
-| `mirror-github` | Push des Quellstands und des Tags nach GitHub |
-| `release-github-images` | Kopiert mit gleichem Digest `bridge:X.Y.Z`, `X.Y`, `latest` nach `ghcr.io/<owner>/<repo>/bridge` und `ci:vX.Y.Z`, `vX` nach `.../ci` (jeweils plus Commit-Tag; nur mit `GITHUB_GHCR_TOKEN`) |
-| `release-github` | GitHub Release zum Tag mit `patchwatch-agent.pyz`, `.deb`, `SHA256SUMS` und der SBOM |
+| `verify-release` | Tag and project version match |
+| `release-bridge-image` | `bridge:X.Y.Z`, `bridge:X.Y`, `bridge:latest` in the registry (the CI image is built by `build-ci-image`) |
+| `release-packages` | `patchwatch-agent.pyz`, `.deb`, `patchwatch-ci-templates.tar.gz`, `SHA256SUMS` in the generic package registry (`packages/generic/patchwatch-agent/X.Y.Z`); with `GITHUB_MIRROR_URL` also `setup-gitlab-project.sh` |
+| `release-pkg-macos` | macOS `.pkg`, only with `PATCHWATCH_MACOS_RUNNER=true` and a runner with tag `macos`; unsigned |
+| `release-sbom-parent`, `release-sbom-bridge`, `release-sbom-ci-image` | Collection project and version `vX.Y.Z` of the bridge and the CI image in PatchWatch/Dependency-Track (profile `distribution`, delta report against the previous release); `allow_failure`, a dTrack outage does not block the release |
+| `sbom-dtrack-*`, `sbom-postgres`, `sbom-trivy`, `sbom-gateway` | Third-party images as version `vX.Y.Z` in dTrack (also run on tags, `allow_failure`) |
+| `release-sbom-project` | One CycloneDX 1.6 SBOM for the entire project (repository plus bridge, CI image and all images from `compose.yaml`), artifact `patchwatch-sbom.cdx.json` without expiry |
+| `release` | GitLab release with download links, including the SBOM |
+| `mirror-github` | Push of the source state and tag to GitHub |
+| `release-github-images` | Copies `bridge:X.Y.Z`, `X.Y`, `latest` to `ghcr.io/<owner>/<repo>/bridge` and `ci:vX.Y.Z`, `vX` to `.../ci` with the same digest (each plus a commit tag; only with `GITHUB_GHCR_TOKEN`) |
+| `release-github` | GitHub release for the tag with `patchwatch-agent.pyz`, `.deb`, `patchwatch-ci-templates.tar.gz`, `setup-gitlab-project.sh`, `SHA256SUMS` and the SBOM |
 
-## GitHub-Mirror
+## GitHub mirror
 
-Die GitLab-Historie wird nicht gespiegelt. Pro Release entsteht ein Commit im GitHub-Repository aus dem
-getaggten Stand (`git archive`), danach ein Tag. Vorher prüft der Job den Stand gegen
-`MIRROR_FORBIDDEN_PATTERNS` und bricht bei einem Treffer ab.
+The GitLab history is not mirrored. For each release, one commit is created in the GitHub repository from the
+tagged state (`git archive`), followed by a tag. Beforehand, the job checks the state against
+`MIRROR_FORBIDDEN_PATTERNS` and aborts on a match.
 
-CI/CD-Variablen (Settings → CI/CD → Variables, alle protected):
+CI/CD variables (Settings → CI/CD → Variables, all protected):
 
-- `GITHUB_MIRROR_URL`: z. B. `https://github.com/<owner>/patchwatch.git` (leeres oder bestehendes Repository)
-- `GITHUB_MIRROR_TOKEN`: Fine-grained Token mit `Contents: write` (masked)
-- `MIRROR_FORBIDDEN_PATTERNS`: Regex mit installationsspezifischen Begriffen, z. B. `example\.internal|meinuser`
+- `GITHUB_MIRROR_URL`: e.g. `https://github.com/<owner>/patchwatch.git` (empty or existing repository)
+- `GITHUB_MIRROR_TOKEN`: fine-grained token with `Contents: write` (masked)
+- `MIRROR_FORBIDDEN_PATTERNS`: regex with installation-specific terms, e.g. `example\.internal|myuser`
 
-- `GITHUB_GHCR_TOKEN` (optional): klassisches Personal Access Token mit `write:packages` (masked). ghcr.io
-  akzeptiert keine Fine-grained Tokens. Ohne diese Variable werden keine Images veröffentlicht.
+- `GITHUB_GHCR_TOKEN` (optional): classic personal access token with `write:packages` (masked). ghcr.io
+  does not accept fine-grained tokens. Without this variable, no images are published.
 
-## Tokens auf GitHub erstellen
+## Creating tokens on GitHub
 
-`python3 scripts/setup-release-mirror.py` zeigt zuerst, welche der vier Variablen im GitLab-Projekt schon gesetzt
-und korrekt als protected (Tokens zusätzlich masked) markiert sind. Gefragt und geschrieben wird nur, was fehlt oder
-falsch markiert ist; korrekte Variablen bleiben unverändert, außer mit `--force`. Die Tokens werden verdeckt abgefragt
-(oder aus `GITHUB_MIRROR_TOKEN` und `GITHUB_GHCR_TOKEN` gelesen) und vor dem Schreiben gegen GitHub geprüft: Schreibzugriff
-auf das Repository beziehungsweise der Scope `write:packages` (`--skip-check` schaltet das ab). Eine leere Eingabe beim
-ghcr.io-Token überspringt die Image-Veröffentlichung. `--dry-run` zeigt nur den Plan. Beide Tokens vorher in GitHub
-erstellen:
+`python3 scripts/setup-release-mirror.py` first shows which of the four variables are already set in the GitLab
+project and correctly marked as protected (tokens additionally masked). It only asks for and writes what is missing
+or wrongly marked; correct variables stay unchanged unless `--force` is given. The tokens are prompted for without
+echo (or read from `GITHUB_MIRROR_TOKEN` and `GITHUB_GHCR_TOKEN`) and checked against GitHub before writing: write
+access to the repository and the scope `write:packages` respectively (`--skip-check` disables this). An empty input
+for the ghcr.io token skips image publishing. `--dry-run` only shows the plan. Create both tokens in GitHub first:
 
-**1. Mirror-Token (`GITHUB_MIRROR_TOKEN`): Fine-grained Token**
+**1. Mirror token (`GITHUB_MIRROR_TOKEN`): fine-grained token**
 
-1. GitHub → Profilbild → *Settings* → *Developer settings* → *Personal access tokens* → *Fine-grained tokens* →
+1. GitHub → profile picture → *Settings* → *Developer settings* → *Personal access tokens* → *Fine-grained tokens* →
    *Generate new token*.
-2. *Token name* z. B. `patchwatch-release-mirror`, *Expiration* nach Bedarf (maximal 1 Jahr), *Resource owner*
-   der Besitzer des Repositorys (bei einer Organisation muss diese Tokens erlauben).
-3. *Repository access* → *Only select repositories* → das Mirror-Repository wählen.
-4. *Repository permissions* → *Contents*: **Read and write**. *Metadata: Read-only* wird automatisch gesetzt.
-   Mehr ist nicht nötig, auch das Release und die Assets laufen über *Contents*.
-5. *Generate token* und den Wert (`github_pat_…`) sofort kopieren; er wird nur einmal angezeigt.
+2. *Token name* e.g. `patchwatch-release-mirror`, *Expiration* as needed (at most 1 year), *Resource owner*
+   the owner of the repository (for an organization, it must allow tokens).
+3. *Repository access* → *Only select repositories* → choose the mirror repository.
+4. *Repository permissions* → *Contents*: **Read and write**. *Metadata: Read-only* is set automatically.
+   Nothing more is needed; the release and its assets also go through *Contents*.
+5. *Generate token* and copy the value (`github_pat_…`) immediately; it is shown only once.
 
-**2. ghcr.io-Token (`GITHUB_GHCR_TOKEN`): klassisches Token**
+**2. ghcr.io token (`GITHUB_GHCR_TOKEN`): classic token**
 
-Fine-grained Tokens unterstützen GitHub Packages nicht, es muss ein *Personal access token (classic)* sein.
+Fine-grained tokens do not support GitHub Packages; it must be a *personal access token (classic)*.
 
 1. GitHub → *Settings* → *Developer settings* → *Personal access tokens* → *Tokens (classic)* →
    *Generate new token* → *Generate new token (classic)*.
-2. *Note* z. B. `patchwatch-ghcr`, *Expiration* nach Bedarf.
-3. Scope **`write:packages`** ankreuzen (`read:packages` wird mit gesetzt). Keine weiteren Scopes.
-4. *Generate token* und den Wert (`ghp_…`) sofort kopieren.
-5. Das Token gehört dem Benutzer und schreibt mit dessen Rechten. Für ein Repository in einer Organisation muss
-   das Token für SSO autorisiert sein (*Configure SSO* neben dem Token) und der Benutzer Pakete in der Organisation
-   anlegen dürfen. Am besten ein dediziertes Dienstkonto verwenden.
+2. *Note* e.g. `patchwatch-ghcr`, *Expiration* as needed.
+3. Tick the scope **`write:packages`** (`read:packages` is set along with it). No further scopes.
+4. *Generate token* and copy the value (`ghp_…`) immediately.
+5. The token belongs to the user and writes with that user's permissions. For a repository in an organization, the
+   token must be authorized for SSO (*Configure SSO* next to the token) and the user must be allowed to create
+   packages in the organization. Ideally use a dedicated service account.
 
-Läuft ein Token ab, schlägt der jeweilige Job fehl: dann ein neues erstellen und das Skript erneut ausführen.
+If a token expires, the respective job fails: create a new one and run the script again.
 
-## Artefakte und Images auf GitHub
+## Artifacts and images on GitHub
 
-`release-github` legt das GitHub Release zum gespiegelten Tag an und lädt Agent-Pakete, Prüfsummen und die
-Projekt-SBOM hoch; bei einem erneuten Lauf werden gleichnamige Assets ersetzt. Die macOS-`.pkg` ist unsigniert
-und wird nicht veröffentlicht.
+`release-github` creates the GitHub release for the mirrored tag and uploads agent packages, checksums and the
+project SBOM; on a rerun, assets of the same name are replaced. The macOS `.pkg` is unsigned and is not published.
 
-In der SBOM werden interne Registry-Namen durch die öffentlichen ghcr.io-Namen ersetzt, die Referenzen auf
-Bridge- und CI-Image zeigen damit auf veröffentlichte Images. Das CI-Image (`ghcr.io/<owner>/<repo>/ci:vX`) ist
-der Job-Container der CI-Vorlagen; wer sie einbindet, übergibt es als `image`-Input. Alle Dateien (auch die Inhalte von `.pyz` und `.deb`) und
-das Image samt Konfiguration werden vor dem Upload gegen `MIRROR_FORBIDDEN_PATTERNS` geprüft; ein Treffer
-bricht den Job ab, bevor etwas veröffentlicht wird.
+In the SBOM, internal registry names are replaced by the public ghcr.io names, so the references to the bridge and
+CI image point to published images. The CI image (`ghcr.io/<owner>/<repo>/ci:vX`) is the job container of the CI
+templates; anyone including them passes it as the `image` input. All files (including the contents of `.pyz` and
+`.deb`) and the image including its configuration are checked against `MIRROR_FORBIDDEN_PATTERNS` before the upload;
+a match aborts the job before anything is published.
 
-Die Images werden kopiert, nicht neu gebaut: Der Digest auf ghcr.io entspricht dem in der GitLab-Registry und in
-der SBOM. Beim ersten Push entstehen die Pakete als privat. Einmalig unter *Package settings* auf *Public*
-stellen (für `bridge` und `ci`) und mit dem Repository verknüpfen, sonst sind die Images nicht anonym abrufbar.
+`patchwatch-ci-templates.tar.gz` holds the CI templates and the name of the public CI image of this release;
+`setup-gitlab-project.sh` is the [setup script](../usage/gitlab-setup-script.md) with this release's download
+location filled in (both are covered by `SHA256SUMS` and by the pattern check). The script is only built when
+`GITHUB_MIRROR_URL` is set, because it needs a public download location.
 
-Installationsspezifische Werte (Hostnamen, OIDC-Issuer, Root-CA) liegen in einem privaten Repository,
-siehe `PATCHWATCH_ENV_PROJECT` und `PATCHWATCH_ENV_DIR` in der [Anpassung](../installation/customization.md).
-Tags `v*` als geschützte Tags konfigurieren.
+The images are copied, not rebuilt: the digest on ghcr.io matches the one in the GitLab registry and in the SBOM.
+On the first push the packages are created as private. Once, under *Package settings*, set them to *Public*
+(for `bridge` and `ci`) and link them to the repository, otherwise the images cannot be pulled anonymously.
+
+Installation-specific values (hostnames, OIDC issuer, root CA) live in a private repository,
+see `PATCHWATCH_ENV_PROJECT` and `PATCHWATCH_ENV_DIR` in the [customization guide](../installation/customization.md).
+Configure tags `v*` as protected tags.

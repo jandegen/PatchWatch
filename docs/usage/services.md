@@ -1,18 +1,18 @@
-# Dienste aus Compose-Dateien
+# Services from Compose files
 
-Agent und reguläres [CI-Template](ci-integration.md) können neben Softwarepaketen auch
-**CycloneDX-Services** erfassen. Das sind statische Angaben aus Compose-Dateien, kein Nachweis
-laufender Prozesse oder tatsächlich bereitgestellter Dienste. NeuVector und ein Kubernetes-
-Laufzeitinventar bleiben [offene TODOs](../design/roadmap.md).
+The agent and the regular [CI template](ci-integration.md) can record **CycloneDX services**
+in addition to software packages. These are static statements from Compose files, no proof of
+running processes or services actually deployed. NeuVector and a Kubernetes
+runtime inventory remain [open TODOs](../design/roadmap.md).
 
-## Erfassung konfigurieren
+## Configuring collection
 
-Beim Linux-/macOS-Agenten ist `detect_services` standardmäßig `true`. Durchsucht werden die
-konfigurierten `roots`; `extension_homes` und Image-Inhalte sind keine zusätzlichen Suchwurzeln.
-Mit `detect_services: false` lässt sich die Compose-Erkennung abschalten.
+For the Linux/macOS agent, `detect_services` is `true` by default. The configured
+`roots` are searched; `extension_homes` and image contents are no additional search roots.
+Compose detection can be switched off with `detect_services: false`.
 
-Im CI-Template steuert der gleichnamige Input die Suche unter `scan_paths`. Zusätzliche
-Dienstnamen lassen sich über `services` angeben:
+In the CI template, the input of the same name controls the search under `scan_paths`. Additional
+service names can be specified via `services`:
 
 ```yaml
 include:
@@ -25,45 +25,45 @@ include:
       detect_services: true
 ```
 
-Das verwendete Template und Job-Image müssen diese Inputs bereits enthalten; bis zur nächsten
-Release-Veröffentlichung einen passenden Commit und das zugehörige `ci:<commit-sha>`-Image
-verwenden. Explizite Namen bestehen aus Buchstaben, Ziffern, `.`, `_`, `-`, beginnen mit einem
-Buchstaben oder einer Ziffer und sind maximal 64 Zeichen lang. Für ausschließlich explizite
-Namen `detect_services: false` setzen. Sie werden auch bei `mode: parent` berücksichtigt.
+The template and job image used must already contain these inputs; until the next
+release is published, use a matching commit and the corresponding `ci:<commit-sha>` image.
+Explicit names consist of letters, digits, `.`, `_`, `-`, start with a letter
+or a digit and are at most 64 characters long. For exclusively explicit
+names, set `detect_services: false`. They are also taken into account with `mode: parent`.
 
-## Datenumfang und Deduplizierung
+## Data scope and deduplication
 
-Der Leser übernimmt Dienstname und eine literale Image-Referenz als `patchwatch:image`; ein
-vorhandener literaler Image-Tag kann als Version übernommen werden. Compose-Variablen werden
-nicht aufgelöst. Environment, Secrets, Volumes, Befehle, Ports und Endpunkte werden nicht
-übertragen. Image-Referenzen können interne Registry-/Repository-Namen offenlegen.
+The reader takes over the service name and a literal image reference as `patchwatch:image`; an
+existing literal image tag can be taken over as the version. Compose variables are
+not resolved. Environment, secrets, volumes, commands, ports and endpoints are not
+transferred. Image references can reveal internal registry/repository names.
 
-Gleiche Dienstnamen werden über alle Suchwurzeln und Compose-Dateien zusammengeführt. Bei
-abweichenden Images gewinnt der erste Fund. Explizite Namen haben in CI Vorrang vor erkannten
-Einträgen; dadurch entfällt für solche Namen die automatisch erkannte Image-Metadatenangabe.
-Gleichnamige Dienste verschiedener Projekte können daher zusammenfallen. Services bleiben
-getrennt von Paketkomponenten und erzeugen keine erfundenen Abhängigkeitskanten.
+Identical service names are merged across all search roots and Compose files. With
+differing images, the first find wins. In CI, explicit names take precedence over detected
+entries; for such names, the automatically detected image metadata statement is therefore dropped.
+Services of the same name from different projects can therefore collapse. Services stay
+separate from package components and create no invented dependency edges.
 
-## Grenzen und Sichtbarkeit
+## Limits and visibility
 
-- Berücksichtigt werden `compose.yaml`, `compose.yml`, `docker-compose.yaml` und
-  `docker-compose.yml`, bis fünf Verzeichnisebenen unter der jeweiligen Wurzel. Maximal 200
-  automatisch erkannte, nach Namen sortierte Dienste werden übernommen.
-- `.git`, `node_modules`, `vendor`, `venv`, `.venv`, `__pycache__`, `site-packages`, `proc` und
-  `sys` werden beim Abstieg übersprungen. Nicht lesbare Dateien werden ausgelassen.
-  Syft-`excludes`/CI-`exclude` gelten nur für Syft, nicht für diesen separaten Leser.
-- Der Leser unterstützt Dienstdefinitionen mit Einrückung unter einem obersten `services:`-Schlüssel,
-  keinen vollständigen YAML-/Compose-Abgleich. Flow-Schreibweisen, Anchors, Includes, Overrides,
-  Profile und Variablen werden nicht wie durch `docker compose config` ausgewertet. Es wird kein
-  Docker-/Compose-Befehl ausgeführt und kein Dienst gestartet.
-- In Dependency-Track stehen die Angaben am Projekt unter **Services**, nicht unter
-  **Komponenten**. Ein Service-Eintrag scannt das referenzierte Image nicht; dafür `images`
-  bzw. ein eigenes Komponenten-Inventar konfigurieren.
-- Services allein erfüllen nicht die Prüfung auf ein nicht leeres Paketinventar. Explizite
-  CI-Sammelprojekte bleiben von dieser Prüfung ausgenommen. Bei `mode: parent` liegen Services
-  im eigenen Unterprojekt `<projekt>/services` derselben Version; der Parent bleibt ein reiner
-  Aggregationscontainer. Der Parent-Job aktualisiert das Service-Unterprojekt auch bei bereits
-  aktiver Aggregation. Die [Migration bestehender Parents](ci-integration.md#mehrere-inventare-hierarchie)
-  kopiert und prüft deren Service-Inventar, bevor es aus dem Parent entfernt wird.
-- Die [MR-Feedback-Schleife](mr-feedback.md), Delta-Berichte und Compliance-Gates vergleichen
-  derzeit keine Service-Inventare. Für diese Prüfungen gelten weiterhin Pakete und Findings.
+- Considered are `compose.yaml`, `compose.yml`, `docker-compose.yaml` and
+  `docker-compose.yml`, up to five directory levels below the respective root. At most 200
+  automatically detected services, sorted by name, are taken over.
+- `.git`, `node_modules`, `vendor`, `venv`, `.venv`, `__pycache__`, `site-packages`, `proc` and
+  `sys` are skipped during descent. Unreadable files are omitted.
+  Syft `excludes`/CI `exclude` apply only to Syft, not to this separate reader.
+- The reader supports service definitions with indentation under a top-level `services:` key,
+  not a full YAML/Compose reconciliation. Flow notation, anchors, includes, overrides,
+  profiles and variables are not evaluated as by `docker compose config`. No
+  Docker/Compose command is executed and no service is started.
+- In Dependency-Track, the entries are on the project under **Services**, not under
+  **Components**. A service entry does not scan the referenced image; configure `images`
+  or an inventory of components of your own for that.
+- Services alone do not satisfy the check for a non-empty package inventory. Explicit
+  CI collection projects remain exempt from this check. With `mode: parent`, services are in
+  the dedicated child project `<project>/services` of the same version; the parent remains a pure
+  aggregation container. The parent job updates the service child project even when aggregation is
+  already active. The [migration of existing parents](ci-integration.md#multiple-inventories-hierarchy)
+  copies and verifies their service inventory before it is removed from the parent.
+- The [MR feedback loop](mr-feedback.md), delta reports and compliance gates currently
+  do not compare service inventories. Packages and findings still apply to these checks.

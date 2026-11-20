@@ -1,26 +1,26 @@
 # Installation
 
-| Betriebsart | Geeignet für | Voraussetzungen |
+| Deployment mode | Suited for | Prerequisites |
 |---|---|---|
-| [Docker Compose](compose.md) | Lokale Erprobung oder einen einzelnen Server | Docker/Compose, Python für Einrichtung, persistenter Speicher; HTTPS für entfernte Agenten |
-| [Kubernetes mit Helmfile](kubernetes.md) | Betrieb in einem eigenen Cluster | Kubernetes, Helm/Helmfile, Ingress-Controller, StorageClass und TLS; optional GitLab CI |
+| [Docker Compose](compose.md) | Local trial or a single server | Docker/Compose, Python for setup, persistent storage; HTTPS for remote agents |
+| [Kubernetes with Helmfile](kubernetes.md) | Operation in your own cluster | Kubernetes, Helm/Helmfile, ingress controller, StorageClass and TLS; optionally GitLab CI |
 
-Beide Varianten enthalten PostgreSQL, Dependency-Track, Frontend, Bridge und
-Trivy-Server. Backups und Monitoring müssen für den regulären Betrieb eingerichtet
-werden. Die Docker-Compose-Variante benötigt keine GitLab-Instanz.
-Der Kubernetes-Deploy kann manuell über dieselben Skripte wie in CI erfolgen.
+Both variants include PostgreSQL, Dependency-Track, the frontend, the bridge and the
+Trivy server. Backups and monitoring must be set up for regular
+operation. The Docker Compose variant needs no GitLab instance.
+The Kubernetes deploy can be done manually with the same scripts as in CI.
 
-## Reihenfolge für eine neue Installation
+## Order for a new installation
 
-1. [Lokalen Schnellstart](../getting-started.md) zum Kennenlernen durchführen oder direkt die Betriebsart wählen.
-2. [Eigene Umgebungsparameter](customization.md) festlegen und die benötigten Images bauen/veröffentlichen.
-3. Den Stack gemäß Compose- oder Kubernetes-Anleitung starten und initialisieren.
-4. [Benutzerzugriff / Keycloak](../configuration/oidc.md), [Richtlinien](../configuration/policies.md) und [Meldeziele](../configuration/alerting.md) einrichten.
-5. [Agenten](../usage/agent.md) oder [CI-Projekte](../usage/ci-integration.md) anbinden und einen Import prüfen.
-6. [Backups, Restore und Monitoring](../operations/index.md) testen.
+1. Run the [local quick start](../getting-started.md) to get to know the system, or choose the deployment mode directly.
+2. Define your [own environment parameters](customization.md) and build/publish the required images.
+3. Start and initialize the stack following the Compose or Kubernetes guide.
+4. Set up [user access / Keycloak](../configuration/oidc.md), [policies](../configuration/policies.md) and [notification targets](../configuration/alerting.md).
+5. Connect [agents](../usage/agent.md) or [CI projects](../usage/ci-integration.md) and verify an import.
+6. Test [backups, restore and monitoring](../operations/index.md).
 
-## Bestehende Installationen
+## Existing installations
 
-Die mitgelieferten Versionen von Dependency-Track und Helm-Chart sind im Repository
-festgelegt; sie sind keine Empfehlung, ungeprüft auf eine neuere Version zu wechseln.
-Vor Änderungen Backups und Upgrade-Hinweise prüfen.
+The bundled versions of Dependency-Track and the Helm chart are fixed in the repository;
+they are not a recommendation to switch to a newer version unchecked.
+Check backups and upgrade notes before making changes.

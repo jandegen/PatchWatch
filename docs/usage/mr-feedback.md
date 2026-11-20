@@ -1,26 +1,26 @@
-# Findings-Bericht für einen Merge Request
+# Findings report for a merge request
 
-Patchwatch veröffentlicht direkt im jeweiligen MR, was sich **durch dessen Merge** ändern
-würde: neue und behobene/entfallende Schwachstellen mit CVE, Schweregrad und Paket sowie
-hinzukommende, entfallende und geänderte Lizenzen je Paket. Auch unveränderte Lizenztypen
-werden einem neu hinzukommenden oder entfernten Paket zugeordnet. Policy-Verstöße werden
-in beide Richtungen ausgewiesen. Ein Bot aktualisiert seinen vorhandenen Kommentar je
-MR und Komponente, statt bei jedem Lauf einen weiteren anzulegen.
+Patchwatch publishes directly in the respective MR what **its merge** would
+change: new and fixed/dropped vulnerabilities with CVE, severity and package as well as
+added, dropped and changed licenses per package. Unchanged license types are also
+assigned to a newly added or removed package. Policy violations are shown in
+both directions. A bot updates its existing comment per
+MR and component instead of creating another one on every run.
 
-Der Vergleich lautet **aktueller Zielbranch ohne MR → Zielbranch mit diesem MR**. Dafür
-berechnet der Scanner mit `git merge-tree --write-tree` einen echten Drei-Wege-Merge und
-scannt beide Bäume im selben Job. Änderungen am Zielbranch, die im Quellbranch noch fehlen,
-bleiben dadurch auf beiden Seiten erhalten. Es werden weder eine alte Release-Version noch
-der Quellbranch allein als Vergleich herangezogen. GitLabs kostenpflichtige Merged-results-
-Pipelines sind dafür nicht erforderlich; existierende Merged-results-Pipelines werden ebenfalls
-unterstützt, wenn ihr synthetischer Commit den aktuellen MR-Quellstand als Elterncommit enthält.
+The comparison is **current target branch without MR → target branch with this MR**. For this, the
+scanner computes a real three-way merge with `git merge-tree --write-tree` and
+scans both trees in the same job. Changes to the target branch that are still missing in the source branch
+are thus kept on both sides. Neither an old release version nor
+the source branch alone is used as a comparison. GitLab's paid merged-results
+pipelines are not required for this; existing merged-results pipelines are also
+supported if their synthetic commit contains the current MR source state as parent commit.
 
-## Einbindung im selben Projekt
+## Integration in the same project
 
-Zwei wiederverwendbare Templates genügen. Die Includes auf einen geprüften Patchwatch-Commit
-und das CI-Image auf dessen Build-SHA oder Digest festlegen. Das Image muss die gepaarte
-Scan-Funktion enthalten (Artefaktformat 2), Git >= 2.38 und Syft; das aktuelle `Dockerfile.ci`
-enthält außerdem Docker CLI für optionale Image-Builds.
+Two reusable templates suffice. Pin the includes to a reviewed Patchwatch commit
+and the CI image to its build SHA or digest. The image must contain the paired
+scan function (artifact format 2), Git >= 2.38 and Syft; the current `Dockerfile.ci`
+additionally contains the Docker CLI for optional image builds.
 
 ```yaml
 workflow:
@@ -30,278 +30,278 @@ workflow:
 stages: [test]
 include:
   - project: platform/patchwatch
-    ref: <geprüfter Commit>
+    ref: <reviewed commit>
     file: ci-templates/mr-sbom.yml
     inputs:
-      image: registry.example.org/platform/patchwatch/ci@sha256:<Digest>
+      image: registry.example.org/platform/patchwatch/ci@sha256:<digest>
       scan_paths: .
   - project: platform/patchwatch
-    ref: <derselbe geprüfte Commit>
+    ref: <the same reviewed commit>
     file: ci-templates/mr-feedback.yml
     inputs:
-      image: registry.example.org/platform/patchwatch/ci@sha256:<Digest>
+      image: registry.example.org/platform/patchwatch/ci@sha256:<digest>
 ```
 
-Der Scanner `patchwatch-mr-sbom` läuft nur in MR-Pipelines und benötigt weder Bot- noch
-dTrack-Schlüssel. `GIT_DEPTH=0` stellt die gemeinsame Historie bereit. Er lädt den aktuellen
-Zielbranch über `origin`, berechnet den Merge und materialisiert beide Bäume getrennt,
-ohne das ausgecheckte Repository zu verändern. Bei einem Merge-Konflikt entsteht ein
-explizites Konfliktartefakt; es wird kein vermeintlicher Änderungsbericht veröffentlicht.
+The scanner `patchwatch-mr-sbom` runs only in MR pipelines and needs neither bot nor
+dTrack keys. `GIT_DEPTH=0` provides the shared history. It fetches the current
+target branch via `origin`, computes the merge and materializes both trees separately,
+without changing the checked-out repository. On a merge conflict, an
+explicit conflict artifact is created; no supposed change report is published.
 
-Der Worker `patchwatch-mr-feedback` läuft im **selben Projekt**, ausschließlich auf dessen
-geschütztem Default-Branch als Schedule- oder Web-Pipeline mit `PATCHWATCH_MR_FEEDBACK=true`.
-Er checkt keinen Anwendungscode aus, übernimmt keine geerbten Build-Skripte und verarbeitet
-nur die Scan-Artefakte. Ein separates Worker-Projekt ist optional: dafür `project_id` auf die
-Zielprojekt-ID setzen. Ohne Input (Standard `0`) wird `CI_PROJECT_ID` verwendet.
+The worker `patchwatch-mr-feedback` runs in the **same project**, exclusively on its
+protected default branch as a schedule or web pipeline with `PATCHWATCH_MR_FEEDBACK=true`.
+It checks out no application code, takes over no inherited build scripts and processes
+only the scan artifacts. A separate worker project is optional: for that, set `project_id` to the
+target project ID. Without the input (default `0`), `CI_PROJECT_ID` is used.
 
-Normale Jobs und Includes bei `PATCHWATCH_MR_FEEDBACK=true` ausschließen, damit der
-Feedback-Zeitplan keine Builds oder Deployments auslöst, z. B. als erste Job-Regel:
+Exclude normal jobs and includes when `PATCHWATCH_MR_FEEDBACK=true` so that the
+feedback schedule triggers no builds or deployments, e.g. as the first job rule:
 
 ```yaml
 rules:
   - if: '$PATCHWATCH_MR_FEEDBACK == "true"'
     when: never
-  # Danach die bisherigen Regeln dieses Jobs.
+  # Then the previous rules of this job.
 ```
 
-Patchwatchs `.gitlab-ci.yml` zeigt dies einschließlich bedingter Includes. Bei eigenen
-übergeordneten `workflow:rules` Schedule-/Web-Pipelines auf dem Default-Branch zulassen.
+Patchwatch's `.gitlab-ci.yml` shows this including conditional includes. With your own
+higher-level `workflow:rules`, allow schedule/web pipelines on the default branch.
 
-## Scan-Eingaben
+## Scan inputs
 
-| Input | Bedeutung |
+| Input | Meaning |
 |---|---|
-| `job_name`, `stage`, `image` | Jobname, Stage und Scanner-Image |
-| `scan_paths` | Zu scannende Verzeichnisse, Standard `.`; mit `''` deaktivieren |
-| `exclude` | Zusätzliche Syft-Ausschlüsse |
-| `dockerfiles` | Leerzeichengetrennte Dockerfile-Pfade; jedes wird mit Repository-Root als Kontext in beiden Bäumen gebaut |
-| `compose_images` | Leerzeichengetrennte Selektoren wie `compose.yaml:postgresql`; liest die jeweilige Image-Version getrennt aus beiden Bäumen |
-| `images` | Zusätzliche feste Registry-Referenzen, identisch auf beiden Seiten; für Änderungen durch den MR stattdessen `dockerfiles` oder `compose_images` verwenden |
+| `job_name`, `stage`, `image` | Job name, stage and scanner image |
+| `scan_paths` | Directories to scan, default `.`; disable with `''` |
+| `exclude` | Additional Syft exclusions |
+| `dockerfiles` | Space-separated Dockerfile paths; each is built with the repository root as context in both trees |
+| `compose_images` | Space-separated selectors such as `compose.yaml:postgresql`; reads the respective image version separately from both trees |
+| `images` | Additional fixed registry references, identical on both sides; for changes made by the MR, use `dockerfiles` or `compose_images` instead |
 
-`dockerfiles` benötigt einen Docker-Daemon im **Scanner-Job**, z. B. einen `docker:dind`-Service
-mit passenden `DOCKER_HOST`-/TLS-Einstellungen. Es werden explizit Dockerfiles gebaut; das
-kann deren Build-Befehle ausführen. Dafür niemals geschützte Bot-/dTrack-Schlüssel bereitstellen.
-Die gebauten Images werden lokal als Docker-Archive gescannt, anschließend aufgeräumt und
-nicht in die Registry hochgeladen. Der Worker benötigt keinen Docker-Daemon.
+`dockerfiles` needs a Docker daemon in the **scanner job**, e.g. a `docker:dind` service
+with matching `DOCKER_HOST`/TLS settings. Dockerfiles are built explicitly; this
+can execute their build commands. Never provide protected bot/dTrack keys for this.
+The built images are scanned locally as Docker archives, then cleaned up and
+not uploaded to the registry. The worker needs no Docker daemon.
 
-Compose-Selektoren unterstützen einfache `services:`-Definitionen mit wörtlichen `image:`-
-Referenzen. Image-Variablen und Build-only-Dienste werden nicht geraten, sondern als Fehler
-gemeldet. Hier werden Image-Pakete verglichen, keine CycloneDX-Serviceinventare.
-Verschwindet ein ausgewählter Dienst, Dockerfile oder Scanpfad auf einer Seite, darf deren
-Inventar leer sein. Zwei leere Inventare werden als fehlerhafte Scan-Konfiguration abgelehnt.
-Mutable Tags und unfixierte Build-Downloads können sich zwischen Builds ändern; für
-reproduzierbare Ergebnisse Images und Build-Abhängigkeiten festlegen.
+Compose selectors support simple `services:` definitions with literal `image:`
+references. Image variables and build-only services are not guessed but reported
+as errors. Here, image packages are compared, not CycloneDX service inventories.
+If a selected service, Dockerfile or scan path disappears on one side, its
+inventory may be empty. Two empty inventories are rejected as a faulty scan configuration.
+Mutable tags and unpinned build downloads can change between builds; for
+reproducible results, pin images and build dependencies.
 
-Für Monorepos die Templates mit unterschiedlichen `job_name`-Werten einbinden und den
-Worker über `scan_job` auf den jeweiligen Produzenten verweisen. `component` benennt den
-separaten dTrack-Vergleich und Bot-Kommentar. Artefakte verschiedener Komponenten kommen
-nicht miteinander in Berührung.
+For monorepos, include the templates with different `job_name` values and point the
+worker to the respective producer via `scan_job`. `component` names the
+separate dTrack comparison and bot comment. Artifacts of different components never
+come into contact with each other.
 
-## Zugangsdaten und Zeitplan
+## Credentials and schedule
 
-Default-Branch und dessen CI-Änderungen durch vertrauenswürdige Maintainer schützen. Unter
-**Settings → CI/CD → Variables → Access protected resources in merge request pipelines**
-die Option **Allow merge request pipelines to access protected variables and runners**
-deaktivieren. Dadurch erhalten auch MRs zwischen geschützten Branches keine geschützten
-Schlüssel. `masked` allein verhindert den Zugriff nicht.
-[GitLab-Dokumentation](https://docs.gitlab.com/ci/pipelines/merge_request_pipelines/#control-access-to-protected-variables-and-runners)
+Protect the default branch and its CI changes through trusted maintainers. Under
+**Settings → CI/CD → Variables → Access protected resources in merge request pipelines**,
+disable the option **Allow merge request pipelines to access protected variables and runners**.
+This way, even MRs between protected branches receive no protected
+keys. `masked` alone does not prevent access.
+[GitLab documentation](https://docs.gitlab.com/ci/pipelines/merge_request_pipelines/#control-access-to-protected-variables-and-runners)
 
-| Variable | Inhalt |
+| Variable | Content |
 |---|---|
-| `PATCHWATCH_GITLAB_URL` | HTTPS-Basis-URL von GitLab |
-| `PATCHWATCH_GITLAB_TOKEN` | Projekt-Bot mit Developer-Rolle und `api`-Scope: Artefakte/Pipelines lesen, MR-Kommentare schreiben und bei verändertem Zielbranch einen neuen MR-Scan anfordern |
-| `PATCHWATCH_URL` | HTTPS-Basis-URL von dTrack |
+| `PATCHWATCH_GITLAB_URL` | HTTPS base URL of GitLab |
+| `PATCHWATCH_GITLAB_TOKEN` | Project bot with Developer role and `api` scope: read artifacts/pipelines, write MR comments and request a new MR scan when the target branch has changed |
+| `PATCHWATCH_URL` | HTTPS base URL of dTrack |
 | `PATCHWATCH_UPLOAD_KEY` | `BOM_UPLOAD`, `PROJECT_CREATION_UPLOAD` |
 | `PATCHWATCH_READ_KEY` | `VIEW_PORTFOLIO`, `VIEW_POLICY_VIOLATION`, `VIEW_VULNERABILITY` |
-| `PATCHWATCH_CA_CERT` | Optional: interne CA als PEM oder Dateivariable; TLS-Prüfung bleibt aktiv |
+| `PATCHWATCH_CA_CERT` | Optional: internal CA as PEM or file variable; TLS verification stays active |
 
-Schlüssel **masked/protected** konfigurieren, optional als Dateivariablen mit Suffix `_FILE`.
-Neue Worker-Variablen können auf Environment `patchwatch-mr-feedback` begrenzt werden;
-das Template nutzt dieses Environment mit `action: access`, ohne ein Deployment anzulegen.
-Vorhandene geschützte Release-Schlüssel mit Scope `*` können weiterverwendet werden.
-Keine persönlichen Admin-Tokens im Worker hinterlegen.
+Configure keys as **masked/protected**, optionally as file variables with the suffix `_FILE`.
+New worker variables can be restricted to the environment `patchwatch-mr-feedback`;
+the template uses this environment with `action: access`, without creating a deployment.
+Existing protected release keys with scope `*` can continue to be used.
+Do not store personal admin tokens in the worker.
 
-Mit bestehender `glab`-Anmeldung und den drei eingerichteten dTrack-Variablen kann die
-Einrichtung automatisiert werden:
+With an existing `glab` login and the three dTrack variables set up, the
+setup can be automated:
 
 ```sh
-export GITLAB_PROJECT_ID=1234  # numerische ID des Projekts mit Feedback-Worker
-# Bot und geschützte Variablen erstellen, Zeitplan vor dem Merge noch deaktiviert lassen:
-python3 scripts/setup-mr-feedback.py --project "$GITLAB_PROJECT_ID" --ca-cert /pfad/zur/ca.pem
-# Nach dem Merge der CI-Includes auf den Default-Branch den Zeitplan aktivieren:
+export GITLAB_PROJECT_ID=1234  # numeric ID of the project with the feedback worker
+# Create the bot and protected variables, leave the schedule deactivated before the merge:
+python3 scripts/setup-mr-feedback.py --project "$GITLAB_PROJECT_ID" --ca-cert /path/to/ca.pem
+# After merging the CI includes into the default branch, activate the schedule:
 python3 scripts/setup-mr-feedback.py --project "$GITLAB_PROJECT_ID" --activate
 ```
 
-Das Script sperrt geschützte Ressourcen für MR-Pipelines, erstellt einen auf das Projekt
-begrenzten Developer-Bot mit 90 Tagen Laufzeit und setzt den Fünf-Minuten-Zeitplan mit
-`PATCHWATCH_MR_FEEDBACK=true`. Bestehende Schlüssel bleiben erhalten; Werte werden nicht
-ausgegeben. Token vor Ablauf erneuern. Alternativ Variablen und Schedule manuell einrichten.
+The script locks protected resources for MR pipelines, creates a Developer bot restricted to the project
+with a lifetime of 90 days and sets the five-minute schedule with
+`PATCHWATCH_MR_FEEDBACK=true`. Existing keys are kept; values are not
+printed. Renew the token before it expires. Alternatively, set up variables and schedule manually.
 
-Vor dem ersten Worker-Lauf die reguläre dTrack-Konfiguration anwenden. Sie legt gesonderte
-`Patchwatch MR …`-Regelkopien für `scan-purpose:mr-feedback` an. Eigene Team-Policies und
-Release-Distributionsregeln werden nicht automatisch kopiert.
+Before the first worker run, apply the regular dTrack configuration. It creates separate
+`Patchwatch MR …` rule copies for `scan-purpose:mr-feedback`. Team policies of your own and
+release distribution rules are not copied automatically.
 
-## Aktualisierung und Grenzen
+## Updates and limits
 
-Der Worker verarbeitet offene MRs desselben Projekts; Fork-MRs werden übersprungen. Er lädt
-`patchwatch-mr.json` über die konkrete erfolgreiche Job-ID und prüft Quellstand, Pipeline-SHA
-und aktuellen Zielbranch. Das Artefakt enthält beide SBOMs, Ziel-/Quell-SHA und Merge-Baum.
-Alte einseitige SBOM-Artefakte werden nicht als korrekter Vergleich akzeptiert.
+The worker processes open MRs of the same project; fork MRs are skipped. It downloads
+`patchwatch-mr.json` via the specific successful job ID and checks source state, pipeline SHA
+and current target branch. The artifact contains both SBOMs, target/source SHA and merge tree.
+Old one-sided SBOM artifacts are not accepted as a correct comparison.
 
-Ist der Zielbranch inzwischen weitergelaufen, veröffentlicht der Worker „Ausstehend“ und
-fordert höchstens eine automatische neue MR-Pipeline je Quell-/Ziel-Kombination an. Laufende
-Pipelines werden abgewartet. Schlägt dieser Scan fehl, kann der Scan-Job manuell erneut
-versucht werden; der Worker startet keine endlose Folge fehlgeschlagener Pipelines.
-Vor jedem Kommentar prüft er Quell- und Zielstand erneut und verwirft überholte Ergebnisse.
-`resource_group` serialisiert Worker-Läufe je Projekt; nur eine Worker-Konfiguration pro
-Zielprojekt betreiben. Externe Cron-Läufe ebenfalls serialisieren.
+If the target branch has moved on in the meantime, the worker publishes "Pending" and
+requests at most one automatic new MR pipeline per source/target combination. Running
+pipelines are awaited. If this scan fails, the scan job can be retried
+manually; the worker does not start an endless series of failed pipelines.
+Before every comment, it checks source and target state again and discards outdated results.
+`resource_group` serializes worker runs per project; operate only one worker configuration per
+target project. Also serialize external cron runs.
 
-### dTrack-Versionen
+### dTrack versions
 
-Alle Versionen liegen unter **demselben Projektnamen wie das reguläre Inventar**
-(`<Projektpfad>[/<Komponente>]`); die Trennung erfolgt über Version und Scope-Tag:
+All versions are under the **same project name as the regular inventory**
+(`<project path>[/<component>]`); separation is via version and scope tag:
 
-| Version | Inhalt | Tags |
+| Version | Content | Tags |
 |---|---|---|
-| `mr-<IID>` | Merge-Ergebnis dieses MRs; jeder Lauf überschreibt sie | `scan-purpose:mr-feedback`, `gitlab-project-id:<id>` |
-| `base-<Zielbranch>` | **Baseline:** gepaarter Scan des Zielbranches am aktuellen Ziel-Commit (Standard, `baseline: scan`) | wie `mr-<IID>` |
-| `<Zielbranch>` (z. B. `main`, `dev`) | Nur mit `baseline: branch`: das reguläre Branch-Inventar als Baseline, solange sein Commit dem aktuellen Ziel-Commit entspricht | wie bisher (CI-Inventar) |
+| `mr-<IID>` | Merge result of this MR; every run overwrites it | `scan-purpose:mr-feedback`, `gitlab-project-id:<id>` |
+| `base-<target branch>` | **Baseline:** paired scan of the target branch at the current target commit (default, `baseline: scan`) | like `mr-<IID>` |
+| `<target branch>` (e.g. `main`, `dev`) | Only with `baseline: branch`: the regular branch inventory as baseline, as long as its commit matches the current target commit | as before (CI inventory) |
 
-Ein MR vergleicht damit immer gegen seinen eigenen Zielbranch („into main“, „into dev“): `base-main`
-bzw. `base-dev` sind der Zielbranch ohne den MR, `mr-<IID>` ist das Merge-Ergebnis. Beide Seiten
-entstehen im selben Scan-Job mit denselben Eingaben, tragen dieselben Scope-Tags und werden von
-denselben `Patchwatch MR …`-Policies bewertet. Dadurch erscheinen nur echte Änderungen im Bericht.
+An MR thus always compares against its own target branch ("into main", "into dev"): `base-main`
+or `base-dev` is the target branch without the MR, `mr-<IID>` is the merge result. Both sides
+are created in the same scan job with the same inputs, carry the same scope tags and are evaluated by the
+same `Patchwatch MR …` policies. As a result, only real changes appear in the report.
 
-Bei Komponenten-Workern (`component` gesetzt) hängen die Komponenten-Versionen einer Version unter einem
-**Parent-Projekt** `<Projektpfad>` mit **derselben Version** (`mr-<IID>`, `base-<Zielbranch>`, Branch-Name).
-So zeigt der Projektbaum in dTrack pro Branch oder MR alle Komponenten gruppiert, wie bei `main`. dTrack legt
-fehlende Parents nicht selbst an: der Worker erzeugt sie aus einem leeren SBOM mit denselben Scope-Tags. Ein
-Parent ohne diese Tags (etwa ein Release gleichen Namens) wird nie angefasst, die Komponente wird dann ohne
-Parent hochgeladen. Die Aggregation der Kinder (`AGGREGATE_DIRECT_CHILDREN`) setzt der serverseitige
-Lauf `patchwatch-versions` alle fünf Minuten, außerdem die Einrichtung bzw. `python -m patchwatch.dtrack.groups`
-mit Admin-Rechten; der Upload-Key darf das nicht. Darüber gruppiert ein Navigationsprojekt
-`<Projektpfad> @ all versions` die verschiedenen Versionen ohne eigene Aggregation.
+For component workers (`component` set), the component versions of a version hang under a
+**parent project** `<project path>` with the **same version** (`mr-<IID>`, `base-<target branch>`, branch name).
+This way the project tree in dTrack shows all components grouped per branch or MR, as for `main`. dTrack does not create
+missing parents itself: the worker creates them from an empty SBOM with the same scope tags. A
+parent without these tags (such as a release of the same name) is never touched; the component is then uploaded without
+a parent. The aggregation of the children (`AGGREGATE_DIRECT_CHILDREN`) is set by the server-side
+run `patchwatch-versions` every five minutes, and also by the setup or `python -m patchwatch.dtrack.groups`
+with admin permissions; the upload key may not do that. Above that, a navigation project
+`<project path> @ all versions` groups the different versions without aggregation of its own.
 
-`baseline: branch` ist nur für Projekte gedacht, deren Produktions-Policies den gespiegelten
-MR-Policies entsprechen und deren Triage (`not_affected`, `false_positive`) keine Rolle spielt:
-Das reguläre Inventar wird von den Produktions-Policies bewertet (`Patchwatch …` statt
-`Patchwatch MR …`) und trägt manuelle Triage-Entscheidungen. Beides erscheint im Bericht als
-Änderung (gleiche Verstöße gelten als „neu“ und „entfallen“). Der Worker erkennt den Stand der
-Branch-Version an der Commit-URL, die jeder Upload als Herkunft mitgibt; ist sie veraltet, fehlt
-oder inaktiv, nutzt er den gepaarten Scan.
+`baseline: branch` is intended only for projects whose production policies match the mirrored
+MR policies and for which triage (`not_affected`, `false_positive`) plays no role:
+the regular inventory is evaluated by the production policies (`Patchwatch …` instead of
+`Patchwatch MR …`) and carries manual triage decisions. Both appear in the report as a
+change (identical violations count as "new" and "dropped"). The worker recognizes the state of the
+branch version by the commit URL that every upload supplies as origin; if it is outdated, missing
+or inactive, it uses the paired scan.
 
-Der Worker überschreibt nie eine Version, die nicht sein Scope-Tag trägt: Eine Version namens
-`mr-7` oder `base-main`, die z. B. aus einem CI-Inventar stammt, führt zu einem Fehler.
-Die Namen `mr-<Zahl>` und `base-…` sind deshalb für Branches reserviert. Release-Tags,
-Latest-Abgleich, Delta-Baselines und Produktionsbenachrichtigungen ignorieren diese Versionen.
+The worker never overwrites a version that does not carry its scope tag: a version named
+`mr-7` or `base-main`, which comes e.g. from a CI inventory, leads to an error.
+The names `mr-<number>` and `base-…` are therefore reserved for branches. Release tags,
+latest synchronization, delta baselines and production notifications ignore these versions.
 
-### Feature-Branches als Versionen
+### Feature branches as versions
 
-Mit `branch_scan_job` (Standard: leer = aus) erzeugt der Worker für **jeden ungeschützten
-Nicht-Default-Branch** eine dTrack-Version mit dem Branch-Namen und dem Tag
-`scan-purpose:branch`. Der Branch-Pipeline läuft dafür ohne Schlüssel mit
-`ci-templates/branch-sbom.yml` (Artefakt `patchwatch-branch.json`); hochgeladen wird erst durch
-den geschützten Worker, wie bei MRs. Geschützte Branches laden weiter über den regulären
-Inventar-Job hoch (`branches`-Input) und werden hier übersprungen. Ein Branch wird nur neu
-hochgeladen, wenn sein Commit von dem der Version abweicht; Namen von Releases oder
-anderen Inventaren werden nie überschrieben. Voraussetzung: Das `workflow:rules` des Projekts
-lässt Branch-Pipelines (Push) für diese Branches zu.
+With `branch_scan_job` (default: empty = off), the worker creates for **every unprotected
+non-default branch** a dTrack version with the branch name and the tag
+`scan-purpose:branch`. The branch pipeline runs without keys for this with
+`ci-templates/branch-sbom.yml` (artifact `patchwatch-branch.json`); upload happens only through
+the protected worker, as with MRs. Protected branches continue to upload via the regular
+inventory job (`branches` input) and are skipped here. A branch is only uploaded again
+if its commit differs from that of the version; names of releases or
+other inventories are never overwritten. Prerequisite: the project's `workflow:rules`
+allow branch pipelines (push) for these branches.
 
 ```yaml
 include:
   - project: platform/patchwatch
-    ref: <geprüfter Commit>
+    ref: <reviewed commit>
     file: ci-templates/branch-sbom.yml
     inputs:
-      image: registry.example.org/platform/patchwatch/ci@sha256:<Digest>
-      dockerfiles: Dockerfile            # dieselben Eingaben wie im MR-Scan
+      image: registry.example.org/platform/patchwatch/ci@sha256:<digest>
+      dockerfiles: Dockerfile            # same inputs as in the MR scan
   - project: platform/patchwatch
-    ref: <derselbe geprüfte Commit>
+    ref: <the same reviewed commit>
     file: ci-templates/mr-feedback.yml
     inputs:
-      image: registry.example.org/platform/patchwatch/ci@sha256:<Digest>
+      image: registry.example.org/platform/patchwatch/ci@sha256:<digest>
       branch_scan_job: patchwatch-branch-sbom
 ```
 
-Nach dem Import werden die Analysestände wiederholt gelesen. Zwei identische Abfragen sind
-eine stabilisierte **Momentaufnahme**, kein Nachweis abgeschlossener Analyzer. Timeouts
-werden als unvollständig markiert und erneut versucht; auch null Findings sind keine Freigabe.
+After the import, the analysis states are read repeatedly. Two identical queries are
+a stabilized **snapshot**, no proof of finished analyzers. Timeouts
+are marked as incomplete and retried; even zero findings are no approval.
 
-Der Kommentar ist eine Vorschau mit maximal 20 Einträgen je Abschnitt und begrenzten Textlängen.
-Direkt darüber steht **„Vollständigen Bericht herunterladen (ZIP: Markdown + JSON)“**. Das Archiv
-enthält den vollständigen Vergleich einschließlich SHAs, Merge-Baum und Auswertungszeitpunkt,
-ohne Zeilen- oder Textkürzung. Es wird als Markdown-Upload im **Zielprojekt des MRs** gespeichert,
-auch wenn der Worker in einem anderen Projekt läuft. Der Link verweist auf genau diese
-Momentaufnahme und bleibt nach Ablauf der CI-Artefakte bestehen. GitLab-Projektberechtigungen
-und die dortigen Regeln zur Aufbewahrung von Anhängen gelten weiterhin. Uploads werden durch
-Patchwatch nicht automatisch gelöscht. Bei ausstehender oder fehlgeschlagener Neuauswertung
-bleibt der letzte Bericht mit ausdrücklicher Kennzeichnung des vorherigen Auswertungsstands
-verlinkt. Unveränderte fertige Ergebnisse erzeugen kein neues Archiv.
+The comment is a preview with at most 20 entries per section and limited text lengths.
+Directly above it is **"Download the full report (ZIP: Markdown + JSON)"**. The archive
+contains the complete comparison including SHAs, merge tree and evaluation time,
+without line or text truncation. It is stored as a Markdown upload in the **target project of the MR**,
+even if the worker runs in a different project. The link points to exactly this
+snapshot and remains after the CI artifacts expire. GitLab project permissions
+and its rules for retention of attachments continue to apply. Uploads are not deleted automatically by
+Patchwatch. For a pending or failed re-evaluation,
+the last report stays linked with an explicit label of the previous evaluation state.
+Unchanged finished results create no new archive.
 
-JSON, Markdown und ZIP liegen zusätzlich eine Woche als Worker-Artefakte unter
-`patchwatch-mr-reports/<MR-IID>/`. Der Worker erzeugt ein GitLab-Report-Artefakt
-`annotations` mit direkten `external_link`-Verweisen auf die ZIPs, auch bei wiederverwendeten
-Ergebnissen. Diese Links erscheinen auf der **Worker-Job-Seite**, nicht als Security-Widget
-in der MR-Pipeline. Der Bot benötigt dafür keine weiteren Rechte neben seinem bisherigen
-Projekt-Token mit `api`-Scope.
+JSON, Markdown and ZIP are additionally available for one week as worker artifacts under
+`patchwatch-mr-reports/<MR-IID>/`. The worker creates a GitLab report artifact
+`annotations` with direct `external_link` references to the ZIPs, even for reused
+results. These links appear on the **worker job page**, not as a security widget
+in the MR pipeline. The bot needs no further permissions for this beyond its existing
+project token with `api` scope.
 
-### GitLabs MR-Reports
+### GitLab's MR reports
 
-Das Scan-Template nutzt `artifacts:expose_as`, um die **SBOM-Rohdaten** direkt in der
-MR-Oberfläche als Artefakt-Link bereitzustellen. Diese gepaarten Inventare enthalten noch
-keine Findings-Auswertung. Den vollständigen Patchwatch-Vergleich liefert der ZIP-Link im
-Bot-Kommentar.
+The scan template uses `artifacts:expose_as` to provide the **raw SBOM data** directly in the
+MR interface as an artifact link. These paired inventories contain no
+findings evaluation yet. The complete Patchwatch comparison is provided by the ZIP link in the
+bot comment.
 
-Ein beliebiger Markdown-/JSON-Vergleich lässt sich nicht als frei definierbares natives
-MR-Report-Widget registrieren. GitLabs native Widgets für Dependency-Scanning und
-Lizenzänderungen benötigen **GitLab Ultimate** und dessen unterstützte Report-Formate,
-passende SBOM-Metadaten sowie Report-Jobs in der MR-/Vergleichspipeline. Ein
-`annotations`-Report in einer geplanten Worker-Pipeline verknüpft deren Findings nicht
-automatisch mit der MR-Pipeline. Die Community Edition kann diese Security-/Lizenz-Widgets
-nicht anzeigen. Patchwatch liefert deshalb direkte Anhänge und Job-Annotations statt
-Security-Findings als fachfremde Test- oder Code-Quality-Ergebnisse auszugeben.
+An arbitrary Markdown/JSON comparison cannot be registered as a freely definable native
+MR report widget. GitLab's native widgets for dependency scanning and
+license changes require **GitLab Ultimate** and its supported report formats,
+matching SBOM metadata and report jobs in the MR/comparison pipeline. An
+`annotations` report in a scheduled worker pipeline does not automatically link its findings
+with the MR pipeline. The Community Edition cannot display these security/license widgets.
+Patchwatch therefore provides direct attachments and job annotations instead of
+emitting security findings as unrelated test or code quality results.
 
-Referenzen: [Artefakte im MR anzeigen](https://docs.gitlab.com/ci/yaml/#artifactsexpose_as),
+References: [Show artifacts in the MR](https://docs.gitlab.com/ci/yaml/#artifactsexpose_as),
 [Annotations](https://docs.gitlab.com/ci/yaml/artifacts_reports/#artifactsreportsannotations),
-[Dependency Scanning](https://docs.gitlab.com/user/application_security/dependency_scanning/),
-[Lizenz-Scanning](https://docs.gitlab.com/user/compliance/license_scanning_of_cyclonedx_files/),
-[Markdown-Uploads](https://docs.gitlab.com/api/project_markdown_uploads/).
+[Dependency scanning](https://docs.gitlab.com/user/application_security/dependency_scanning/),
+[License scanning](https://docs.gitlab.com/user/compliance/license_scanning_of_cyclonedx_files/),
+[Markdown uploads](https://docs.gitlab.com/api/project_markdown_uploads/).
 
-Fehlende/abgelaufene Artefakte ergeben „Ausstehend“, API-/Upload-/Auswertungsfehler einen
-Fehlerkommentar und fehlgeschlagenen Worker-Job. Andere MRs werden weiter verarbeitet.
-Geschlossene MRs werden nicht mehr aktualisiert; Kommentare bleiben als Historie bestehen.
-`mr-<IID>`-, `base-…`- und Branch-Versionen werden noch nicht automatisch gelöscht; frühere
-Versionen unter `<Projektpfad>/mr-feedback` bleiben unverändert stehen und können gelöscht werden. Später veröffentlichte
-CVEs werden nach erneutem Scan-Job ausgewertet; unveränderte fertige Job-Ergebnisse werden
-nicht ständig neu hochgeladen.
+Missing/expired artifacts result in "Pending", API/upload/evaluation errors in an
+error comment and a failed worker job. Other MRs continue to be processed.
+Closed MRs are no longer updated; comments remain as history.
+`mr-<IID>`, `base-…` and branch versions are not yet deleted automatically; earlier
+versions under `<project path>/mr-feedback` remain in place and can be deleted. Later published
+CVEs are evaluated after a renewed scan job; unchanged finished job results are
+not constantly re-uploaded.
 
-Die SBOMs stammen aus veränderbaren MR-Pipelines. Der Bericht ist Review-Feedback, keine
-Attestierung gegen absichtliche Manipulation der Scan-Konfiguration. Paketnamen werden ohne
-aktive Erwähnungen, HTML oder GitLab-Quick-Actions dargestellt.
+The SBOMs come from mutable MR pipelines. The report is review feedback, no
+attestation against deliberate manipulation of the scan configuration. Package names are shown without
+active mentions, HTML or GitLab quick actions.
 
-## Patchwatch selbst
+## Patchwatch itself
 
-`ci/mr-components.yml` scannt Bridge und CI-Image aus ihren jeweiligen Dockerfiles sowie
-API-Server, Frontend, PostgreSQL, Trivy und Gateway über `compose.yaml`. Dadurch werden
-Image-Versionen tatsächlich aus dem Ziel- bzw. Merge-Baum gelesen; die Image-Liste des
-Quellbranchs wird nicht irrtümlich für beide Seiten verwendet. Tests prüfen, dass dieselben
-Komponenten wie bei den regulären Release-Scans abgedeckt sind.
+`ci/mr-components.yml` scans the bridge and CI image from their respective Dockerfiles as well as
+API server, frontend, PostgreSQL, Trivy and gateway via `compose.yaml`. This way,
+image versions are actually read from the target or merge tree; the image list of the
+source branch is not mistakenly used for both sides. Tests verify that the same
+components as in the regular release scans are covered.
 
-`ci/mr-feedback.yml` bindet die sieben Worker für das Patchwatch-Projekt ein.
-Vor der Nachnutzung dessen Projekt-ID und Registry-Referenzen anpassen. In geschützten
-Feedback-Pipelines wird das zum Default-Branch-Commit gehörende CI-Image verwendet. Die
-MR-Pipeline baut nur das Scanner-Image vorab; die zu vergleichenden Bridge-/CI-Images werden
-anschließend separat aus den beiden Bäumen gebaut. Der normale Release-/Deploy-Ablauf und
-sein Komponenten-Zeitplan bleiben unabhängig vom Feedback-Zeitplan.
+`ci/mr-feedback.yml` includes the seven workers for the Patchwatch project.
+Before reuse, adapt its project ID and registry references. In protected
+feedback pipelines, the CI image belonging to the default branch commit is used. The
+MR pipeline builds only the scanner image beforehand; the bridge/CI images to be compared are
+then built separately from the two trees. The normal release/deploy flow and
+its component schedule stay independent of the feedback schedule.
 
-`ci/branch-components.yml` enthält dieselben Scans mit identischen Eingaben für Feature-Branches
-(`ci-templates/branch-sbom.yml`); `ci/mr-feedback.yml` setzt dafür `branch_scan_job`. Die
-`workflow:rules` starten für jeden Branch eine Push-Pipeline, außer er hat einen offenen MR: dann
-genügt dessen MR-Pipeline, und die Branch-Version bleibt auf dem Stand vor dem MR, während
-`mr-<IID>` aktuell ist. Das CI-Image wird dafür auch in Branch-Pipelines gebaut.
+`ci/branch-components.yml` contains the same scans with identical inputs for feature branches
+(`ci-templates/branch-sbom.yml`); `ci/mr-feedback.yml` sets `branch_scan_job` for this. The
+`workflow:rules` start a push pipeline for every branch unless it has an open MR: in that case
+its MR pipeline suffices, and the branch version stays at the state before the MR, while
+`mr-<IID>` is current. The CI image is also built in branch pipelines for this.
 
-Referenzen: [Git-Merge-Baum](https://git-scm.com/docs/git-merge-tree),
-[Syft-Scan-Ziele](https://oss.anchore.com/docs/guides/sbom/scan-targets/),
-[MR-Pipelines-API](https://docs.gitlab.com/api/merge_requests/#create-merge-request-pipeline),
-[Artefakte per Job-ID](https://docs.gitlab.com/api/job_artifacts/#download-a-single-artifact-file-by-job-id),
-[MR-Kommentare](https://docs.gitlab.com/api/notes/#merge-requests).
+References: [Git merge tree](https://git-scm.com/docs/git-merge-tree),
+[Syft scan targets](https://oss.anchore.com/docs/guides/sbom/scan-targets/),
+[MR pipelines API](https://docs.gitlab.com/api/merge_requests/#create-merge-request-pipeline),
+[Artifacts by job ID](https://docs.gitlab.com/api/job_artifacts/#download-a-single-artifact-file-by-job-id),
+[MR comments](https://docs.gitlab.com/api/notes/#merge-requests).

@@ -1,81 +1,81 @@
 # Patchwatch
 
-Patchwatch erfasst Software auf Entwickler-Rechnern und in GitLab-Projekten als
-SBOM, gleicht den Bestand über Dependency-Track mit Schwachstellenquellen ab und
-meldet Findings sowie Lizenzverstöße an die zuständigen Teams.
+Patchwatch records the software on developer machines and in GitLab projects as
+SBOMs, matches the inventory against vulnerability sources through Dependency-Track, and
+reports findings and license violations to the responsible teams.
 
-Unterstützt werden Linux und macOS, Verzeichnis- und Image-Scans mit Syft sowie
-Metadaten ausgewählter IDE- und Browser-Erweiterungen. Die zentrale Installation
-besteht aus Dependency-Track, PostgreSQL, Frontend, Bridge und Trivy-Server.
-Patchwatch erkennt Schwachstellen; es installiert keine Updates auf Endgeräten.
+It supports Linux and macOS, directory and image scans with Syft, and metadata of
+selected IDE and browser extensions. The central installation consists of
+Dependency-Track, PostgreSQL, the frontend, the bridge and the Trivy server.
+Patchwatch detects vulnerabilities; it does not install updates on endpoints.
 
-## Architektur
+## Architecture
 
-![Architektur: Agenten und GitLab CI übertragen SBOMs an Dependency-Track. Trivy und Schwachstellenquellen liefern Analysedaten; die Bridge versendet Benachrichtigungen.](docs/assets/architecture.svg)
+![Architecture: agents and GitLab CI upload SBOMs to Dependency-Track. Trivy and vulnerability sources provide analysis data; the bridge sends notifications.](docs/assets/architecture.svg)
 
-Agent und CI erzeugen mit Syft das Softwareinventar. Dependency-Track speichert
-und analysiert die SBOMs und zeigt Findings in der Weboberfläche. Die Bridge
-übernimmt gefilterte Benachrichtigungen mit Wiederholungen bei Zustellfehlern.
-Der zentrale Stack läuft mit Docker Compose oder auf Kubernetes.
+The agent and CI create the software inventory with Syft. Dependency-Track stores
+and analyzes the SBOMs and shows findings in the web interface. The bridge
+forwards filtered notifications and retries on delivery failures.
+The central stack runs with Docker Compose or on Kubernetes.
 
-## Einstieg
+## Getting started
 
-1. [Schnellstart mit Docker Compose](docs/getting-started.md) für die erste lokale Installation.
-2. [Installation auswählen](docs/installation/index.md): Compose oder Kubernetes mit Helmfile.
-3. [Agent einrichten](docs/usage/agent.md) oder [GitLab-Projekte anbinden](docs/usage/ci-integration.md).
-4. [Keycloak-Login](docs/configuration/oidc.md), [Richtlinien](docs/configuration/policies.md)
-   und [Benachrichtigungen](docs/configuration/alerting.md) konfigurieren.
-5. [Backups, Monitoring und Updates](docs/operations/index.md) vor dem regulären Betrieb einrichten.
+1. [Quick start with Docker Compose](docs/getting-started.md) for the first local installation.
+2. [Choose an installation](docs/installation/index.md): Compose or Kubernetes with Helmfile.
+3. [Set up the agent](docs/usage/agent.md) or [connect GitLab projects](docs/usage/ci-integration.md).
+4. Configure [Keycloak login](docs/configuration/oidc.md), [policies](docs/configuration/policies.md)
+   and [notifications](docs/configuration/alerting.md).
+5. Set up [backups, monitoring and updates](docs/operations/index.md) before regular operation.
 
-Die **[Dokumentationsübersicht](docs/README.md)** führt durch alle Anleitungen,
-Referenzen und noch nicht implementierten Entwürfe. Alle Beispiele verwenden
-neutrale Domains und Projektpfade; vor einem Deployment die
-[Installationsparameter](docs/installation/customization.md) auf die eigene Umgebung abstimmen.
-Die eingecheckten Kubernetes-Profile sind ein anzupassendes Referenzdeployment.
+The **[documentation overview](docs/README.md)** guides you through all guides,
+references and not yet implemented designs. All examples use
+neutral domains and project paths; before a deployment, adapt the
+[installation parameters](docs/installation/customization.md) to your own environment.
+The checked-in Kubernetes profiles are a reference deployment to be adapted.
 
-## Verwendung
+## Usage
 
-- **Rechner erfassen:** Agent konfigurieren, Upload-Schlüssel hinterlegen und den regelmäßigen Scan aktivieren.
-- **Projekte prüfen:** CI-Template einbinden und Repositorys oder Container-Images als SBOM hochladen.
-- **Findings bearbeiten:** In der Weboberfläche Schwachstellen und Lizenzverstöße bewerten; bei Bedarf Delta- oder MR-Berichte nutzen.
-- **Teams informieren:** Meldeziele und Filter konfigurieren, damit relevante Findings als Ticket oder Chat-Nachricht ankommen.
+- **Record machines:** configure the agent, store the upload key and enable the regular scan.
+- **Check projects:** include the CI template and upload repositories or container images as SBOMs.
+- **Handle findings:** assess vulnerabilities and license violations in the web interface; use delta or MR reports where needed.
+- **Inform teams:** configure notification targets and filters so that relevant findings arrive as a ticket or chat message.
 
-## Funktionsumfang
+## Features
 
-- Hostinventar mit stabiler Gerätezuordnung, kanonischen Tags und Registrierung.
-- CycloneDX-SBOMs aus Verzeichnissen, Container-Images und GitLab-Pipelines.
-- Schwachstellenanalyse mit Dependency-Track und dessen nativer Trivy-Anbindung.
-- Security- und Lizenzregeln, Compliance-Berichte und optionale CI-Gates.
-- Delta-Berichte und Findings-Feedback für Merge Requests.
-- Persistente Benachrichtigungen über Webhooks, JIRA, Slack und Teams.
-- OIDC-Anmeldung mit Keycloak-Gruppen und getrennten Aufgabenrechten.
+- Host inventory with stable device assignment, canonical tags and registration.
+- CycloneDX SBOMs from directories, container images and GitLab pipelines.
+- Vulnerability analysis with Dependency-Track and its native Trivy integration.
+- Security and license rules, compliance reports and optional CI gates.
+- Delta reports and findings feedback for merge requests.
+- Persistent notifications via webhooks, JIRA, Slack and Teams.
+- OIDC login with Keycloak groups and separate task permissions.
 
-Datenumfang, Erkennungsgrenzen und Datenschutz beschreibt die
-[Architekturübersicht](docs/reference/architecture.md). Ein Enrollment-Dienst und
-Agent-Installationspakete (`.deb`, `.pkg`) werden mit `packaging/build.py` gebaut ([Agent](docs/usage/agent.md)); Signierung und private Laufzeit sind noch [Entwurf](docs/design/README.md).
+The [architecture overview](docs/reference/architecture.md) describes the data scope,
+detection limits and privacy. An enrollment service and
+agent installation packages (`.deb`, `.pkg`) are built with `packaging/build.py` ([agent](docs/usage/agent.md)); signing and the private runtime are still a [design](docs/design/README.md).
 
-## Entwicklung und Prüfung
+## Development and testing
 
-Python ≥3.12; der Anwendungscode benötigt keine zusätzlichen Python-Laufzeitpakete.
-Für Deployment-Prüfungen werden Helm und Helmfile benötigt.
+Python ≥3.12; the application code needs no additional Python runtime packages.
+Helm and Helmfile are required for deployment checks.
 
 ```sh
 python3 -m unittest discover -s tests -v
 python3 scripts/spdx.py --check
 helm lint deploy/helm/patchwatch
-python3 packaging/build.py deb      # Agent-Paket nach dist/
+python3 packaging/build.py deb      # agent package into dist/
 ```
 
-Codestruktur: `patchwatch/core` (gemeinsam), `agent` (Host-Agent, eigenständig paketierbar),
-`dtrack` (Dependency-Track-Client und Administration), `ci` (GitLab-CI-Jobs) und `bridge`.
-Die erlaubten Abhängigkeiten zwischen den Schichten prüft `tests/test_boundaries.py`;
-Einzelheiten in der [Architekturübersicht](docs/reference/architecture.md#code-struktur).
+Code structure: `patchwatch/core` (shared), `agent` (host agent, packageable on its own),
+`dtrack` (Dependency-Track client and administration), `ci` (GitLab CI jobs) and `bridge`.
+`tests/test_boundaries.py` checks the allowed dependencies between the layers;
+details in the [architecture overview](docs/reference/architecture.md#code-structure).
 
-Nach Änderungen an versionierten Quelldateien `python3 scripts/spdx.py` ausführen,
-damit die [SPDX-Quellinventur](docs/reference/licenses.md) aktuell bleibt.
+After changes to versioned source files, run `python3 scripts/spdx.py`
+so that the [SPDX source inventory](docs/reference/licenses.md) stays current.
 
-## Lizenz
+## License
 
-Patchwatch steht unter **Apache-2.0**: [LICENSE](LICENSE), [NOTICE](NOTICE).
-Deklarierte Abhängigkeiten und Umfang der Inventur:
-[Lizenzen und SPDX](docs/reference/licenses.md).
+Patchwatch is licensed under **Apache-2.0**: [LICENSE](LICENSE), [NOTICE](NOTICE).
+Declared dependencies and scope of the inventory:
+[Licenses and SPDX](docs/reference/licenses.md).

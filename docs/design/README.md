@@ -1,12 +1,12 @@
-# Entwürfe und Roadmap
+# Designs and roadmap
 
-Die folgenden Dokumente beschreiben geplante Erweiterungen. Die darin skizzierten
-Befehle, Dienste, Tabellen und Endpunkte sind, soweit nicht ausdrücklich vermerkt, noch nicht implementiert.
-Für die Agent-Pakete gilt der Teilstand im [Konzept](agent-distribution.md).
-Für den aktuellen produktiven Stand die [Installations-](../installation/index.md)
-und [Agent-Anleitung](../usage/agent.md) verwenden.
+The following documents describe planned extensions. The commands, services, tables and endpoints sketched in them
+are not yet implemented unless explicitly noted.
+For the agent packages, the partial state in the [concept](agent-distribution.md) applies.
+For the current production state, use the [installation](../installation/index.md)
+and [agent guide](../usage/agent.md).
 
-1. [Agent-Verteilung](agent-distribution.md): versionierte Pakete, Konfiguration und Updates.
-2. [Enrollment-Konzept](enrollment.md): Geräteaufnahme, einzelne Geräteberechtigungen und zentrale Upload-Vermittlung.
-3. [Enrollment-Architektur](enrollment-architecture.md): Datenmodell, Transaktionen, Worker und Schnittstellen als Implementierungsentwurf.
-4. [Roadmap](roadmap.md): offene Integrationen und Abgrenzung zum aktuellen Umfang.
+1. [Agent distribution](agent-distribution.md): versioned packages, configuration and updates.
+2. [Enrollment concept](enrollment.md): device onboarding, individual device permissions and central upload mediation.
+3. [Enrollment architecture](enrollment-architecture.md): data model, transactions, workers and interfaces as an implementation design.
+4. [Roadmap](roadmap.md): open integrations and delimitation from the current scope.

@@ -1,12 +1,12 @@
-# Installation mit Docker Compose
+# Installation with Docker Compose
 
-Alle Befehle im Repository-Wurzelverzeichnis ausführen. Für eine lokale Erprobung siehe [Schnellstart](../getting-started.md).
+Run all commands in the repository root directory. For a local trial, see the [quick start](../getting-started.md).
 
 
-Voraussetzungen: Docker mit Compose v2+, Python ≥3.12 für Hilfsskripte und etwa 7 GiB freier RAM.
+Prerequisites: Docker with Compose v2+, Python ≥3.12 for helper scripts and about 7 GiB of free RAM.
 
 ```sh
-python3 scripts/init-compose.py   # erzeugt auch .secrets/dt_kek (Key-Encryption-Key von Dependency-Track 5)
+python3 scripts/init-compose.py   # also creates .secrets/dt_kek (Dependency-Track 5 key-encryption key)
 docker compose up -d --build --wait --wait-timeout 600
 # http://localhost:8080
 DT_URL=http://localhost:8080 ALLOW_HTTP=true \
@@ -15,31 +15,31 @@ DT_URL=http://localhost:8080 ALLOW_HTTP=true \
   TRIVY_URL=http://trivy:4954 TRIVY_TOKEN_FILE=.secrets/trivy_token \
   BRIDGE_URL=http://bridge:8080 PUBLIC_URL=http://localhost:8080 \
   python3 -m patchwatch.dtrack.setup --initial-admin
-# Tägliche PostgreSQL-Backups zusätzlich starten:
+# Additionally start the daily PostgreSQL backups:
 docker compose --profile operations up -d backup
 ```
 
-Die Datei `.env` wird aus `.env.example` erzeugt. Nur das Gateway bindet standardmäßig einen
-Host-Port, und zwar `127.0.0.1:8080`. API, PostgreSQL und Bridge sind ausschließlich im privaten
-Compose-Netz erreichbar. Die API-URL im Frontend muss vom **Browser** erreichbar sein.
-Die `.env` wird von Compose gelesen, aber nicht automatisch von
-`python3 -m patchwatch.dtrack.setup`. Bei einer eigenen öffentlichen URL auch dessen
-Parameter `PUBLIC_URL` im Einrichtungsaufruf auf die eigene URL setzen; `DT_URL`
-kann für die lokale Einrichtung weiterhin auf Loopback zeigen.
+The `.env` file is created from `.env.example`. By default only the gateway binds a
+host port, namely `127.0.0.1:8080`. The API, PostgreSQL and the bridge are reachable only in the private
+Compose network. The API URL in the frontend must be reachable from the **browser**.
+Compose reads `.env`, but `python3 -m patchwatch.dtrack.setup` does not read it
+automatically. With a public URL of your own, also set its
+parameter `PUBLIC_URL` in the setup call to your own URL; `DT_URL`
+can keep pointing to loopback for the local setup.
 
-Named Volumes persistieren Datenbank, Dependency-Track-Dateispeicher und Bridge-Outbox.
-Der Key-Encryption-Key `.secrets/dt_kek` verschlüsselt die in Dependency-Track gespeicherten Zugangsdaten und
-gehört in jede Sicherung; ein anderer Schlüssel verhindert den Start des API-Servers.
-`docker compose down` behält Volumes; `down -v` löscht sie unwiederbringlich.
+Named volumes persist the database, the Dependency-Track file storage and the bridge outbox.
+The key-encryption key `.secrets/dt_kek` encrypts the credentials stored in Dependency-Track and
+belongs in every backup; a different key prevents the API server from starting.
+`docker compose down` keeps volumes; `down -v` deletes them irrecoverably.
 
-`.secrets` hat Modus `0700`. Die hineingenerierten Server-Secret-Dateien sind innerhalb dieses
-Verzeichnisses lesbar, damit verschiedene Container-UIDs sie als Compose-Bind-Mount verwenden
-können. Host-Upload-Schlüssel bleiben `0600`. Passwörter niemals aus `.env` ins Repository übernehmen.
+`.secrets` has mode `0700`. The server secret files generated into it are readable inside this
+directory so that different container UIDs can use them as a Compose bind mount.
+Host upload keys stay `0600`. Never copy passwords from `.env` into the repository.
 
-## HTTPS für entfernte Agenten
+## HTTPS for remote agents
 
-Ein gültiges Zertifikat mit passendem SAN und den privaten Schlüssel als `.secrets/tls.crt` und
-`.secrets/tls.key` ablegen. Die Zertifikatskette muss von Agent und Browser vertraut werden.
+Place a valid certificate with a matching SAN and the private key as `.secrets/tls.crt` and
+`.secrets/tls.key`. The certificate chain must be trusted by the agent and the browser.
 
 ```dotenv
 PUBLIC_URL=https://patchwatch.example.org:8443
@@ -51,15 +51,15 @@ HTTPS_PORT=8443
 docker compose --profile tls up -d --build --wait --wait-timeout 600
 ```
 
-Der zusätzliche TLS-Gateway terminiert HTTPS. Der HTTP-Port bleibt durch den getrennten
-Parameter `HTTP_BIND_ADDRESS=127.0.0.1` auf Loopback begrenzt. Alternativ einen vorhandenen
-TLS-Reverse-Proxy vor das Loopback-Gateway setzen. Zugang zum Inventar nur über internes
-Netz/VPN vorsehen. Agenten lehnen HTTP standardmäßig ab; `ALLOW_HTTP=true` ist für die
-internen Setup-/Monitor-Aufrufe.
+The additional TLS gateway terminates HTTPS. The HTTP port stays restricted to loopback by the separate
+parameter `HTTP_BIND_ADDRESS=127.0.0.1`. Alternatively, put an existing
+TLS reverse proxy in front of the loopback gateway. Provide access to the inventory only via the internal
+network/VPN. Agents reject HTTP by default; `ALLOW_HTTP=true` is meant for the
+internal setup/monitor calls.
 
-Wenn HTTPS nach dem lokalen Schnellstart eingerichtet wird, die Einrichtung mit
-der neuen öffentlichen URL erneut ausführen. Der Aufruf läuft auf dem Compose-Host;
-die internen Integrations-URLs bleiben Compose-Dienstnamen:
+If HTTPS is set up after the local quick start, run the setup again with
+the new public URL. The call runs on the Compose host;
+the internal integration URLs remain Compose service names:
 
 ```sh
 DT_URL=http://localhost:8080 ALLOW_HTTP=true \
@@ -70,52 +70,52 @@ DT_URL=http://localhost:8080 ALLOW_HTTP=true \
   python3 -m patchwatch.dtrack.setup
 ```
 
-Bei abweichendem HTTP-Port `DT_URL` entsprechend ändern. Für die erste Einrichtung
-zusätzlich `--initial-admin` verwenden. Bei geändertem `SECRETS_DIR` alle
-Secret-Pfade und `--output` anpassen: Das Python-Setup liest die Compose-`.env`
-nicht ein. Der TLS-Schlüssel und das Zertifikat müssen für den Benutzer des
-TLS-Gateway-Containers lesbar sein; das umgebende Secret-Verzeichnis bleibt `0700`.
+With a different HTTP port, change `DT_URL` accordingly. For the first setup,
+additionally use `--initial-admin`. If `SECRETS_DIR` is changed, adjust all
+secret paths and `--output`: the Python setup does not read the Compose `.env`.
+The TLS key and certificate must be readable by the user of the
+TLS gateway container; the surrounding secrets directory stays `0700`.
 
-## Agenten und GitLab CI anbinden
+## Connecting agents and GitLab CI
 
-Die erfolgreiche Einrichtung erzeugt folgende Dateien im Ausgabeordner
-(standardmäßig `.secrets`):
+A successful setup creates the following files in the output folder
+(`.secrets` by default):
 
-| Datei | Verwendung |
+| File | Use |
 |---|---|
-| `upload_key` | Host-Agent; sicher auf die Geräte verteilen, dort Modus `0600` |
-| `ci_upload_key` | Geschützte, maskierte GitLab-Variable `PATCHWATCH_UPLOAD_KEY` |
-| `monitor_key` | Server-Monitor; optional geschützte CI-Lesezugriffe |
-| `versions_key` | Ausschließlich serverseitiger Abgleich der Projektversionen |
+| `upload_key` | Host agent; distribute securely to the devices, mode `0600` there |
+| `ci_upload_key` | Protected, masked GitLab variable `PATCHWATCH_UPLOAD_KEY` |
+| `monitor_key` | Server monitor; optionally protected CI read access |
+| `versions_key` | Exclusively for the server-side project version synchronization |
 
-Agenten und CI-Jobs verwenden die von außen erreichbare HTTPS-Basis-URL aus
-`PUBLIC_URL`, ohne `/api`. `localhost` im CI-Job bezeichnet den Job-Container,
-nicht den Compose-Server. Nur das Gateway muss für sie erreichbar sein.
+Agents and CI jobs use the externally reachable HTTPS base URL from
+`PUBLIC_URL`, without `/api`. `localhost` in the CI job refers to the job container,
+not to the Compose server. Only the gateway has to be reachable for them.
 
-1. [Agent einrichten und ersten lokalen oder entfernten Upload prüfen](../usage/agent.md#verbindung-zu-einem-compose-server).
-2. Für GitLab [CI-Image ohne Kubernetes veröffentlichen und Runner anbinden](../usage/ci-integration.md#14-ci-mit-einem-compose-server-ohne-kubernetes).
-3. Nach erfolgreicher Einrichtung den Versionsabgleich starten:
+1. [Set up the agent and verify the first local or remote upload](../usage/agent.md#connecting-to-a-compose-server).
+2. For GitLab, [publish the CI image without Kubernetes and connect the runner](../usage/ci-integration.md#14-ci-with-a-compose-server-without-kubernetes).
+3. After a successful setup, start the version synchronization:
 
    ```sh
    docker compose --profile operations up -d versions
    docker compose logs --tail=50 versions
    ```
 
-Das gesamte Profil `operations` erst aktivieren, wenn `versions_key` vorhanden ist.
-Backup allein kann wie oben mit explizitem Dienstnamen gestartet werden.
+Enable the entire `operations` profile only once `versions_key` exists.
+Backup alone can be started with an explicit service name as above.
 
-## Integrationen und Monitoring
+## Integrations and monitoring
 
-Ziele in `.secrets/routes.json` konfigurieren, siehe [alerting.md](../configuration/alerting.md). Danach
-`docker compose restart bridge`. Für Tag-Auflösung den Leseschlüssel als zusätzliche
-Datei in die Bridge mounten; ein Beispiel steht ebenfalls dort.
+Configure targets in `.secrets/routes.json`, see [alerting.md](../configuration/alerting.md). Then run
+`docker compose restart bridge`. For tag resolution, mount the read key as an additional
+file into the bridge; an example is also given there.
 
 ```sh
 docker compose --profile monitoring run --rm monitor
 ```
 
-Dieser Aufruf prüft das Inventar einmal und liefert Exitcode 1 bei veralteten Hosts und 2 bei
-API-/Konfigurationsfehlern. Für regelmäßige Compose-Prüfungen einen Host-Timer/Cronjob verwenden;
-fehlgeschlagene Aufrufe in das bestehende Monitoring übernehmen.
+This call checks the inventory once and returns exit code 1 for stale hosts and 2 for
+API/configuration errors. For regular Compose checks, use a host timer/cron job;
+feed failed calls into your existing monitoring.
 
-Compose-Restore, Secret-Rotation und Monitoring: [operations.md](../operations/index.md).
+Compose restore, secret rotation and monitoring: [operations.md](../operations/index.md).

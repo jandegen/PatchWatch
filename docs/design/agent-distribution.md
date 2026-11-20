@@ -1,186 +1,186 @@
-# Konzept: vereinfachte Agent-Verteilung
+# Concept: simplified agent distribution
 
-Stand: 16. November 2026. Vorschlag auf Basis des Repositorys. **Teilweise umgesetzt:** Der Agent ist
-als eigene Schicht (`patchwatch/agent` + `patchwatch/core`, nur Standardbibliothek) abgetrennt;
-`packaging/build.py` baut daraus ein reproduzierbares Zipapp, ein `.deb` und (unter macOS) ein `.pkg`,
-`patchwatch-agent --init-config` legt das Profil mit neuer `host_id` an, und der CI-Job
-`agent-packages` veröffentlicht die Artefakte. Das Paket verwendet das System-Python (≥3.12).
-**Noch offen:** private Python-Laufzeit, Signierung/Notarisierung, Paket-SBOM, Diagnosebefehl,
-Registrierung mit Zielgeräte-Metadaten, Update-/Rollback-Abläufe und alles zu Enrollment.
+As of: 16 November 2026. Proposal based on the repository. **Partially implemented:** the agent is
+separated as a layer of its own (`patchwatch/agent` + `patchwatch/core`, standard library only);
+`packaging/build.py` builds a reproducible zipapp, a `.deb` and (on macOS) a `.pkg` from it,
+`patchwatch-agent --init-config` creates the profile with a new `host_id`, and the CI job
+`agent-packages` publishes the artifacts. The package uses the system Python (≥3.12).
+**Still open:** private Python runtime, signing/notarization, package SBOM, diagnostic command,
+registration with target device metadata, update/rollback flows and everything on enrollment.
 
-## Empfehlung
+## Recommendation
 
-Den Agenten als versioniertes Installationspaket einschließlich Python-Laufzeit und Syft
-ausliefern. Ein separates Geräteprofil enthält Konfiguration und Zugangsdaten und wird
-über Ansible beziehungsweise MDM verteilt. Installation, Einrichtung und Updates werden
-dadurch wiederholbare Verwaltungsaktionen; ein Git-Checkout auf Endgeräten entfällt.
+Deliver the agent as a versioned installation package including the Python runtime and Syft.
+A separate device profile contains configuration and credentials and is distributed via
+Ansible or MDM. Installation, setup and updates thereby
+become repeatable management actions; a Git checkout on endpoints is no longer needed.
 
-Zunächst den bestehenden direkten Upload zu Dependency-Track beibehalten und die
-Registrierung vom Verwaltungsrechner aus automatisieren. Einen eigenen Enrollment-Dienst
-erst ergänzen, wenn Geräte ohne bestehende Verwaltung aufgenommen werden sollen oder
-eine zuverlässig durchgesetzte Berechtigung pro Gerät erforderlich ist.
+First keep the existing direct upload to Dependency-Track and automate
+registration from the management machine. Add an enrollment service of its own
+only when devices without existing management are to be onboarded or
+a reliably enforced permission per device is required.
 
-## Ausgangslage und konkrete Hindernisse
+## Starting point and concrete obstacles
 
-| Heute | Auswirkung | Vorgeschlagene Änderung |
+| Today | Effect | Proposed change |
 |---|---|---|
-| `scripts/install-agent.sh` installiert aus einem lokalen Checkout | Quellen und Build-Umgebung müssen auf jeden Rechner | Fertige Release-Pakete |
-| Python ≥3.12 und Syft müssen vorher installiert sein | Unterschiedliche Versionen, Pfade und Fehlerbilder | Getestete, mitgelieferte Laufzeit und Scanner |
-| `pip install --no-deps .` baut vor Ort; Build-Abhängigkeiten sind damit nicht ausgeschlossen | Installation kann zusätzlichen Paketindex-Zugriff benötigen | Ausschließlich in CI bauen |
-| URL, Scan-Wurzeln und Schlüssel werden separat eingerichtet | Manuelle Schritte und Konfigurationsabweichungen | Zentral gepflegte Profile mit Gerätezustand |
-| systemd-/launchd-Dateien werden kopiert, aber nicht aktiviert | Erfolgreiche Installation bedeutet noch keinen regelmäßigen Scan | Eigener Einrichtungsschritt prüft und aktiviert |
-| `patchwatch.dtrack.register` benötigt administrative DTrack-Zugangsdaten | Registrierung bleibt ein zusätzlicher administrativer Ablauf | Zentraler Registrierungsworkflow |
-| Keine Agent-Release-Jobs, Paketablage oder geregelten Updates | Aktualisierung und Rücknahme bleiben Handarbeit | Versionierte Artefakte und gestaffelter Rollout |
+| `scripts/install-agent.sh` installs from a local checkout | Sources and build environment have to go onto every machine | Ready-made release packages |
+| Python ≥3.12 and Syft must be installed beforehand | Different versions, paths and failure patterns | Tested, bundled runtime and scanner |
+| `pip install --no-deps .` builds on site; build dependencies are therefore not excluded | Installation may need additional package index access | Build exclusively in CI |
+| URL, scan roots and key are set up separately | Manual steps and configuration deviations | Centrally maintained profiles with device state |
+| systemd/launchd files are copied but not enabled | A successful installation does not yet mean a regular scan | A separate setup step verifies and enables |
+| `patchwatch.dtrack.register` needs administrative DTrack credentials | Registration remains an additional administrative flow | Central registration workflow |
+| No agent release jobs, package storage or regulated updates | Updating and rollback remain manual work | Versioned artifacts and staged rollout |
 
-Grundlage: [Installer](../../scripts/install-agent.sh), [Agent-Anleitung](../usage/agent.md),
-[Registrierung](../usage/inventory.md), [Projektmetadaten](../../pyproject.toml) und
-[GitLab-Pipeline](../../.gitlab-ci.yml).
+Basis: [installer](../../scripts/install-agent.sh), [agent guide](../usage/agent.md),
+[registration](../usage/inventory.md), [project metadata](../../pyproject.toml) and
+[GitLab pipeline](../../.gitlab-ci.yml).
 
-## Zielablauf für verwaltete Rechner
+## Target flow for managed machines
 
-1. Die Verwaltung installiert eine freigegebene Paketversion für Betriebssystem und Architektur.
-2. Sie übernimmt eine vorhandene `host_id` oder erzeugt einmalig eine neue. Geklonte
-   Betriebssystem-Images enthalten weder Geräteidentität noch Zugangsdaten.
-3. Sie erfasst Hostname, Betriebssystem und Distribution vom Zielgerät. Ein zentraler
-   Registrierungsjob legt das Projekt an beziehungsweise aktualisiert es und liefert
-   `project_uuid` zurück. Administrative Zugangsdaten bleiben auf dem Verwaltungsrechner.
-4. Ansible/MDM schreibt Profil, Projekt-UUID und Upload-Schlüssel mit restriktiven Rechten.
-5. Ein neuer Diagnosebefehl prüft Konfiguration, Leserechte, Scanner, TLS-Vertrauen,
-   API-Erreichbarkeit und Projektzuordnung. Der erste vollständige Scan bestätigt den
-   BOM-Import; erst danach meldet der Rollout das Gerät als erfolgreich eingerichtet.
-6. Die Verwaltung aktiviert den täglichen Zeitplan. Bei temporärer Nichterreichbarkeit
-   bleibt das Gerät als ausstehend erkennbar und die Einrichtung wird wiederholt.
+1. The management installs an approved package version for operating system and architecture.
+2. It takes over an existing `host_id` or creates a new one once. Cloned
+   operating system images contain neither device identity nor credentials.
+3. It collects hostname, operating system and distribution from the target device. A central
+   registration job creates the project or updates it and returns
+   `project_uuid`. Administrative credentials stay on the management machine.
+4. Ansible/MDM writes profile, project UUID and upload key with restrictive permissions.
+5. A new diagnostic command checks configuration, read permissions, scanner, TLS trust,
+   API reachability and project assignment. The first full scan confirms the
+   BOM import; only then does the rollout report the device as successfully set up.
+6. The management enables the daily schedule. On temporary unreachability,
+   the device stays recognizable as pending and the setup is repeated.
 
-Angestrebte Bedienung: ein Ansible-Playbook beziehungsweise ein MDM-Auftrag pro Gerätegruppe.
-Ein manueller Weg aus Paketinstallation und Profilimport bleibt für Einzelgeräte verfügbar.
-Geheimnisse werden weder als Kommandozeilenargument noch in allgemeinen Download-URLs übergeben.
+Targeted operation: one Ansible playbook or one MDM job per device group.
+A manual path of package installation and profile import remains available for individual devices.
+Secrets are passed neither as command line arguments nor in general download URLs.
 
-Wichtige Voraussetzung: `inventory_tags()` ermittelt OS und Distribution derzeit auf dem
-ausführenden Rechner. `patchwatch.dtrack.register` kann daher noch nicht unverändert zur
-Registrierung beliebiger entfernter Geräte dienen. Die Registrierung muss explizite,
-validierte Zielgeräte-Metadaten verarbeiten können; der lokale Aufruf bleibt kompatibel.
+Important prerequisite: `inventory_tags()` currently determines OS and distribution on the
+executing machine. `patchwatch.dtrack.register` can therefore not yet be used unchanged to
+register arbitrary remote devices. Registration must be able to process explicit,
+validated target device metadata; the local call stays compatible.
 
-## Pakete und Release-Prozess
+## Packages and release process
 
-| Ziel | Vorgesehenes Format | Verteilung |
+| Target | Intended format | Distribution |
 |---|---|---|
-| Debian-/Ubuntu-Systeme mit systemd | `.deb` | Zunächst versionierter Download, später internes APT-Repository |
-| macOS | Signiertes und notarisiertes `.pkg` | MDM oder manueller Paketimport |
-| RPM-basierte Linux-Systeme | `.rpm`, bei nachgewiesenem Bedarf | Vorhandene Linux-Verwaltung, später RPM-Repository |
+| Debian/Ubuntu systems with systemd | `.deb` | First versioned download, later an internal APT repository |
+| macOS | Signed and notarized `.pkg` | MDM or manual package import |
+| RPM-based Linux systems | `.rpm`, if a need is demonstrated | Existing Linux management, later an RPM repository |
 
-Startumfang: Linux x86_64 und macOS arm64. Weitere Architekturen werden nach tatsächlichem
-Gerätebestand ergänzt. Das ist eine Planungsannahme, keine im Repository belegte Flottenanalyse.
-Windows bleibt außerhalb dieses Konzepts, da der Agent plattformspezifische Anpassungen benötigt.
+Initial scope: Linux x86_64 and macOS arm64. Further architectures are added according to the actual
+device inventory. This is a planning assumption, not a fleet analysis documented in the repository.
+Windows stays outside this concept, since the agent needs platform-specific adaptations.
 
-Das Paket enthält Agent, private Python-Laufzeit, Syft, Dienstdefinitionen und Lizenzhinweise.
-Ein Verzeichnisbundle mit festem Einstiegspunkt ist das bevorzugte Ziel; ein einzelnes
-selbstentpackendes Binary ist dafür nicht erforderlich. Laufzeit und Scanner werden über
-absolute Pfade gestartet. Die konkrete Bündelung wird zuerst in einem Build-Prototyp geprüft,
-einschließlich Linux-Kompatibilitätsgrenzen und macOS-Signierung. Sie verändert die
-Wartungsverantwortung: Python- und Syft-Sicherheitsupdates benötigen neue Agent-Pakete.
+The package contains the agent, private Python runtime, Syft, service definitions and license notices.
+A directory bundle with a fixed entry point is the preferred target; a single
+self-extracting binary is not required for this. Runtime and scanner are started via
+absolute paths. The concrete bundling is first verified in a build prototype,
+including Linux compatibility limits and macOS signing. It changes the
+maintenance responsibility: Python and Syft security updates need new agent packages.
 
-Pro Release-Tag `vX.Y.Z` baut CI die unterstützten Pakete. Paketversion und Python-Projektversion
-müssen übereinstimmen. Die Veröffentlichung umfasst Prüfsummen, einen vertrauenswürdig
-signierten Release-Nachweis beziehungsweise signierte Repository-Metadaten, eine SBOM der
-tatsächlich gebündelten Komponenten und Build-Herkunft. Eine Prüfsumme neben einem Download
-allein ersetzt keinen vertrauenswürdigen Signaturnachweis.
+For each release tag `vX.Y.Z`, CI builds the supported packages. Package version and Python project version
+must match. The publication comprises checksums, a trustworthily
+signed release attestation or signed repository metadata, an SBOM of the
+components actually bundled, and build provenance. A checksum next to a download
+alone does not replace a trustworthy signature proof.
 
-Die vorhandene Quell-SPDX und die Container-SBOMs ersetzen diese Paket-SBOM nicht.
-Insbesondere muss die bisherige Annahme „Agent hat keine eigenen Drittanbieterpakete“ in
-`ci/components.yml` und der CI-Dokumentation an die gebündelte Laufzeit angepasst werden.
-macOS benötigt geeignete Build-/Test-Runner und Signierungszugänge; deren Verfügbarkeit
-ist vor der Umsetzung zu klären. Endgeräte benötigen keinen GitLab-Build- oder Admin-Token.
+The existing source SPDX and the container SBOMs do not replace this package SBOM.
+In particular, the previous assumption "the agent has no third-party packages of its own" in
+`ci/components.yml` and the CI documentation must be adapted to the bundled runtime.
+macOS needs suitable build/test runners and signing access; their availability
+is to be clarified before implementation. Endpoints need no GitLab build or admin token.
 
-## Konfiguration, Updates und Betrieb
+## Configuration, updates and operation
 
-- **Software und Gerätezustand trennen:** Programmdateien unter `/opt/patchwatch`,
-  Konfiguration und Schlüssel unter `/etc/patchwatch`, Zustand unter `/var/lib/patchwatch`.
-  Der Paketinstaller überschreibt weder `host_id`, `project_uuid`, Profil noch Schlüssel.
-- **Idempotente Einrichtung:** Erneutes Ausrollen repariert Paket und Dienstdefinitionen,
-  erzeugt aber kein neues Gerät. Namen- und Identitätskonflikte brechen mit einem klaren
-  Fehler ab; Projekte werden nicht automatisch zusammengeführt.
-- **Bewusste Scanprofile:** Zum Beispiel Linux-System und macOS-Entwicklergerät mit passenden
-  Wurzeln. Vollständigkeit, Home-Zugriff und macOS-Datenschutzrechte bleiben ausdrücklich
-  Teil des Profils; Paketinstallation allein gewährt keine zusätzlichen Leserechte.
-- **Diagnose:** Neue Befehle für Version, Konfigurationsprüfung und lokalen Status; Ausgabe
-  mit Agent-/Syft-Version, letztem Scan und letztem bestätigten Import, ohne Schlüssel.
-  Der bestehende Scan-Einstiegspunkt bleibt erhalten.
-- **Zeitplanung:** Linux-Zufallsverzögerung beibehalten; für macOS ebenfalls einen verteilten
-  Start vorsehen. Paketinstallation startet keinen ungeplanten Vollscan.
-- **Updates:** Verwaltung verteilt konkrete Versionen zunächst an Pilotgeräte und danach
-  an weitere Gruppen. Laufende Scans werden vor dem Austausch abgewartet; Zeitplan vorübergehend
-  anhalten. Kein paralleler Schreibzugriff auf Installation oder Gerätezustand.
-- **Rollback:** Vorversion bleibt verfügbar; Konfigurationsmigrationen sind versioniert und
-  rückwärtskompatibel oder mit geschützter Sicherung rücknehmbar. Identität und Projekt-UUID
-  bleiben erhalten. Ein Paket-Downgrade allein genügt bei inkompatibler Migration nicht.
-- **Deinstallation:** Stoppt den Zeitplan und entfernt Software. Gerätezustand und Zugangsdaten
-  werden nur bei ausdrücklicher Bereinigung gelöscht; zentrale Sperrung gehört zum Offboarding.
+- **Separate software and device state:** program files under `/opt/patchwatch`,
+  configuration and keys under `/etc/patchwatch`, state under `/var/lib/patchwatch`.
+  The package installer overwrites neither `host_id`, `project_uuid`, profile nor keys.
+- **Idempotent setup:** Rolling out again repairs package and service definitions
+  but creates no new device. Name and identity conflicts abort with a clear
+  error; projects are not merged automatically.
+- **Deliberate scan profiles:** For example Linux system and macOS developer device with matching
+  roots. Completeness, home access and macOS privacy permissions remain explicitly
+  part of the profile; package installation alone grants no additional read permissions.
+- **Diagnostics:** New commands for version, configuration check and local status; output
+  with agent/Syft version, last scan and last confirmed import, without keys.
+  The existing scan entry point is kept.
+- **Scheduling:** Keep the Linux random delay; also provide a distributed
+  start for macOS. Package installation starts no unscheduled full scan.
+- **Updates:** The management distributes concrete versions first to pilot devices and then
+  to further groups. Running scans are awaited before the swap; pause the schedule
+  temporarily. No parallel write access to installation or device state.
+- **Rollback:** The previous version stays available; configuration migrations are versioned and
+  backward compatible or reversible with a protected backup. Identity and project UUID
+  are kept. A package downgrade alone is not enough with an incompatible migration.
+- **Uninstallation:** Stops the schedule and removes software. Device state and credentials
+  are deleted only on explicit cleanup; central revocation is part of offboarding.
 
-## Registrierung und Schlüssel: zwei Ausbaustufen
+## Registration and keys: two stages
 
-Der detaillierte Entwurf der zweiten Stufe steht im [Enrollment-Konzept](enrollment.md).
+The detailed design of the second stage is in the [enrollment concept](enrollment.md).
 
-**Stufe 1 – bestehende Verwaltung nutzen.** Ein zentraler Job registriert Geräte und verteilt
-ihre Konfiguration. Die Agenten behalten die bisherigen DTrack-Uploadrechte, administrative
-Rechte bleiben zentral. Schlüssel werden über die Geheimnisverwaltung von Ansible/MDM
-verteilt und unabhängig vom Softwarepaket rotiert. Zentraler Job und Zielgerät müssen dieselbe
-persistierte `host_id` verwenden; Wiederholungen nach Teilfehlern dürfen keine Duplikate erzeugen.
+**Stage 1 – use existing management.** A central job registers devices and distributes
+their configuration. The agents keep the previous DTrack upload permissions, administrative
+permissions stay central. Keys are distributed via the secret management of Ansible/MDM
+and rotated independently of the software package. The central job and target device must use the same
+persisted `host_id`; repetitions after partial failures must not create duplicates.
 
-Diese Stufe vereinfacht die Verteilung, bietet aber keine nachgewiesene Berechtigungsgrenze
-pro Gerät: `project_uuid` ist eine Zieladresse, kein Zugriffsschutz. Der vorhandene Upload-Key
-hat außerdem `PROJECT_CREATION_UPLOAD`. Ein gemeinsamer Schlüssel ermöglicht keine einzelne
-Gerätesperrung. Etwaige getrennte Schlüssel müssen auf ihre tatsächlichen DTrack-Rechte geprüft
-werden; eine reine Aufteilung der Schlüssel beweist keine Projektisolation.
+This stage simplifies distribution but offers no demonstrated permission boundary
+per device: `project_uuid` is a target address, no access protection. The existing upload key
+also has `PROJECT_CREATION_UPLOAD`. A shared key does not allow revoking an individual
+device. Any separate keys must be checked for their actual DTrack permissions;
+a mere split of the keys proves no project isolation.
 
-**Stufe 2 – optionaler Enrollment- und Upload-Dienst.** Für Self-Service erhält jedes Gerät
-ein kurzlebiges, einmal verwendbares Enrollment-Token aus einem autorisierten Verwaltungsprozess.
-Der Dienst bindet die Registrierung an eine Gerätekennung und ein freigegebenes Profil,
-registriert zentral das DTrack-Projekt und stellt eine eigene Gerätezugangsberechtigung aus.
-Wiederholungen nach Verbindungsabbruch sind idempotent; eine neue Geräteinstallation kann
-nicht allein durch Behaupten einer bekannten `host_id` die bisherige Identität übernehmen.
+**Stage 2 – optional enrollment and upload service.** For self-service, each device receives
+a short-lived, single-use enrollment token from an authorized management process.
+The service binds the registration to a device identifier and an approved profile,
+registers the DTrack project centrally and issues a device credential of its own.
+Repetitions after a connection abort are idempotent; a new device installation cannot
+take over the previous identity merely by claiming a known `host_id`.
 
-Für wirksame Isolation laufen spätere Uploads über diesen Dienst. Er erzwingt die Zuordnung
-von Geräteberechtigung zu Projekt-UUID, begrenzt Uploads und hält DTrack-Schlüssel zentral.
-Ein Enrollment-Dienst, der nur denselben gemeinsamen Upload-Key zurückgibt, löst das
-Isolationsproblem nicht. Betrieb, Verfügbarkeit, Sperrung, Rotation und Zustandsdatenbank
-sind zusätzlicher Aufwand und begründen die getrennte Entscheidung für diese Stufe.
+For effective isolation, later uploads go through this service. It enforces the assignment
+of device credential to project UUID, limits uploads and keeps DTrack keys central.
+An enrollment service that merely returns the same shared upload key does not solve the
+isolation problem. Operation, availability, revocation, rotation and state database
+are additional effort and justify the separate decision for this stage.
 
-## Abgewogene Alternativen
+## Alternatives considered
 
-| Variante | Nutzen | Bewertung |
+| Variant | Benefit | Assessment |
 |---|---|---|
-| Nur den bestehenden Installer erweitern | Schnell weniger manuelle Schritte | Übergangslösung; Python-, Build- und Update-Abhängigkeiten bleiben |
-| Wheel mit externer Python-/Syft-Installation | Kleine Artefakte, einfache Python-Builds | Sinnvoll, falls die gesamte Flotte diese Voraussetzungen bereits zentral garantiert |
-| Native Pakete mit privater Laufzeit und Syft | Einheitliche Installation, klarer Updateweg | Empfohlenes Ziel; mehr Build- und Patchverantwortung |
-| Container als Standard-Agent | Bekannter Image-Verteilungsweg | Für Hostinventar wegen Dateisystemzugriff, Benutzerprofilen und Desktop-Umgebungen nicht bevorzugt |
-| Eigener Updater und Enrollment sofort | Unabhängig von Ansible/MDM | Erst bei belegtem Bedarf; deutlich mehr Server- und Sicherheitslogik |
+| Only extend the existing installer | Quickly fewer manual steps | Interim solution; Python, build and update dependencies remain |
+| Wheel with external Python/Syft installation | Small artifacts, simple Python builds | Sensible if the entire fleet already guarantees these prerequisites centrally |
+| Native packages with private runtime and Syft | Uniform installation, clear update path | Recommended target; more build and patch responsibility |
+| Container as standard agent | Known image distribution path | Not preferred for host inventory because of file system access, user profiles and desktop environments |
+| Own updater and enrollment immediately | Independent of Ansible/MDM | Only with demonstrated need; significantly more server and security logic |
 
-## Umsetzung in überprüfbaren Schritten
+## Implementation in verifiable steps
 
-1. **Paket-Prototyp:** Gerätebestand und Verwaltungsweg bestätigen; ein Linux- und ein
-   macOS-Testgerät festlegen. Laufzeit, Syft und Dienstdefinitionen bündeln. Installation
-   auf sauberen Systemen ohne vorinstalliertes Python/Syft und ohne Quell-Checkout nachweisen.
-   Mindest-OS-Versionen dokumentieren. Erst danach die endgültige Build-Technik festlegen.
-2. **Verwalteter Rollout:** Release-Jobs, Paketprüfung, Diagnose und zentrale Registrierung
-   mit Zielgeräte-Metadaten ergänzen. Ansible-Rolle und MDM-Installationsrezept liefern.
-   Bestehende Installationen unter Erhalt ihrer Identität übernehmen; vorhandene
-   benutzerbezogene Installationen vor einer Systemmigration ausdrücklich zuordnen.
-3. **Updates und Betriebsreife:** Pilotgruppe, Versionsübersicht, Rotation, Rollback und
-   Deinstallation erproben. Paket-Repositories nur ergänzen, wenn sie den gewählten
-   Verwaltungsweg vereinfachen. Danach Stufe 2 anhand des tatsächlichen Bedarfs entscheiden.
+1. **Package prototype:** Confirm device inventory and management path; fix one Linux and one
+   macOS test device. Bundle runtime, Syft and service definitions. Demonstrate installation
+   on clean systems without preinstalled Python/Syft and without a source checkout.
+   Document minimum OS versions. Only then fix the final build technique.
+2. **Managed rollout:** Add release jobs, package verification, diagnostics and central registration
+   with target device metadata. Deliver an Ansible role and MDM installation recipe.
+   Take over existing installations while preserving their identity; explicitly assign existing
+   user-level installations before a system migration.
+3. **Updates and operational maturity:** Trial pilot group, version overview, rotation, rollback and
+   uninstallation. Add package repositories only if they simplify the chosen
+   management path. Then decide on stage 2 based on actual need.
 
-Abnahmekriterien:
+Acceptance criteria:
 
-- Ein Verwaltungsauftrag reicht von der Installation bis zum ersten bestätigten BOM-Import;
-  keine manuelle JSON-Bearbeitung auf dem Endgerät.
-- Nach der Paketbereitstellung benötigt die Installation keinen Python-Paketindex oder
-  Nachladezugriff für Syft; API-Zugriff wird erst für Registrierung und Upload benötigt.
-- Wiederholte Einrichtung, Upgrade und Rollback erhalten `host_id`, `project_uuid` und Findings.
-- Ein Netzwerkausfall erzeugt einen nachvollziehbaren ausstehenden/fehlgeschlagenen Zustand;
-  Wiederholung erzeugt kein zweites Projekt.
-- Schlüssel erscheinen weder im Softwarepaket noch in Prozessargumenten oder Logs;
-  administrative DTrack-Zugänge liegen ausschließlich in der zentralen Verwaltung.
-- Nachgewiesene Tests umfassen frische Installation, Migration, Namenskollision,
-  fehlendes TLS-Vertrauen, unterbrochene Einrichtung sowie Update bei laufendem Scan.
-- Ziel für den Pilot: höchstens fünf Minuten aktive Administrationszeit pro Gerätegruppe,
-  ohne Paketdownload und Scandauer. Vorher-/Nachher-Werte werden im Pilot erhoben.
+- One management job suffices from installation to the first confirmed BOM import;
+  no manual JSON editing on the endpoint.
+- After the package is provided, the installation needs no Python package index or
+  reload access for Syft; API access is needed only for registration and upload.
+- Repeated setup, upgrade and rollback preserve `host_id`, `project_uuid` and findings.
+- A network outage creates a traceable pending/failed state;
+  repetition creates no second project.
+- Keys appear neither in the software package nor in process arguments or logs;
+  administrative DTrack credentials exist exclusively in the central management.
+- Demonstrated tests cover fresh installation, migration, name collision,
+  missing TLS trust, interrupted setup and update during a running scan.
+- Target for the pilot: at most five minutes of active administration time per device group,
+  excluding package download and scan duration. Before/after values are collected in the pilot.

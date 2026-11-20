@@ -44,15 +44,27 @@ unit:
   rules: !reference [.not-scheduled, rules]
   stage: test
   image: python:3.14.0-alpine3.22
-  before_script: ["apk add --no-cache bash git"]
+  # curl, jq, shellcheck and py3-yaml are used by tests/test_gitlab_project_setup.py (scripts/setup-gitlab-project.sh)
+  before_script: ["apk add --no-cache bash git curl jq shellcheck py3-yaml"]
   script:
     - pip install '.[ci]'
     - python -m unittest discover -s tests -v
     - python scripts/spdx.py --check
     - python -m patchwatch.dtrack.policies --check
     - python -m compileall -q patchwatch
-    - sh -n deploy/compose/trivy-entrypoint.sh scripts/backup.sh scripts/helm-postrender.sh ci/install-tools.sh
+    - sh -n deploy/compose/trivy-entrypoint.sh scripts/backup.sh scripts/helm-postrender.sh ci/install-tools.sh scripts/setup-gitlab-project.sh
     - bash -n scripts/install-agent.sh scripts/deploy.sh scripts/bootstrap-cluster.sh
+
+# The setup script must run with dash (Debian/Ubuntu /bin/sh) as well as busybox ash (the unit job on Alpine).
+setup-script-debian:
+  rules: !reference [.not-scheduled, rules]
+  stage: test
+  image: debian:bookworm-slim
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq --no-install-recommends curl jq shellcheck python3 python3-yaml busybox
+  script:
+    - python3 -m unittest -v tests.test_gitlab_project_setup
 
 manifests:
   rules: !reference [.not-scheduled, rules]

@@ -1,77 +1,77 @@
-# Agent für Linux und macOS
+# Agent for Linux and macOS
 
-## Installation per Paket (empfohlen für verwaltete Rechner)
+## Installation via package (recommended for managed machines)
 
-Der Agent ist unabhängig vom restlichen Projekt paketierbar: `patchwatch/agent` und
-`patchwatch/core` benötigen nur die Python-Standardbibliothek. `packaging/build.py` erzeugt daraus
-reproduzierbar ein Zipapp und die Installationspakete; die CI-Job `agent-packages` legt sie als
-Artefakte in `dist/` ab.
+The agent can be packaged independently of the rest of the project: `patchwatch/agent` and
+`patchwatch/core` need only the Python standard library. `packaging/build.py` reproducibly creates a zipapp
+and the installation packages from them; the CI job `agent-packages` stores them as
+artifacts in `dist/`.
 
 ```sh
 python3 packaging/build.py pyz                 # dist/patchwatch-agent.pyz
-python3 packaging/build.py deb                 # dist/patchwatch-agent_<Version>_all.deb
-python3 packaging/build.py deb --syft ./syft   # Syft mitliefern (architekturspezifisch)
-python3 packaging/build.py pkg                 # macOS: dist/patchwatch-agent-<Version>.pkg
-sudo apt install ./dist/patchwatch-agent_1.0.9_all.deb
+python3 packaging/build.py deb                 # dist/patchwatch-agent_<version>_all.deb
+python3 packaging/build.py deb --syft ./syft   # bundle Syft (architecture-specific)
+python3 packaging/build.py pkg                 # macOS: dist/patchwatch-agent-<version>.pkg
+sudo apt install ./dist/patchwatch-agent_1.0.10_all.deb
 ```
 
-Das Paket installiert den Starter `patchwatch-agent`, das Zipapp unter `/usr/lib/patchwatch/`, die
-systemd-Units (bzw. unter macOS Starter in `/usr/local/bin` und den LaunchDaemon) und legt
-`/etc/patchwatch/agent.json` mit einer neuen `host_id` an (`patchwatch-agent --init-config`). Eine
-vorhandene Konfiguration wird nie überschrieben. Der Zeitplan wird **nicht** aktiviert: erst
-`url` und Schlüssel eintragen, einmal `sudo patchwatch-agent` ausführen, dann den Timer aktivieren
-(siehe unten). Das Paket benötigt `python3 >= 3.12`; bei `--syft` ist Syft enthalten, sonst muss es
-vorhanden sein. Eine private Python-Laufzeit, Signierung und Notarisierung sind noch nicht Teil des
-Builds ([Konzept](../design/agent-distribution.md)). Das `.pkg` wird nur unter macOS gebaut
-(`pkgbuild`) und wurde bisher nicht auf einem Gerät erprobt.
+The package installs the launcher `patchwatch-agent`, the zipapp under `/usr/lib/patchwatch/`, the
+systemd units (on macOS, a launcher in `/usr/local/bin` and the LaunchDaemon) and creates
+`/etc/patchwatch/agent.json` with a new `host_id` (`patchwatch-agent --init-config`). An
+existing configuration is never overwritten. The schedule is **not** enabled: first enter
+`url` and key, run `sudo patchwatch-agent` once, then enable the timer
+(see below). The package requires `python3 >= 3.12`; with `--syft`, Syft is included, otherwise it must be
+present. A private Python runtime, signing and notarization are not yet part of the
+build ([concept](../design/agent-distribution.md)). The `.pkg` is built only on macOS
+(`pkgbuild`) and has not yet been tried on a device.
 
-## Installation aus dem Checkout (Entwicklung, einzelne Rechner)
+## Installation from the checkout (development, individual machines)
 
-Voraussetzungen: Python ≥3.12, Syft und Netzwerkzugriff auf die HTTPS-API. Referenzversion
-für Syft: **1.57.1**. Release-Archiv und Checksummen vom
-[offiziellen Release](https://github.com/anchore/syft/releases/tag/v1.57.1) beziehen und prüfen,
-oder Syft über die vorhandene Paketverwaltung verteilen. Der Installer lädt keine fremden
-Installationsskripte nach. Syft muss im PATH des Dienstes sein; sonst in `agent.json` einen
-absoluten `syft`-Pfad setzen.
+Prerequisites: Python ≥3.12, Syft and network access to the HTTPS API. Reference version
+for Syft: **1.57.1**. Obtain and verify the release archive and checksums from the
+[official release](https://github.com/anchore/syft/releases/tag/v1.57.1),
+or distribute Syft through the existing package management. The installer does not download third-party
+installation scripts. Syft must be in the service's PATH; otherwise set an
+absolute `syft` path in `agent.json`.
 
 ```sh
 sudo bash scripts/install-agent.sh
 sudoedit /etc/patchwatch/agent.json
-# Schlüssel aus DTrack-Team sbom-upload sicher nach /etc/patchwatch/api-key übertragen:
+# Securely transfer the key from the DTrack team sbom-upload to /etc/patchwatch/api-key:
 sudo chmod 600 /etc/patchwatch/api-key
-# Optional zuerst administrativ registrieren, siehe inventory.md.
+# Optionally register administratively first, see inventory.md.
 sudo patchwatch-agent
 ```
 
-Vor dem Installer einen Checkout auf dem Zielrechner bereitstellen und die Befehle
-aus dessen Wurzelverzeichnis ausführen. In `agent.json` mindestens `url`,
-`api_key_file` und die gewünschten `roots` prüfen. Die mitgelieferte URL ist ein
-Platzhalter (`https://patchwatch.example.org`) und muss ersetzt werden; `host_id` erzeugt der Installer.
+Before the installer, provide a checkout on the target machine and run the commands
+from its root directory. In `agent.json`, check at least `url`,
+`api_key_file` and the desired `roots`. The bundled URL is a
+placeholder (`https://patchwatch.example.org`) and must be replaced; the installer generates `host_id`.
 
-Den Upload-Schlüssel erzeugt die zentrale Einrichtung mit `patchwatch.dtrack.setup`:
+The upload key is created by the central setup with `patchwatch.dtrack.setup`:
 
-| Installation | Quelle auf dem Server |
+| Installation | Source on the server |
 |---|---|
-| Docker Compose | `.secrets/upload_key` nach dem [Compose-Setup](../installation/compose.md) |
-| Kubernetes | Secret `patchwatch-provisioning`, Feld `upload_key` |
+| Docker Compose | `.secrets/upload_key` after the [Compose setup](../installation/compose.md) |
+| Kubernetes | Secret `patchwatch-provisioning`, field `upload_key` |
 
-Die Datei sicher auf den Zielrechner übertragen und dort als
-`/etc/patchwatch/api-key` mit Besitzer `root` und Modus `0600` installieren.
-Bei einem Agenten direkt auf dem Compose-Server geht das aus dem Checkout mit
+Transfer the file securely to the target machine and install it there as
+`/etc/patchwatch/api-key` with owner `root` and mode `0600`.
+For an agent directly on the Compose server, this works from the checkout with
 `sudo install -o root -m 0600 .secrets/upload_key /etc/patchwatch/api-key`.
-Nur diesen Upload-Schlüssel verteilen. Der Agent erhält ausschließlich `BOM_UPLOAD` und
-`PROJECT_CREATION_UPLOAD`, keinen administrativen oder Portfolio-Lesezugriff.
+Distribute only this upload key. The agent receives exclusively `BOM_UPLOAD` and
+`PROJECT_CREATION_UPLOAD`, no administrative or portfolio read access.
 
-## Verbindung zu einem Compose-Server
+## Connecting to a Compose server
 
-Für entfernte Rechner zuerst [Compose mit HTTPS](../installation/compose.md#https-für-entfernte-agenten)
-einrichten. `url` ist dann beispielsweise `https://patchwatch.example.org:8443`,
-ohne `/api`. DNS, Portfreigabe und CA-Vertrauen müssen auf jedem Agent-Rechner
-funktionieren. Compose-Dienstnamen wie `apiserver` sind nur im Container-Netz auflösbar.
-Der Agent läuft als Host-Dienst; Compose startet ihn nicht automatisch.
+For remote machines, first set up [Compose with HTTPS](../installation/compose.md#https-for-remote-agents).
+`url` is then for example `https://patchwatch.example.org:8443`,
+without `/api`. DNS, port forwarding and CA trust must work on every agent machine.
+Compose service names such as `apiserver` are resolvable only in the container network.
+The agent runs as a host service; Compose does not start it automatically.
 
-Ein erster lokaler Scan auf demselben Rechner wie der Compose-Stack ist auch ohne
-Systeminstallation möglich. Nach dem Schnellstart und mit Syft im PATH im Checkout:
+A first local scan on the same machine as the Compose stack is also possible without a
+system installation. After the quick start and with Syft in the PATH, in the checkout:
 
 ```sh
 python3 - <<'PY'
@@ -98,137 +98,136 @@ DT_URL=http://localhost:8080 ALLOW_HTTP=true \
 python3 -m patchwatch.agent --config .secrets/agent-local.json
 ```
 
-Bei abweichendem `HTTP_PORT` beide lokalen URLs anpassen. Dieses Beispiel erfasst
-nur den Checkout und verwendet bewusst HTTP auf Loopback. Für ein vollständiges
-Systeminventar die Systeminstallation und passende Scan-Wurzeln verwenden;
-für sie dieselbe `host_id` und gegebenenfalls `project_uuid` übernehmen, wenn sie
-das lokale Testinventar fortführen soll.
-`ALLOW_HTTP=true` steuert die administrative Registrierung; der Agent liest
-stattdessen `allow_http` aus seiner JSON-Datei. Für HTTPS dieses Feld entfernen.
-Administratorzugangsdaten bleiben beim Betreiber. Entfernte Hosts können mit einer
-Kopie ihrer Zielkonfiguration auf dem Betreiberrechner registriert werden; danach
-die aktualisierte Datei mit `project_uuid` auf den Host zurückübertragen.
+With a different `HTTP_PORT`, adapt both local URLs. This example records
+only the checkout and deliberately uses HTTP on loopback. For a complete
+system inventory, use the system installation and suitable scan roots;
+for it, adopt the same `host_id` and, if applicable, `project_uuid` if it is meant to
+continue the local test inventory.
+`ALLOW_HTTP=true` controls the administrative registration; the agent instead reads
+`allow_http` from its JSON file. For HTTPS, remove this field.
+Administrator credentials stay with the operator. Remote hosts can be registered with a
+copy of their target configuration on the operator's machine; afterwards,
+transfer the updated file with `project_uuid` back to the host.
 
-Nach erfolgreichem Upload unter **Projekte → Hostname → current → Komponenten**
-den Bestand prüfen. Der Agent wartet auf den BOM-Import; Findings können später
-eintreffen. Erst nach einem erfolgreichen Testlauf den unten beschriebenen
-Timer beziehungsweise LaunchDaemon aktivieren.
+After a successful upload, check the inventory under **Projects → hostname → current → Components**.
+The agent waits for the BOM import; findings can arrive later. Only after a successful test run,
+activate the timer or LaunchDaemon described below.
 
-Das DTrack-Projekt heißt wie der Rechner (z. B. `workstation-01`), Version `current`.
-Der Installer generiert zusätzlich eine stabile `host_id`. Nach der administrativen Registrierung
-wird über `project_uuid` hochgeladen; Umbenennung und Tag-Änderungen benötigen deshalb keinen
-neuen Bestand. Registrierung, Tag-Schema und Migration sind in [inventory.md](inventory.md)
-beschrieben. Der Hostname wird entsprechend der gewünschten Gerätezuordnung übertragen;
-Nutzernamen werden weiterhin nicht automatisch als Identität verwendet.
+The DTrack project is named like the machine (e.g. `workstation-01`), version `current`.
+The installer additionally generates a stable `host_id`. After the administrative registration,
+uploads go via `project_uuid`; renaming and tag changes therefore need no
+new inventory. Registration, tag schema and migration are described in [inventory.md](inventory.md).
+The hostname is transferred according to the desired device assignment;
+user names are still not used as identity automatically.
 
-Konfigurationsbeispiel: [`agent/agent.example.json`](../../agent/agent.example.json).
+Configuration example: [`agent/agent.example.json`](../../agent/agent.example.json).
 
-| Einstellung | Bedeutung |
+| Setting | Meaning |
 |---|---|
-| `url` | HTTPS-Basis-URL, ohne `/api` |
-| `allow_http` | Standard `false`; ausschließlich für lokale HTTP-Tests ausdrücklich auf `true` setzen |
-| `host_id` | Stabile Asset-ID, wird zusätzlich als `asset-id:*` getaggt |
-| `hostname` | Optionaler Anzeigename; standardmäßig automatisch erkannter Hostname |
-| `project_uuid` | Zielprojekt nach administrativer Registrierung, bleibt bei Umbenennung gleich |
-| `agent_scope` | `user` oder `system`, passend zur Installation |
-| `api_key_file` | Schlüsseldatei, Modus `0600` oder `0400` |
-| `roots` | Syft-Scan-Verzeichnisse; Standard `/usr`, `/opt`; `[]` deaktiviert Verzeichnis-Scans |
-| `scan_extensions` | IDE-/Browser-Erweiterungen erfassen; Standard `true`; unabhängig von `roots` |
-| `extension_homes` | Optional: absolute Benutzer-Home-Verzeichnisse; ohne Angabe automatische Ermittlung; `[]` deaktiviert die Erfassung |
-| `images` | Optionale Syft-Imagequellen, z. B. `registry:registry.example/tool:1.2` |
-| `tags` | Zusätzliche kanonische Tags wie `team:platform`; Team nur bei bekannter Zuordnung setzen |
-| `excludes` | Zusätzliche Syft-Ausschlüsse relativ zur jeweiligen Scan-Wurzel |
-| `detect_services` | Standard `true`: Services aller Compose-Dateien unter `roots` (bis Tiefe 5; nur Name und Image) als CycloneDX-Services hochladen |
-| `scan_timeout` | Sekunden je Scan; Standard 7200 |
-| `lock_file` | Verhindert konkurrierende Scans desselben Hosts |
+| `url` | HTTPS base URL, without `/api` |
+| `allow_http` | Default `false`; set to `true` explicitly only for local HTTP tests |
+| `host_id` | Stable asset ID, additionally tagged as `asset-id:*` |
+| `hostname` | Optional display name; by default the automatically detected hostname |
+| `project_uuid` | Target project after administrative registration, stays the same on renaming |
+| `agent_scope` | `user` or `system`, matching the installation |
+| `api_key_file` | Key file, mode `0600` or `0400` |
+| `roots` | Syft scan directories; default `/usr`, `/opt`; `[]` disables directory scans |
+| `scan_extensions` | Collect IDE/browser extensions; default `true`; independent of `roots` |
+| `extension_homes` | Optional: absolute user home directories; automatic detection if omitted; `[]` disables collection |
+| `images` | Optional Syft image sources, e.g. `registry:registry.example/tool:1.2` |
+| `tags` | Additional canonical tags such as `team:platform`; set team only if the assignment is known |
+| `excludes` | Additional Syft exclusions relative to the respective scan root |
+| `detect_services` | Default `true`: upload services of all Compose files under `roots` (up to depth 5; name and image only) as CycloneDX services |
+| `scan_timeout` | Seconds per scan; default 7200 |
+| `lock_file` | Prevents concurrent scans of the same host |
 
-Ein Vollscan ist mit `roots: ["/"]` möglich. Pseudo-Dateisysteme, temporäre Verzeichnisse,
-Docker-/containerd-Storage und macOS `/System`, `/Volumes` werden ausgeschlossen. Für andere
-Wurzeln Ausschlüsse relativ anpassen. Homebrew auf Apple Silicon benötigt `/opt/homebrew`,
-unter Intel üblicherweise `/usr/local`. Für Benutzerpakete und Repositories ausdrücklich
-entsprechende Verzeichnisse aufnehmen. Begrenzte Wurzeln erfassen **nicht** automatisch alle
-OS-Paketdatenbanken; bei Bedarf `/var/lib/dpkg`, `/var/lib/rpm`, `/lib/apk` einbeziehen oder `/` scannen.
-Bei mehreren Wurzeln werden identische Komponenten zusammengeführt. Syft erhält weiterhin
-einen Scan-Aufruf je konfigurierter Wurzel; überlappende Wurzeln vermeiden, um Scan-Arbeit
-nicht mehrfach auszuführen. Die Erweiterungserfassung benötigt keine zusätzlichen Syft-Aufrufe. Der Agent ergänzt die
-Directory-Standardkataloge um `+javascript-package-cataloger`, damit insbesondere globale npm-Installationen erfasst
-werden. Eine leere Inventur wird zum Schutz vor versehentlichem Überschreiben abgewiesen; nur für
-bewusst leere Quellen `allow_empty: true` setzen. Upload-Grenze: 128 MiB.
+A full scan is possible with `roots: ["/"]`. Pseudo file systems, temporary directories,
+Docker/containerd storage and macOS `/System`, `/Volumes` are excluded. For other
+roots, adapt exclusions relatively. Homebrew on Apple Silicon needs `/opt/homebrew`,
+on Intel usually `/usr/local`. For user packages and repositories, explicitly include the
+corresponding directories. Limited roots do **not** automatically record all
+OS package databases; if needed, include `/var/lib/dpkg`, `/var/lib/rpm`, `/lib/apk` or scan `/`.
+With multiple roots, identical components are merged. Syft still receives
+one scan call per configured root; avoid overlapping roots so as not to do scan work
+multiple times. Extension collection needs no additional Syft calls. The agent extends the
+directory default catalogs with `+javascript-package-cataloger` so that global npm installs in particular
+are recorded. An empty inventory is rejected as protection against accidental overwriting; set
+`allow_empty: true` only for deliberately empty sources. Upload limit: 128 MiB.
 
-## Dienste aus Compose
+## Services from Compose
 
-`detect_services` erfasst standardmäßig statische Dienstnamen und Image-Referenzen aus
-Compose-Dateien unter `roots`. Suchgrenzen, Zusammenführung gleicher Namen und Unterschiede
-zu einem laufenden Dienst beschreibt die [Service-Anleitung](services.md). Syft-Ausschlüsse
-werden auf diesen separaten Leser nicht angewendet.
+`detect_services` by default collects static service names and image references from
+Compose files under `roots`. Search limits, merging of identical names and differences
+from a running service are described in the [service guide](services.md). Syft exclusions
+are not applied to this separate reader.
 
-## IDE- und Browser-Erweiterungen
+## IDE and browser extensions
 
-Der Agent liest standardmäßig zusätzlich installierte Erweiterungen in den üblichen
-Benutzerverzeichnissen auf Linux und macOS. Dafür werden keine weiteren Syft-Scans gestartet
-und keine Editoren, Browser oder Erweiterungen ausgeführt.
+By default the agent additionally reads installed extensions in the usual
+user directories on Linux and macOS. No further Syft scans are started for this
+and no editors, browsers or extensions are executed.
 
-- **VS Code**, Insiders, Code OSS, Cursor und Windsurf, einschließlich der jeweiligen
-  unterstützten `.vscode-server`-/`.cursor-server`-/`.windsurf-server`-Verzeichnisse:
+- **VS Code**, Insiders, Code OSS, Cursor and Windsurf, including the respective
+  supported `.vscode-server`/`.cursor-server`/`.windsurf-server` directories:
   `extensions/*/package.json`.
-- **JetBrains**: Plugin-Deskriptoren in `META-INF/plugin.xml` und Plugin-JARs unter
-  `~/.local/share/JetBrains/*/plugins` bzw.
+- **JetBrains**: plugin descriptors in `META-INF/plugin.xml` and plugin JARs under
+  `~/.local/share/JetBrains/*/plugins` or
   `~/Library/Application Support/JetBrains/*/plugins`.
-- **Chrome, Chromium, Brave, Edge und Vivaldi**: `manifest.json` in den Erweiterungsverzeichnissen
-  aller Profile unter den üblichen Konfigurationsverzeichnissen. Für Chromium/Chrome werden
-  außerdem ausgewählte Snap-/Flatpak-Standardpfade berücksichtigt.
-- **Firefox**: entpackte Erweiterungen und XPI-Archive in den Profilverzeichnissen;
-  unter Linux einschließlich der Snap-/Flatpak-Standardpfade.
+- **Chrome, Chromium, Brave, Edge and Vivaldi**: `manifest.json` in the extension directories
+  of all profiles under the usual configuration directories. For Chromium/Chrome, selected
+  Snap/Flatpak default paths are also taken into account.
+- **Firefox**: unpacked extensions and XPI archives in the profile directories;
+  on Linux including the Snap/Flatpak default paths.
 
-Bei Ausführung als root werden Benutzer-Homes aus der Betriebssystem-Benutzerdatenbank
-ermittelt; ohne root wird nur das eigene Home berücksichtigt. Eine explizite Auswahl ist möglich:
+When run as root, user homes are determined from the operating system user database;
+without root, only the own home is taken into account. An explicit selection is possible:
 
 ```json
 "scan_extensions": true,
 "extension_homes": ["/home/alice", "/home/bob"]
 ```
 
-Auf macOS entsprechend `/Users/alice` verwenden. Homes müssen lesbar sein; macOS-Datenschutzrechte
-können den Zugriff zusätzlich begrenzen. Abweichende Editor-/Browser-Profilpfade, Safari-Erweiterungen
-und andere IDEs sind derzeit nicht abgedeckt. Inventarisiert werden vorhandene Installationsdateien,
-auch deaktivierte Erweiterungen und noch vorhandene ältere Versionen; der Aktivierungszustand wird
-nicht ermittelt. Fehlerhafte oder nicht lesbare Metadaten erzeugen eine Warnung ohne Benutzerpfade.
+On macOS, use `/Users/alice` accordingly. Homes must be readable; macOS privacy permissions
+can additionally limit access. Deviating editor/browser profile paths, Safari extensions
+and other IDEs are currently not covered. Existing installation files are inventoried,
+including disabled extensions and older versions still present; the activation state is
+not determined. Faulty or unreadable metadata produces a warning without user paths.
 
-Die Identität besteht aus Ökosystem, technischer Erweiterungs-ID und Version. Gleiche Erweiterungen
-in mehreren Benutzerkonten, Profilen oder Editoren werden einmal übertragen; ihre Fundorte werden
-zusammengeführt. Verschiedene Versionen bleiben getrennt. Ein Syft-Paketeintrag desselben Manifests
-bzw. Plugin-JARs wird anhand von Fundort und Version mit der Erweiterung zusammengeführt;
-enthaltene npm-/Java-Bibliotheken und bekannte Abhängigkeitsbeziehungen bleiben erhalten.
-Abhängigkeiten innerhalb von Erweiterungen werden nur erfasst, soweit die Syft-Scan-Wurzeln sie
-abdecken. Die generischen PURLs kennzeichnen Erweiterungen eindeutig, garantieren aber kein
-CVE-Matching in Dependency-Track.
+The identity consists of ecosystem, technical extension ID and version. Identical extensions
+in multiple user accounts, profiles or editors are transferred once; their locations are
+merged. Different versions stay separate. A Syft package entry of the same manifest
+or plugin JAR is merged with the extension based on location and version;
+contained npm/Java libraries and known dependency relationships are kept.
+Dependencies inside extensions are recorded only as far as the Syft scan roots
+cover them. The generic PURLs identify extensions unambiguously but guarantee no
+CVE matching in Dependency-Track.
 
-Es werden nur technische ID, Version, Ökosystem, Fundort und gegebenenfalls eine kurze Lizenzangabe
-ausgelesen. Beschreibungen, Berechtigungen, Browser-Historie, Einstellungen und Erweiterungscode
-werden nicht übertragen. Absolute Fundorte können wie bei Syft Benutzernamen enthalten.
-Für reine Image-Scans `roots: []` und `scan_extensions: false` setzen.
+Only technical ID, version, ecosystem, location and, if applicable, a short license statement
+are read. Descriptions, permissions, browser history, settings and extension code
+are not transferred. As with Syft, absolute locations can contain user names.
+For pure image scans, set `roots: []` and `scan_extensions: false`.
 
-Manifestformate: [VS Code](https://code.visualstudio.com/api/references/extension-manifest),
+Manifest formats: [VS Code](https://code.visualstudio.com/api/references/extension-manifest),
 [JetBrains](https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html),
 [Chromium](https://developer.chrome.com/docs/extensions/reference/manifest),
 [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json).
 
-Es werden Komponenten-Typ, Paketname/-gruppe, Version, PURL/CPE, Paketpfade sowie erkannte
-Lizenz-IDs, kurze Lizenznamen und SPDX-Ausdrücke behalten. Vollständige Lizenztexte und
-Lizenzgeber-Metadaten werden nicht übertragen. Details: [licenses.md](../reference/licenses.md).
-Dateikomponenten, Descriptions, Autoren, Syft-Metadaten und Inhalte werden entfernt. PURL/CPE
-beschreiben Paketkoordinaten und Herkunft für das Matching. Absolute Paketpfade können bei
-Home-Verzeichnissen personenbezogene Namen enthalten; Scan-Wurzeln entsprechend abstimmen.
-Syft liest zur Erkennung lokale Dateien; die bereinigte SBOM überträgt deren Inhalte nicht.
-Raw-SBOMs liegen nur im privaten temporären Verzeichnis und werden auch bei Fehlern entfernt.
-Ein Stromausfall/SIGKILL kann temporäre Dateien hinterlassen; systemeigene TMP-Bereinigung aktiv halten.
+Component type, package name/group, version, PURL/CPE, package paths as well as detected
+license IDs, short license names and SPDX expressions are kept. Full license texts and
+licensor metadata are not transferred. Details: [licenses.md](../reference/licenses.md).
+File components, descriptions, authors, Syft metadata and contents are removed. PURL/CPE
+describe package coordinates and origin for matching. Absolute package paths can contain
+personal names in home directories; align scan roots accordingly.
+Syft reads local files for detection; the sanitized SBOM does not transfer their contents.
+Raw SBOMs are only in the private temporary directory and are removed even on errors.
+A power failure/SIGKILL can leave temporary files behind; keep the system's own TMP cleanup active.
 
-Der Upload nutzt begrenzte Wiederholungen für temporäre HTTP-/Netzwerkfehler, prüft TLS und
-wartet auf den DTrack-Verarbeitungstoken. Das bestätigt den abgeschlossenen BOM-Import;
-das anschließende Schwachstellen-Matching kann länger dauern. Proxy- und CA-Einstellungen
-über die Python-Standardumgebung (`HTTPS_PROXY`, `SSL_CERT_FILE`) verteilen. Keine TLS-Prüfung deaktivieren.
+The upload uses limited retries for temporary HTTP/network errors, verifies TLS and
+waits for the DTrack processing token. This confirms the completed BOM import;
+the subsequent vulnerability matching can take longer. Distribute proxy and CA settings
+via the Python standard environment (`HTTPS_PROXY`, `SSL_CERT_FILE`). Do not disable TLS verification.
 
-Linux aktivieren:
+Enable on Linux:
 
 ```sh
 sudo systemctl enable --now patchwatch-agent.timer
@@ -236,19 +235,19 @@ systemctl list-timers patchwatch-agent.timer
 journalctl -u patchwatch-agent.service
 ```
 
-Der persistente tägliche Timer startet ab 02:00 mit bis zu zwei Stunden Zufallsverzögerung.
-Der Dienst läuft für Systeminventar als root, mit `nice`, Idle-I/O und systemd-Härtung.
-Die Registry-Anmeldung für optionale private Images muss dem Dienstkonto zur Verfügung stehen.
+The persistent daily timer starts from 02:00 with up to two hours of random delay.
+For the system inventory, the service runs as root, with `nice`, idle I/O and systemd hardening.
+The registry login for optional private images must be available to the service account.
 
-macOS aktivieren:
+Enable on macOS:
 
 ```sh
 sudo launchctl bootstrap system /Library/LaunchDaemons/eu.patchwatch.agent.plist
 sudo launchctl kickstart system/eu.patchwatch.agent
 ```
 
-Der LaunchDaemon läuft beim Laden und täglich um 03:00. Logrotation für
-`/var/log/patchwatch-agent.log` über die vorhandene MDM-/newsyslog-Konfiguration einrichten.
-Rollout per Ansible/MDM: Paket installieren, Konfiguration und Schlüssel mit restriktiven Rechten
-verteilen, einmaliger Testlauf, anschließend Zeitplan aktivieren. Keine Agenten auf fremden
-Rechnern werden durch das zentrale Deployment automatisch installiert.
+The LaunchDaemon runs on load and daily at 03:00. Set up log rotation for
+`/var/log/patchwatch-agent.log` via the existing MDM/newsyslog configuration.
+Rollout via Ansible/MDM: install the package, distribute configuration and key with restrictive permissions,
+a one-off test run, then enable the schedule. The central deployment does not automatically install
+agents on third-party machines.

@@ -1,14 +1,14 @@
-# Schnellstart
+# Quick start
 
-Dieser Ablauf startet Patchwatch lokal mit Docker Compose. Voraussetzung sind
-Docker mit Compose v2+, Python ≥3.12, ungefähr 7 GiB freier Arbeitsspeicher und
-ausreichend Speicher für Datenbank und Schwachstellendaten. Ein Checkout des
-Repositorys muss vorliegen. Für dieses lokale Beispiel sind weder Kubernetes
-noch GitLab, eine eigene Domain oder Keycloak erforderlich.
+This procedure starts Patchwatch locally with Docker Compose. Prerequisites are
+Docker with Compose v2+, Python ≥3.12, about 7 GiB of free memory and
+enough storage for the database and vulnerability data. A checkout of the
+repository must be available. This local example requires neither Kubernetes
+nor GitLab, a domain of your own or Keycloak.
 
-## Stack starten und initialisieren
+## Start and initialize the stack
 
-Im Wurzelverzeichnis des Checkouts:
+In the root directory of the checkout:
 
 ```sh
 python3 scripts/init-compose.py
@@ -21,29 +21,30 @@ DT_URL=http://localhost:8080 ALLOW_HTTP=true \
   python3 -m patchwatch.dtrack.setup --initial-admin
 ```
 
-Öffnen: `http://localhost:8080`, Benutzer `admin`, Passwort aus
-`.secrets/admin_password`. Die Einrichtung ersetzt das initiale Standardpasswort,
-legt technische Teams und Schlüssel an und konfiguriert Quellen und Richtlinien.
-Der erste Datenabgleich kann länger dauern als der Start der Container.
-Der HTTP-Port ist für dieses Beispiel nur an Loopback gebunden.
+Open `http://localhost:8080`, user `admin`, password from
+`.secrets/admin_password`. The setup replaces the initial default password,
+creates technical teams and keys, and configures sources and policies.
+The first data synchronization can take longer than starting the containers.
+In this example the HTTP port is bound to loopback only.
 
-## Erstes Inventar erfassen
+## Record the first inventory
 
-Auf einem Linux- oder macOS-Rechner Python und Syft installieren und die
-[Agent-Anleitung](usage/agent.md) befolgen. Für einen Agenten auf einem anderen
-Rechner zunächst [HTTPS](installation/compose.md#https-für-entfernte-agenten)
-einrichten; lokale HTTP-Ausnahmen nicht auf entfernte Geräte übertragen.
-Als Alternative ein Repository über die [GitLab-CI-Integration](usage/ci-integration.md)
-anbinden. Ein GitLab-Projekt und ein eigenes veröffentlichtes CI-Image sind dafür erforderlich;
-die [Compose-Einrichtung für CI](usage/ci-integration.md#14-ci-mit-einem-compose-server-ohne-kubernetes)
-beschreibt den Ablauf ohne Kubernetes.
+On a Linux or macOS machine, install Python and Syft and follow the
+[agent guide](usage/agent.md). For an agent on a different
+machine, first set up [HTTPS](installation/compose.md#https-for-remote-agents);
+do not carry local HTTP exceptions over to remote devices.
+Alternatively, connect a GitLab repository with the interactive [setup script](usage/gitlab-setup-script.md)
+(it needs only `curl` and `jq`), or follow the [GitLab CI integration](usage/ci-integration.md) by hand.
+This requires a GitLab project and a published CI image of your own;
+the [Compose setup for CI](usage/ci-integration.md#14-ci-with-a-compose-server-without-kubernetes)
+describes the procedure without Kubernetes.
 
-## Für den regulären Betrieb
+## For regular operation
 
-- [Alerting-Ziele](configuration/alerting.md) konfigurieren; die initiale Konfiguration verschickt keine Meldungen.
-- [Backups und Monitoring](operations/index.md) einrichten und einen Restore prüfen.
-- Bei mehreren Benutzern [OIDC-Gruppen und Rechte](configuration/oidc.md) konfigurieren.
-- Für Kubernetes mit der [Installationsanleitung](installation/kubernetes.md) und den [Umgebungsparametern](installation/customization.md) fortfahren.
+- Configure [alerting targets](configuration/alerting.md); the initial configuration sends no messages.
+- Set up [backups and monitoring](operations/index.md) and verify a restore.
+- With multiple users, configure [OIDC groups and permissions](configuration/oidc.md).
+- For Kubernetes, continue with the [installation guide](installation/kubernetes.md) and the [environment parameters](installation/customization.md).
 
-`docker compose down` stoppt die Dienste und erhält die Volumes. `down -v` entfernt
-die gespeicherten Daten. Weitere Themen stehen in der [Dokumentationsübersicht](README.md).
+`docker compose down` stops the services and keeps the volumes. `down -v` removes
+the stored data. More topics are in the [documentation overview](README.md).

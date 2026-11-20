@@ -5,6 +5,7 @@
     python3 packaging/build.py pyz            dist/patchwatch-agent.pyz  (agent + core only)
     python3 packaging/build.py deb            dist/patchwatch-agent_<version>_<arch>.deb
     python3 packaging/build.py pkg            dist/patchwatch-agent-<version>.pkg   (macOS only)
+    python3 packaging/build.py templates      dist/patchwatch-ci-templates.tar.gz   (GitLab CI templates)
 
 The agent ships as a zipapp: ``patchwatch/agent`` and ``patchwatch/core`` are the only packages in
 it (``tests/test_boundaries.py`` guarantees they do not import anything else). Packages install it
@@ -235,13 +236,41 @@ def build_pkg(destination_dir: Path, pyz: Path, syft=None) -> Path:
     return destination
 
 
+# -- CI templates ---------------------------------------------------------------------------------
+
+TEMPLATES_NAME = "patchwatch-ci-templates.tar.gz"
+
+
+def build_templates(destination: Path, image=None) -> Path:
+    """Archive of ``ci-templates/*.yml`` for scripts/setup-gitlab-project.sh.
+
+    Besides the templates it holds ``VERSION`` and, when ``image`` is given, ``IMAGE``: the public job
+    image (``ghcr.io/<owner>/<repo>/ci:vX.Y.Z``) the generated GitLab configuration passes as the
+    ``image`` input. The templates themselves are shipped unchanged.
+    """
+    entries = {f"ci-templates/{path.name}": (path.read_bytes(), 0o644)
+               for path in (ROOT / "ci-templates").glob("*.yml")}
+    if not entries:
+        raise SystemExit("ci-templates/ contains no templates")
+    entries["VERSION"] = (f"{__version__}\n".encode(), 0o644)
+    if image:
+        entries["IMAGE"] = (f"{image}\n".encode(), 0o644)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(_tar(entries))
+    return destination
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("target", choices=("pyz", "deb", "pkg"))
+    parser.add_argument("target", choices=("pyz", "deb", "pkg", "templates"))
     parser.add_argument("--output", default=str(ROOT / "dist"), help="output directory (default: dist/)")
     parser.add_argument("--syft", help="Syft binary to bundle (makes the package architecture specific)")
+    parser.add_argument("--image", help="public CI job image recorded in the templates archive (target templates)")
     args = parser.parse_args(argv)
     output = Path(args.output)
+    if args.target == "templates":
+        print(build_templates(output / TEMPLATES_NAME, args.image))
+        return
     with tempfile.TemporaryDirectory() as folder:
         pyz = build_pyz(output / PYZ_NAME if args.target == "pyz" else Path(folder) / PYZ_NAME)
         if args.target == "deb":

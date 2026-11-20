@@ -1,147 +1,147 @@
-# Technische Architektur des Enrollment-Dienstes
+# Technical architecture of the enrollment service
 
-Stand: 14. November 2026. Ausführbarer Implementierungsplan als Entwurf; die beschriebenen
-Module, Tabellen und Endpunkte sind noch nicht implementiert. Ergänzt das fachliche
-[Enrollment-Konzept](enrollment.md). Bei den hier präzisierten Fehler- und Zustandsabläufen
-gilt dieser Detailentwurf.
+As of: 14 November 2026. Executable implementation plan as a draft; the modules,
+tables and endpoints described are not yet implemented. Supplements the functional
+[enrollment concept](enrollment.md). For the error and state flows specified more precisely here,
+this detailed design applies.
 
-## 1. Technische Entscheidungen
+## 1. Technical decisions
 
-| Bereich | Entscheidung | Begründung |
+| Area | Decision | Rationale |
 |---|---|---|
-| Server | Python ≥3.12, FastAPI/Pydantic, Uvicorn | Anschluss an bestehenden Code; explizite Request-/Response-Modelle und OpenAPI |
-| Speicherung | PostgreSQL 17, Psycopg 3 mit begrenztem Connection-Pool | Transaktionen, Constraints, persistente Aufträge |
-| Datenzugriff | Parametrisiertes SQL in Repository-Modulen | Sperren und Zustandswechsel bleiben im Code sichtbar; zunächst kein ORM |
-| Migration | Nummerierte SQL-Dateien, eigene Migration-CLI | Kleine, nachvollziehbare Schemaänderungen; separates DDL-Recht |
-| Backend-HTTP | HTTPX mit wiederverwendeten Clients | Dateien als Multipart streamen; explizite Timeouts und deaktivierte Redirects |
-| SBOM-Prüfung | Streaming-Vorprüfung mit `ijson`, Schema-/Feldprüfung mit `jsonschema` | Grenzen vor Materialisierung erzwingen; CycloneDX und Patchwatch-Feldumfang prüfen |
-| Auftragsverarbeitung | PostgreSQL-Queue, Worker außerhalb des HTTP-Requests | Aufnahme und Upload überleben API-Abstürze; kein Redis/Celery im MVP |
-| Upload-Puffer | Ein privates POSIX-PVC, temporäre und fertige Dateien | Begrenzt und unabhängig vom Arbeitsspeicher; kein Objektspeicher im MVP |
-| Auslieferung | Eigenes Server-Image und eigenes Python-Distributionspaket | Neue Serverabhängigkeiten gelangen nicht in Agent oder Bridge |
-| Hochverfügbarkeit | Eine Pod-Replik mit mehreren Rollen im Pilot | Gemeinsamer Puffer und klare Restart-Reihenfolge; keine vorgetäuschte HA |
+| Server | Python ≥3.12, FastAPI/Pydantic, Uvicorn | Connection to existing code; explicit request/response models and OpenAPI |
+| Storage | PostgreSQL 17, Psycopg 3 with a bounded connection pool | Transactions, constraints, persistent jobs |
+| Data access | Parameterized SQL in repository modules | Locks and state changes stay visible in code; no ORM at first |
+| Migration | Numbered SQL files, own migration CLI | Small, traceable schema changes; separate DDL permission |
+| Backend HTTP | HTTPX with reused clients | Stream files as multipart; explicit timeouts and disabled redirects |
+| SBOM validation | Streaming pre-check with `ijson`, schema/field check with `jsonschema` | Enforce limits before materialization; check CycloneDX and Patchwatch field scope |
+| Job processing | PostgreSQL queue, worker outside the HTTP request | Onboarding and upload survive API crashes; no Redis/Celery in the MVP |
+| Upload buffer | One private POSIX PVC, temporary and finished files | Bounded and independent of main memory; no object storage in the MVP |
+| Delivery | Own server image and own Python distribution package | New server dependencies do not reach the agent or bridge |
+| High availability | One pod replica with multiple roles in the pilot | Shared buffer and clear restart order; no pretended HA |
 
-Die konkreten Bibliotheksversionen werden bei Implementierung gemeinsam festgesetzt und
-als Lockdatei mit Hashes eingecheckt. Sie sind keine automatische Erweiterung der aktuell
-leeren `dependencies` des Agent-Pakets. Servercode wird als eigene Distribution im Monorepo
-gebaut; gemeinsam genutzte Inventar-/Bereinigungsfunktionen erhalten explizite Schnittstellen.
-Das Server-Image wird unabhängig vom bisherigen Bridge-Image gebaut und inventarisiert.
+The concrete library versions are fixed together at implementation and
+checked in as a lock file with hashes. They are no automatic extension of the currently
+empty `dependencies` of the agent package. Server code is built as a distribution of its own in the monorepo;
+shared inventory/sanitizing functions receive explicit interfaces.
+The server image is built and inventoried independently of the existing bridge image.
 
-FastAPI-Anwendungen können getrennte OpenAPI-Verträge besitzen; hier werden aus demselben
-Code zwei eigenständige App-Factories gestartet, statt Managementrouten nur am Ingress zu
-verstecken. Grundlage: [FastAPI-Dokumentation](https://fastapi.tiangolo.com/advanced/sub-applications/).
-Dateibasierte Multipart-Uploads sind im [HTTPX-Client](https://www.python-httpx.org/quickstart/#sending-multipart-file-uploads)
-vorgesehen. Die bestehenden Helfer `multipart()` und `upload_and_wait()` werden serverseitig
-nicht unverändert genutzt: Sie bauen den vollständigen Body im Speicher und wiederholen
-die Weiterleitung bei Fehlern, ohne eine persistente Versandentscheidung zu kennen.
+FastAPI applications can have separate OpenAPI contracts; here, two independent
+app factories are started from the same code instead of merely hiding management routes at the
+ingress. Basis: [FastAPI documentation](https://fastapi.tiangolo.com/advanced/sub-applications/).
+File-based multipart uploads are provided for in the [HTTPX client](https://www.python-httpx.org/quickstart/#sending-multipart-file-uploads).
+The existing helpers `multipart()` and `upload_and_wait()` are not used unchanged on the server:
+they build the complete body in memory and repeat
+forwarding on errors without knowing a persistent send decision.
 
-## 2. Laufzeitkomponenten und Schnittstellen
+## 2. Runtime components and interfaces
 
 ```mermaid
 flowchart TB
-    A[Agent] -->|HTTPS| I[Geräte-Ingress]
+    A[Agent] -->|HTTPS| I[Device ingress]
     I -->|8080| P[Public API]
-    C[Admin CLI / Ansible / MDM] -->|Interner HTTPS-Zugang| M[Management API :8081]
+    C[Admin CLI / Ansible / MDM] -->|Internal HTTPS access| M[Management API :8081]
     P --> DB[(Enrollment PostgreSQL)]
     M --> DB
-    P --> FS[(Upload-PVC)]
-    W[Worker: Registrierung, Validierung, Upload, Polling] --> DB
+    P --> FS[(Upload PVC)]
+    W[Worker: registration, validation, upload, polling] --> DB
     W --> FS
-    W -->|Festes API-Ziel| D[Dependency-Track]
-    W --> V[Begrenzter Validator-Unterprozess]
+    W -->|Fixed API target| D[Dependency-Track]
+    W --> V[Bounded validator subprocess]
 ```
 
-Ein Image hat vier Startmodi: `serve-public`, `serve-admin`, `worker` und `migrate`.
-Im Kubernetes-Pilot laufen die ersten drei als getrennte Container eines Pods mit einer
-Replik und `Recreate`-Strategie. Migrationen laufen vorher als separater Job. In Compose
-sind es drei Services mit demselben Image und gemeinsamen Puffervolume; der Migrationsjob
-muss erfolgreich abgeschlossen sein. Ein Produktions-Deployment per RollingUpdate ist für
-diesen MVP ausgeschlossen, weil alter und neuer Worker sonst gleichzeitig leben können.
+One image has four start modes: `serve-public`, `serve-admin`, `worker` and `migrate`.
+In the Kubernetes pilot, the first three run as separate containers of one pod with one
+replica and the `Recreate` strategy. Migrations run beforehand as a separate job. In Compose
+there are three services with the same image and a shared buffer volume; the migration job
+must have completed successfully. A production deployment via RollingUpdate is excluded for
+this MVP because old and new worker could otherwise live at the same time.
 
-| Rolle | Darf | Erhält nicht |
+| Role | May | Does not receive |
 |---|---|---|
-| Public API | Geräte authentisieren, Aufnahme reservieren, Payload persistieren, eigenen Status lesen | DTrack-Schlüssel, DDL-Rechte, Management-Router |
-| Management API | Einladungen, Profilzuordnung, Sperrung und manuelle Auflösung | Upload-PVC, DTrack-Schlüssel, Public-Uploadhandler |
-| Worker | Aufträge bearbeiten, Payload prüfen/lesen/löschen, DTrack adressieren | Verwaltungs-Credential, öffentliche Listener |
-| Migration | DDL und Schema-Version ändern | Geräte-Ingress, laufende Scanverarbeitung |
+| Public API | Authenticate devices, reserve onboarding, persist payload, read own status | DTrack keys, DDL permissions, management router |
+| Management API | Invitations, profile assignment, revocation and manual resolution | Upload PVC, DTrack keys, public upload handler |
+| Worker | Process jobs, check/read/delete payload, address DTrack | Management credential, public listeners |
+| Migration | Change DDL and schema version | Device ingress, running scan processing |
 
-Jede Rolle hat einen eigenen DB-Login; ein gemeinsamer Schema-Owner gehört ausschließlich
-dem Migrationsjob. Tabellenrechte werden entsprechend begrenzt, Audit ist für Laufzeitrollen
-nur anfügbar. Das ersetzt nicht die Geräteautorisierung im Anwendungscode. Container im
-gleichen Pod teilen die Netzwerkidentität; die Public API ist hier keine harte Netzwerk-
-Sicherheitsgrenze gegenüber dem Worker. Separate Pods und getrennte Service-Identitäten
-sind ein späterer Härtungsschritt mit passendem gemeinsamem Speicher.
+Every role has its own DB login; a shared schema owner belongs exclusively
+to the migration job. Table permissions are limited accordingly, audit is append-only for runtime roles.
+This does not replace device authorization in the application code. Containers in the
+same pod share the network identity; the public API here is no hard network
+security boundary against the worker. Separate pods and separate service identities
+are a later hardening step with suitable shared storage.
 
-Die API macht keine DTrack-Aufrufe innerhalb von Requests. Der Worker verwendet nur
-persistierte, geprüfte Daten und eine fest konfigurierte Backend-URL. Vor dem produktiven
-Start wird die Erreichbarkeit der Management-API vom öffentlichen Ingress negativ getestet.
+The API makes no DTrack calls within requests. The worker uses only
+persisted, verified data and a fixed configured backend URL. Before productive
+start, the reachability of the management API from the public ingress is tested negatively.
 
-## 3. Code-Aufteilung
+## 3. Code layout
 
-Vorgesehene Struktur, noch keine anzulegenden Implementierungsdateien:
+Intended structure, no implementation files to be created yet:
 
 ```text
 server/enrollment/
-  pyproject.toml                 # eigene Serverdistribution und Abhängigkeiten
+  pyproject.toml                 # own server distribution and dependencies
   src/patchwatch_enrollment/
-    apps/public.py              # nur Geräte- und Aufnahme-Router
-    apps/admin.py               # nur Management-Router
-    api/models.py               # kleine JSON-Requests und Responses
-    auth.py                     # Tokenparser, Digestprüfung, AuthContext
-    services/enrollments.py     # atomare Aufnahme und Wiederaufnahme
-    services/credentials.py     # Rotation und Bestätigung
-    services/uploads.py        # Annahme, Idempotenz und Status
-    services/profiles.py        # versionierte Profilzuordnung
-    repositories/              # SQL je fachlichem Bereich
-    workers/dispatch.py         # Claims, Leases, Versandsperren
-    workers/registration.py     # DTrack-Zuordnung und Reconciliation
-    workers/uploads.py         # Validierung, Versand, Polling
-    validation.py              # SBOM-Unterprozess ohne Backend-Zugangsdaten
-    dtrack.py                  # begrenzter Backend-Client, keine impliziten Retries
-    spool.py                   # Dateipfade, Synchronisation, Bereinigung
-    maintenance.py             # TTL, abgelaufene Reservierungen, Metriken
-    cli.py                     # Management und Migration
+    apps/public.py              # device and onboarding routers only
+    apps/admin.py               # management routers only
+    api/models.py               # small JSON requests and responses
+    auth.py                     # token parser, digest check, AuthContext
+    services/enrollments.py     # atomic onboarding and re-onboarding
+    services/credentials.py     # rotation and confirmation
+    services/uploads.py        # acceptance, idempotency and status
+    services/profiles.py        # versioned profile assignment
+    repositories/              # SQL per functional area
+    workers/dispatch.py         # claims, leases, send locks
+    workers/registration.py     # DTrack assignment and reconciliation
+    workers/uploads.py         # validation, sending, polling
+    validation.py              # SBOM subprocess without backend credentials
+    dtrack.py                  # bounded backend client, no implicit retries
+    spool.py                   # file paths, synchronization, cleanup
+    maintenance.py             # TTL, expired reservations, metrics
+    cli.py                     # management and migration
     migrations/                # 0001_initial.sql, ...
 ```
 
-Handler enthalten HTTP-Abbildung, Authentisierung und Aufruf eines Services. Transaktionen
-liegen im Service und umfassen genau die benötigten Repository-Aufrufe. Repositories
-führen keine eigenen versteckten Commits aus. Die Datenbankverbindungen nutzen explizite,
-kurze Transaktionen; Netzwerkzugriffe, Dateistreaming und Validierung laufen außerhalb davon.
-Das vermeidet offene Transaktionen während langer I/O-Phasen; siehe
-[Psycopg-Transaktionsverwaltung](https://www.psycopg.org/psycopg3/docs/basic/transactions.html).
+Handlers contain HTTP mapping, authentication and the call of a service. Transactions
+live in the service and cover exactly the required repository calls. Repositories
+perform no hidden commits of their own. Database connections use explicit,
+short transactions; network access, file streaming and validation run outside them.
+This avoids open transactions during long I/O phases; see
+[Psycopg transaction management](https://www.psycopg.org/psycopg3/docs/basic/transactions.html).
 
-## 4. Relationales Datenmodell
+## 4. Relational data model
 
-Alle IDs sind UUIDs, alle Zeiten `timestamptz` in UTC. Zustände sind `text` mit CHECK-
-Constraints, Versions-/Sequenznummern `bigint`, Größen `bigint`, Geheimnisdigests `bytea`
-mit genau 32 Bytes. API-Ausgaben formatieren Zeiten als RFC-3339 mit `Z`.
+All IDs are UUIDs, all times `timestamptz` in UTC. States are `text` with CHECK
+constraints, version/sequence numbers `bigint`, sizes `bigint`, secret digests `bytea`
+of exactly 32 bytes. API outputs format times as RFC 3339 with `Z`.
 
-| Tabelle | Wesentliche Spalten | Constraints und Indizes |
+| Table | Key columns | Constraints and indexes |
 |---|---|---|
-| `profiles` | `id`, `version`, `schema_version`, `body jsonb`, `body_sha256`, `created_by`, `created_at` | PK `(id, version)`; veröffentlichte Zeilen unveränderlich |
-| `devices` | `id`, `host_id`, `project_uuid`, `state`, `generation`, `hostname`, `reported_metadata jsonb`, `approved_metadata jsonb`, `metadata_revision`, `registered_revision`, `profile_id`, `profile_version`, `org_tags jsonb`, `next_upload_sequence`, `last_seen_at`, `last_imported_at`, `row_version` | Unique `host_id`, nullable Unique `project_uuid`; FK zum exakten Profil; `active` benötigt Projekt-UUID |
-| `credentials` | `id`, `device_id`, `generation`, `slot`, `secret_digest`, `created_at`, `expires_at`, `confirmed_at`, `revoked_at`, `rotation_request_id` | FK Gerät; partiell Unique `(device_id, slot)` für nicht widerrufene Zeilen; Slot 0 oder 1; Rotation-ID je Gerät eindeutig |
-| `invitations` | `id`, `secret_digest`, `state`, `expires_at`, `expected_host_id`, `expected_hostname`, `target_device_id`, `target_generation`, `profile_id/version`, `org_tags`, `consumed_device_id`, `enrollment_request_id`, `request_digest`, `created_by` | FK auf Profil und ggf. bestehendes Gerät; Einlösung nur einmal; Request-ID eindeutig, wenn gesetzt |
-| `registration_jobs` | `id`, `device_id`, `generation`, `metadata_revision`, `state`, `attempts`, `next_run_at`, `lease_owner`, `lease_until`, `lease_epoch`, `last_error_code` | Unique `(device_id, generation, metadata_revision)`; Index auf fällige Zustände |
-| `upload_jobs` | `id`, `device_id`, `generation`, `scan_id`, `sequence`, `state`, `declared_sha256`, `actual_sha256`, `declared_bytes`, `actual_bytes`, `profile_id/version`, `metadata_revision`, `spool_key`, `dtrack_token`, `expires_at`, Lease-/Fehlerfelder | Unique `(device_id, scan_id)` und `(device_id, sequence)`; partiell maximal ein offener Upload je Gerät |
-| `device_dispatch` | `device_id`, `job_kind`, `job_id`, `lease_owner`, `lease_until`, `epoch`, `barrier_reason`, `updated_at` | Eine Zeile je Gerät; serialisiert Registrierung und Uploadversand |
-| `upload_reservations` | `id`, `device_id`, `job_id`, `reserved_bytes`, `lease_until`, `owner` | FK auf internen `receiving`-Auftrag; zählt laufende HTTP-Streams mit |
-| `quota_buckets` | `id`, `limit_bytes`, `used_bytes`, `limit_slots`, `used_slots` | Reservierung unter Zeilensperre; CHECK auf nichtnegative Zähler |
-| `admin_principals` | `id`, `credential_id`, `secret_digest`, `role`, `expires_at`, `revoked_at` | Getrennter Credential-Namensraum; Initialisierung über lokale Bootstrap-CLI |
-| `audit_events` | `id`, `occurred_at`, `actor_type`, `actor_id`, `action`, `target_type/id`, `request_id`, `details jsonb` | Index auf Zeit und Ziel; Details ausschließlich freigegebene Felder |
-| `schema_migrations` | `version`, `checksum`, `applied_at` | PK Version; Checksum-Abweichung verhindert Start |
+| `profiles` | `id`, `version`, `schema_version`, `body jsonb`, `body_sha256`, `created_by`, `created_at` | PK `(id, version)`; published rows immutable |
+| `devices` | `id`, `host_id`, `project_uuid`, `state`, `generation`, `hostname`, `reported_metadata jsonb`, `approved_metadata jsonb`, `metadata_revision`, `registered_revision`, `profile_id`, `profile_version`, `org_tags jsonb`, `next_upload_sequence`, `last_seen_at`, `last_imported_at`, `row_version` | Unique `host_id`, nullable unique `project_uuid`; FK to the exact profile; `active` requires a project UUID |
+| `credentials` | `id`, `device_id`, `generation`, `slot`, `secret_digest`, `created_at`, `expires_at`, `confirmed_at`, `revoked_at`, `rotation_request_id` | FK device; partial unique `(device_id, slot)` for non-revoked rows; slot 0 or 1; rotation ID unique per device |
+| `invitations` | `id`, `secret_digest`, `state`, `expires_at`, `expected_host_id`, `expected_hostname`, `target_device_id`, `target_generation`, `profile_id/version`, `org_tags`, `consumed_device_id`, `enrollment_request_id`, `request_digest`, `created_by` | FK to profile and, if applicable, existing device; redemption only once; request ID unique if set |
+| `registration_jobs` | `id`, `device_id`, `generation`, `metadata_revision`, `state`, `attempts`, `next_run_at`, `lease_owner`, `lease_until`, `lease_epoch`, `last_error_code` | Unique `(device_id, generation, metadata_revision)`; index on due states |
+| `upload_jobs` | `id`, `device_id`, `generation`, `scan_id`, `sequence`, `state`, `declared_sha256`, `actual_sha256`, `declared_bytes`, `actual_bytes`, `profile_id/version`, `metadata_revision`, `spool_key`, `dtrack_token`, `expires_at`, lease/error fields | Unique `(device_id, scan_id)` and `(device_id, sequence)`; partial: at most one open upload per device |
+| `device_dispatch` | `device_id`, `job_kind`, `job_id`, `lease_owner`, `lease_until`, `epoch`, `barrier_reason`, `updated_at` | One row per device; serializes registration and upload sending |
+| `upload_reservations` | `id`, `device_id`, `job_id`, `reserved_bytes`, `lease_until`, `owner` | FK to internal `receiving` job; also counts running HTTP streams |
+| `quota_buckets` | `id`, `limit_bytes`, `used_bytes`, `limit_slots`, `used_slots` | Reservation under row lock; CHECK for non-negative counters |
+| `admin_principals` | `id`, `credential_id`, `secret_digest`, `role`, `expires_at`, `revoked_at` | Separate credential namespace; initialization via local bootstrap CLI |
+| `audit_events` | `id`, `occurred_at`, `actor_type`, `actor_id`, `action`, `target_type/id`, `request_id`, `details jsonb` | Index on time and target; details exclusively approved fields |
+| `schema_migrations` | `version`, `checksum`, `applied_at` | PK version; checksum deviation prevents start |
 
-`generation` trennt Zugangsperioden desselben Assets: Eine Wiederaufnahme inkrementiert sie.
-Ein Credential ist nur gültig, wenn seine Generation der aktuellen Gerätegeneration entspricht.
-Aufträge aus älteren Generationen dürfen nicht mehr neu versendet werden. Ein schon laufender
-DTrack-Auftrag muss vor Freigabe der neuen Generation abgeglichen werden.
+`generation` separates access periods of the same asset: a re-onboarding increments it.
+A credential is valid only if its generation matches the current device generation.
+Jobs of older generations may no longer be newly sent. A DTrack job already running
+must be reconciled before the new generation is released.
 
-Ein `slot` begrenzt gleichzeitig vorhandene Geräte-Credentials auf zwei. Vor Rotation werden
-abgelaufene Zeilen unter Gerätesperre widerrufen, damit sie ihren Slot freigeben. Historische
-Zeilen bleiben für Audit erhalten. Die Zuordnung zum gleichen Gerät und zur aktuellen
-Generation wird bei jeder Mutation geprüft; der Slotindex allein prüft keine Gültigkeit.
+A `slot` limits simultaneously existing device credentials to two. Before rotation, expired
+rows are revoked under the device lock so that they release their slot. Historical
+rows are kept for audit. The assignment to the same device and to the current
+generation is checked on every mutation; the slot index alone checks no validity.
 
-Beispiel für zentrale Constraints; kein vollständiges Migrationsskript:
+Example of central constraints; not a complete migration script:
 
 ```sql
 CREATE UNIQUE INDEX uq_credential_slot
@@ -161,15 +161,15 @@ ALTER TABLE devices ADD CONSTRAINT active_has_project
     CHECK (state <> 'active' OR project_uuid IS NOT NULL);
 ```
 
-Anwendungsregeln wie „kein Versand bei Sperre“ benötigen zusätzlich Transaktionen und
-Dispatch-Prüfung; ein CHECK auf einer Tabelle ersetzt keine tabellenübergreifende Invariante.
-Die verwendeten Constraint-Arten sind in der [PostgreSQL-Dokumentation](https://www.postgresql.org/docs/17/ddl-constraints.html)
-beschrieben. Geräte, Projekte und historische Identitäten werden im normalen Betrieb nicht
-per kaskadierender Löschung entfernt. Eine endgültige Löschung ist ein separater Ablauf.
+Application rules such as "no sending on revocation" additionally need transactions and
+dispatch checks; a CHECK on one table replaces no cross-table invariant.
+The constraint types used are described in the [PostgreSQL documentation](https://www.postgresql.org/docs/17/ddl-constraints.html).
+Devices, projects and historical identities are not removed through cascading deletion in
+normal operation. A final deletion is a separate flow.
 
-## 5. Authentisierung und Request-Verarbeitung
+## 5. Authentication and request processing
 
-Vorgeschlagene Tokenformate:
+Proposed token formats:
 
 ```text
 pw_enr_v1.<invitation_uuid>.<base64url_32_random_bytes>
@@ -177,36 +177,36 @@ pw_dev_v1.<credential_uuid>.<base64url_32_random_bytes>
 pw_adm_v1.<principal_uuid>.<base64url_32_random_bytes>
 ```
 
-Die Präfixe unterscheiden Zwecke, sind aber kein Berechtigungsnachweis. Gespeichert wird
-`SHA-256(domain || public_id || secret_bytes)` mit getrennten Domains je Tokentyp. Parser
-prüfen maximale Länge, UUID, kanonische Base64url-Kodierung und exakt 32 Geheimnisbytes.
-Ungültige, unbekannte und abgelaufene Zugangsdaten liefern nach außen denselben generischen
-Authentisierungsfehler; Audit unterscheidet intern nur unkritische Fehlerklassen.
+The prefixes distinguish purposes but are no proof of permission. Stored is
+`SHA-256(domain || public_id || secret_bytes)` with separate domains per token type. Parsers
+check maximum length, UUID, canonical base64url encoding and exactly 32 secret bytes.
+Invalid, unknown and expired credentials yield the same generic
+authentication error to the outside; audit distinguishes internally only non-critical error classes.
 
-Reihenfolge jedes Geräte-Requests:
+Order of every device request:
 
-1. Host, erlaubten Pfad, Methode, Content-Type, Header- und deklarierte Größenlimits prüfen.
-2. Credential über öffentliche ID laden und Digest zeitkonstant vergleichen.
-3. Ablauf, Widerruf, Gerätegeneration und Gerätestatus aus PostgreSQL prüfen; kein positiver
-   Auth-Cache im MVP. `provisioning` und Registrierungsfehler erlauben nur eigenen Status.
-4. Einen unveränderlichen `AuthContext(device_id, credential_id, generation, request_id)`
-   erzeugen. Er enthält weder Token noch vom Body übernommene Geräte-ID.
-5. Mutationen prüfen den Gerätestatus unter Zeilensperre erneut. Ressourcen-Lookups verwenden
-   immer `WHERE id = :id AND device_id = :authenticated_device`.
-6. Antwort über explizites Response-Modell serialisieren. Pydantic-Validierungsfehler werden
-   ohne Eingabewerte ausgegeben: Sie könnten den Credential-Body enthalten.
+1. Check host, permitted path, method, content type, header and declared size limits.
+2. Load the credential via its public ID and compare the digest in constant time.
+3. Check expiry, revocation, device generation and device status from PostgreSQL; no positive
+   auth cache in the MVP. `provisioning` and registration errors allow only own status.
+4. Create an immutable `AuthContext(device_id, credential_id, generation, request_id)`.
+   It contains neither token nor a device ID taken from the body.
+5. Mutations check the device status again under row lock. Resource lookups always use
+   `WHERE id = :id AND device_id = :authenticated_device`.
+6. Serialize the response via an explicit response model. Pydantic validation errors are output
+   without input values: they could contain the credential body.
 
-Standardfelder wie `request_id` und `error_code` dürfen geloggt werden; Auth-Header, JSON-
-Bodies, SQL-Parameter und rohe Exceptions werden nicht geloggt. Auch Debug-/Tracing-Tools
-und HTTPX-Logs müssen diese Vorgabe einhalten. `last_seen_at` wird höchstens alle fünf
-Minuten geschrieben, damit Statuspolling nicht unnötig Tabellenupdates erzeugt.
+Standard fields such as `request_id` and `error_code` may be logged; auth headers, JSON
+bodies, SQL parameters and raw exceptions are not logged. Debug/tracing tools
+and HTTPX logs must also comply with this rule. `last_seen_at` is written at most every five
+minutes so that status polling does not needlessly create table updates.
 
-## 6. Konkrete Aufnahme- und Konfigurationsverträge
+## 6. Concrete onboarding and configuration contracts
 
-Kleine JSON-Requests sind auf 64 KiB begrenzt, besitzen `additionalProperties: false` und
-verwenden feste Schema-Versionen. Beispiele enthalten ausschließlich Platzhalter.
+Small JSON requests are limited to 64 KiB, have `additionalProperties: false` and
+use fixed schema versions. Examples contain placeholders exclusively.
 
-`POST /v1/enrollments`, Authorization: Einladungstoken:
+`POST /v1/enrollments`, Authorization: invitation token:
 
 ```json
 {
@@ -215,16 +215,16 @@ verwenden feste Schema-Versionen. Beispiele enthalten ausschließlich Platzhalte
   "hostname": "workstation-01",
   "metadata": {"os": "linux", "distro": "ubuntu", "architecture": "x86_64"},
   "agent_version": "0.1.0",
-  "credential": {"id": "7a21ed7f-e09c-45eb-a118-ae8a67497c03", "secret": "<base64url-32-zufallsbytes>"}
+  "credential": {"id": "7a21ed7f-e09c-45eb-a118-ae8a67497c03", "secret": "<base64url-32-random-bytes>"}
 }
 ```
 
-Der Agent persistiert vorher Request-ID, normalisierte Metadaten und Credential, damit
-Wiederholungen byteunabhängig denselben fachlichen Request bilden. Der Server speichert
-einen Digest über kanonische, normalisierte Werte einschließlich Credential-Digest.
-Normalisierungsvorschriften werden Teil des API-Vertrags; kein allgemeines Signaturformat.
+The agent persists request ID, normalized metadata and credential beforehand so that
+repetitions form the same functional request independent of bytes. The server stores
+a digest over canonical, normalized values including the credential digest.
+Normalization rules become part of the API contract; no general signature format.
 
-`202 Accepted` mit `Location: /v1/device`, `Retry-After: 5`, `Cache-Control: no-store`:
+`202 Accepted` with `Location: /v1/device`, `Retry-After: 5`, `Cache-Control: no-store`:
 
 ```json
 {
@@ -235,30 +235,30 @@ Normalisierungsvorschriften werden Teil des API-Vertrags; kein allgemeines Signa
 }
 ```
 
-Aufnahmetransaktion bei `READ COMMITTED`:
+Onboarding transaction at `READ COMMITTED`:
 
-1. Einladung `FOR UPDATE` laden. Bei bereits verbrauchter Einladung Request-ID,
-   Request-Digest und Besitz der mitgesendeten Geräteberechtigung prüfen. Identische
-   Wiederholung liefert nur bestehenden Zustand und reaktiviert nichts.
-2. Bei neuer Einlösung Frist, Widerruf, Profil und erwartete Metadaten prüfen. Eine normale
-   Einladung darf keine existierende Asset-ID übernehmen. Wiederaufnahme benötigt eine
-   Einladung mit explizitem Zielgerät und erwarteter Generation.
-3. Gerätezeile erstellen beziehungsweise sperren; Konflikte auf Unique-Constraints als
-   `409 IDENTITY_CONFLICT` abbilden. Wiederaufnahme scheitert, wenn ein ungeklärter Versand
-   oder Registrierungsaufruf die alte Generation noch blockiert.
-4. Credential-Digest und Generation persistieren, Einladung konsumieren, Registrierungsjob
-   sowie Audit schreiben. Ein Commit macht alle Änderungen gemeinsam sichtbar.
-5. Erst danach antworten. Bei Commit-Verbindungsfehler ist der Commit-Ausgang unbekannt;
-   die API meldet keinen Erfolg. Der Agent verwendet Statusabfrage und identische Wiederholung.
+1. Load the invitation `FOR UPDATE`. For an already consumed invitation, check request ID,
+   request digest and possession of the device credential sent along. An identical
+   repetition returns only the existing state and reactivates nothing.
+2. For a new redemption, check deadline, revocation, profile and expected metadata. A normal
+   invitation may not take over an existing asset ID. Re-onboarding needs an
+   invitation with an explicit target device and expected generation.
+3. Create or lock the device row; map conflicts on unique constraints to
+   `409 IDENTITY_CONFLICT`. Re-onboarding fails if an unresolved send
+   or registration call still blocks the old generation.
+4. Persist credential digest and generation, consume the invitation, write registration job
+   and audit. One commit makes all changes visible together.
+5. Only then respond. On a connection error at commit, the commit outcome is unknown;
+   the API reports no success. The agent uses a status query and identical repetition.
 
-Wiederholungen verbrauchter Einladungen sind nur mit übereinstimmender, noch gültiger
-Geräteberechtigung erlaubt; die ursprüngliche Einladungsfrist beendet nicht den Statusabruf.
-Ein verlorenes Verwaltungs-Response bei Einladungserstellung ist anders: Der Server kann
-das nur als Digest gespeicherte Token nicht erneut anzeigen. Die Verwaltung widerruft die
-betroffene Einladung über ihre bekannte Request-ID und erstellt eine neue. Unbekannte
-Einladungen werden nicht durch beliebige Wiederholungen vervielfacht.
+Repetitions of consumed invitations are allowed only with a matching, still valid
+device credential; the original invitation deadline does not end the status query.
+A lost management response when creating an invitation is different: the server cannot
+show the token, stored only as a digest, again. The management revokes the
+invitation concerned via its known request ID and creates a new one. Unknown
+invitations are not multiplied by arbitrary repetitions.
 
-Ein aktives Gerät erhält über `GET /v1/device/config` beispielsweise:
+An active device receives via `GET /v1/device/config`, for example:
 
 ```json
 {
@@ -278,312 +278,312 @@ Ein aktives Gerät erhält über `GET /v1/device/config` beispielsweise:
 }
 ```
 
-`profile_id` ist hier der veröffentlichte technische Name; die Datenbank nutzt intern eine
-UUID. `ETag` bezieht sich auf den gesamten aus Profil und Geräte-Metadaten abgeleiteten
-Response; bei `If-None-Match` kann `304` folgen. Der Agent ersetzt seinen letzten gültigen
-Stand erst nach erfolgreicher Prüfung. Syft-Pfad, API-Ziel, CA, Credential-Datei und lokal
-freigegebene Scanbereiche werden nicht durch diesen Response überschrieben.
+`profile_id` here is the published technical name; the database internally uses a
+UUID. `ETag` refers to the entire response derived from profile and device metadata;
+with `If-None-Match`, `304` can follow. The agent replaces its last valid
+state only after successful validation. Syft path, API target, CA, credential file and locally
+approved scan areas are not overwritten by this response.
 
-## 7. Upload-Annahme und Puffertransaktion
+## 7. Upload acceptance and buffer transaction
 
-Uploadvertrag:
+Upload contract:
 
 ```http
 POST /v1/device/uploads
 Authorization: Bearer <device-credential>
 Content-Type: application/vnd.cyclonedx+json
-Content-Length: <exakte-byteanzahl>
-X-Scan-ID: <persistierte-uuid>
-X-Content-SHA256: <64-hexzeichen>
+Content-Length: <exact-byte-count>
+X-Scan-ID: <persisted-uuid>
+X-Content-SHA256: <64-hex-characters>
 X-Profile-Version: 3
 X-Metadata-Revision: 2
 
-<bereinigte CycloneDX-1.6-JSON-Datei>
+<sanitized CycloneDX 1.6 JSON file>
 ```
 
-Der MVP verlangt Content-Length (`411`, falls fehlend), verweigert Content-Encoding und
-unterstützt keinen frei konfigurierbaren Multipart-Eingang. Der Agent serialisiert die SBOM
-einmal in eine private Datei und wiederholt genau diese Bytes; ein neuer Aufruf von
-`sanitize()` würde eine neue `serialNumber` erzeugen und ist keine identische Wiederholung.
+The MVP requires Content-Length (`411` if missing), refuses Content-Encoding and
+supports no freely configurable multipart input. The agent serializes the SBOM
+once into a private file and repeats exactly these bytes; a new call of
+`sanitize()` would create a new `serialNumber` and is not an identical repetition.
 
-1. Authentisieren, Header prüfen, Gerätestatus und zuletzt bestätigte Metadatenrevision
-   kontrollieren. Profilversion muss für das Gerät zur Scanzeit freigegeben gewesen und
-   innerhalb eines konfigurierten Übergangsfensters noch akzeptiert sein; der Auftrag hält
-   diese Version unveränderlich fest. Sicherheitsrelevanter Profilwiderruf kann sie sofort sperren.
-2. Unter kurzer Transaktion zuerst den globalen Quotabucket, dann das Gerät sperren.
-   Bei bekanntem `(device_id, scan_id)` deklarierten Hash, Länge und Versionsfelder vergleichen:
-   abweichend `409`, identisch bestehenden Status liefern, ohne Payload zu ersetzen.
-   Ein bei dieser Wiederholung nicht gelesener Body wird nicht als neuer Inhalt verarbeitet.
-3. Bei neuer ID Sequenz vergeben, internen Auftrag `receiving` und Byte-/Slotreservierung
-   erstellen. Maximal ein offener Auftrag je Gerät. Keine DB-Transaktion während des Streams.
-4. Body in serverseitige Datei `incoming/<job_uuid>.<attempt_uuid>.part` streamen, gleichzeitig
-   SHA-256 und Istgröße ermitteln. Überschreitung, falsche Länge oder falscher Hash führen
-   zu Abbruch, sichtbarem Fehler und anschließender Freigabe der Reservierung.
-5. Datei `fsync`, auf demselben Volume nach `payloads/<job_uuid>.json` umbenennen, Ziel-
-   und Quellverzeichnis synchronisieren. Der Storage-Treiber muss diese POSIX-Eigenschaften
-   tatsächlich gewährleisten. Pfade verwenden ausschließlich serverseitige UUIDs.
-6. In neuer Transaktion Gerätestatus und Generation erneut prüfen, Größe und Hash speichern,
-   Auftrag nach `queued` wechseln, reservierte auf tatsächlich belegte Bytes umstellen.
-   Nach erfolgreichem Commit ist `202` mit Upload-ID und Status-URL erlaubt.
+1. Authenticate, check headers, check device status and last confirmed metadata revision.
+   The profile version must have been approved for the device at scan time and
+   still be accepted within a configured transition window; the job fixes
+   this version immutably. A security-relevant profile revocation can block it immediately.
+2. In a short transaction, lock first the global quota bucket, then the device.
+   For a known `(device_id, scan_id)`, compare declared hash, length and version fields:
+   different yields `409`, identical returns the existing status, without replacing the payload.
+   A body not read during this repetition is not processed as new content.
+3. For a new ID, assign the sequence, create the internal job `receiving` and a byte/slot reservation.
+   At most one open job per device. No DB transaction during the stream.
+4. Stream the body into the server-side file `incoming/<job_uuid>.<attempt_uuid>.part`, determining
+   SHA-256 and actual size at the same time. Exceeding, wrong length or wrong hash lead
+   to abort, a visible error and subsequent release of the reservation.
+5. `fsync` the file, rename it on the same volume to `payloads/<job_uuid>.json`, synchronize target
+   and source directory. The storage driver must actually guarantee these POSIX properties.
+   Paths use exclusively server-side UUIDs.
+6. In a new transaction, check device status and generation again, store size and hash,
+   switch the job to `queued`, convert reserved to actually occupied bytes.
+   After a successful commit, `202` with upload ID and status URL is allowed.
 
-**Präzisierung des Basiskonzepts:** `202 queued` bestätigt dauerhafte Annahme, noch keine
-Schema- oder Inhaltsfreigabe. Die vollständige Validierung erfolgt im Worker vor jedem
-DTrack-Zugriff. Falsche Formate können deshalb als Auftrag `failed/SBOM_INVALID` enden.
-Authentisierungs-, Header-, Größen- und Hashfehler vor Annahme liefern dagegen direkt 4xx.
+**Clarification of the base concept:** `202 queued` confirms durable acceptance, not yet
+schema or content approval. The complete validation takes place in the worker before every
+DTrack access. Wrong formats can therefore end as job `failed/SBOM_INVALID`.
+Authentication, header, size and hash errors before acceptance, in contrast, return 4xx directly.
 
-Die Sperrreihenfolge für Pfade mit Quotenänderung lautet immer `quota_buckets → devices →
-job/reservation`. Andere Transaktionen sperren `devices → job`. Es gibt keinen Pfad, der
-erst ein Gerät und danach einen Quotabucket sperrt. Audit wird innerhalb der fachlichen
-Transaktion geschrieben. Temporäre Slots geben atomare Limits auch bei parallelen Requests.
+The lock order for paths with a quota change is always `quota_buckets → devices →
+job/reservation`. Other transactions lock `devices → job`. There is no path that
+first locks a device and then a quota bucket. Audit is written within the functional
+transaction. Temporary slots give atomic limits even with parallel requests.
 
-Ein Reconciler prüft abgelaufene `receiving`-Leases: Nach Ende des verantwortlichen Streams
-Dateien entfernen, Auftrag abbrechen und Quote freigeben. Bei verlorener DB-Verbindung
-stoppt der Stream vor Ablauf seiner Lease. Nach Dateiumbenennung, aber vor Commit ist eine
-Datei noch kein angenommener Auftrag; sie darf nach Abgleich bereinigt werden. Fehlende
-Dateien für `queued`/`ready` führen zu `PAYLOAD_MISSING`, niemals zu einem leeren Upload.
+A reconciler checks expired `receiving` leases: after the end of the responsible stream,
+remove files, cancel the job and release the quota. On a lost DB connection,
+the stream stops before its lease expires. After file renaming but before commit, a
+file is not yet an accepted job; it may be cleaned up after reconciliation. Missing
+files for `queued`/`ready` lead to `PAYLOAD_MISSING`, never to an empty upload.
 
-## 8. Validierung und Speichergrenzen
+## 8. Validation and storage limits
 
-Ein Validator-Unterprozess bearbeitet jeweils eine Datei. Der Worker übergibt einen
-bereits geöffneten, nur lesbaren Dateideskriptor und eine minimale Konfiguration; keine
-Schlüsselwerte, DB-Verbindungen oder Backend-Sockets werden übergeben. Der Unterprozess
-hat eine bereinigte Umgebung; Fehlerausgaben werden auf feste Codes begrenzt. Unter derselben
-UID kann er grundsätzlich weiterhin auf gemountete Worker-Secrets zugreifen. Dies ist
-Ressourcenisolation, keine Geheimnis- oder Netzwerksandbox. Eine harte Trennung benötigt
-einen eigenen Validator-Container beziehungsweise Pod ohne Secret-Mounts und Backend-Zugriff.
+A validator subprocess handles one file at a time. The worker passes an
+already opened, read-only file descriptor and a minimal configuration; no
+key values, DB connections or backend sockets are passed. The subprocess
+has a sanitized environment; error output is limited to fixed codes. Under the same
+UID it can in principle still access mounted worker secrets. This is
+resource isolation, no secret or network sandbox. A hard separation needs
+a validator container or pod of its own without secret mounts and backend access.
 
-Zwei Prüfphasen:
+Two check phases:
 
-1. Streaming-Prüfung auf valides UTF-8/JSON, maximale Tiefe, Stringlänge, Anzahl der Elemente,
-   doppelte Objektschlüssel, keine NaN-/Infinity-Werte und erwarteten Formatkopf.
-2. Vollständige Prüfung gegen lokal mitgelieferte CycloneDX-1.6-Schemas und eine strengere
-   Patchwatch-Allowlist. Kein dynamisches Laden von `$ref`-URLs. Erlaubt sind die tatsächlich
-   vom Agenten erzeugten Komponenten-, Lizenz-, Pfad-, Service- und Abhängigkeitsfelder.
-   Erfasste Asset-ID und Hostwurzel müssen zur Auftragssnapshot passen. Unbekannte Felder,
-   fremde Referenzen und leere Inventare ohne Profilfreigabe werden abgewiesen.
+1. Streaming check for valid UTF-8/JSON, maximum depth, string length, number of elements,
+   duplicate object keys, no NaN/Infinity values and the expected format header.
+2. Complete check against locally bundled CycloneDX 1.6 schemas and a stricter
+   Patchwatch allowlist. No dynamic loading of `$ref` URLs. Permitted are the component, license, path, service and
+   dependency fields actually produced by the agent.
+   Recorded asset ID and host root must match the job snapshot. Unknown fields,
+   foreign references and empty inventories without profile approval are rejected.
 
-Anfängliche Schutzgrenzen, vor Produktionsfreigabe anhand echter Geräte zu prüfen:
+Initial protection limits, to be verified with real devices before production release:
 
-| Grenze | Vorgeschlagener Startwert |
+| Limit | Proposed starting value |
 |---|---|
-| Reine SBOM | 120 MiB |
-| JSON-Tiefe | 32 |
-| Einzelner String | 16 KiB, fachliche Felder ggf. deutlich kleiner |
-| Komponenten / Abhängigkeitskanten | 100.000 / 500.000 |
-| Services | 10.000 |
-| Gesamte JSON-Parserereignisse | 5 Millionen |
-| Validator | 1 gleichzeitig, 120 Sekunden Laufzeit, 2 GiB Adressraumlimit |
+| Pure SBOM | 120 MiB |
+| JSON depth | 32 |
+| Single string | 16 KiB, functional fields possibly considerably smaller |
+| Components / dependency edges | 100,000 / 500,000 |
+| Services | 10,000 |
+| Total JSON parser events | 5 million |
+| Validator | 1 concurrent, 120 seconds runtime, 2 GiB address space limit |
 
-Der Validator wird bei CPU-/Speicherüberschreitung beendet; die API bleibt in einem anderen
-Container verfügbar. Ein 120-MiB-JSON kann als Python-Objekt deutlich größer werden. Deshalb
-sind Prozessgrenzen und Streaming-Vorprüfung notwendig; „120 MiB Upload“ ist keine Zusage
-über den Arbeitsspeicherbedarf. Diese Grenzen können ein formal gültiges, aber zu komplexes
-Dokument abweisen. Lasttests entscheiden über Freigabe oder Anpassung des Formats/Limits.
+The validator is terminated on CPU/memory overrun; the API stays available in another
+container. A 120 MiB JSON can become considerably larger as a Python object. Process limits
+and streaming pre-check are therefore necessary; "120 MiB upload" is no commitment
+about memory needs. These limits can reject a formally valid but overly complex
+document. Load tests decide on release or adaptation of the format/limit.
 
-## 9. Zustände, Worker-Claims und sichere Weiterleitung
+## 9. States, worker claims and safe forwarding
 
-Gerätezustände: `provisioning → active`, bei Identitätskonflikten `registration_conflict`,
-bei Sperrung `revoked`. `active` erfordert bestätigtes Projekt. Kontaktalter und Importalter
-sind abgeleitete Betriebszustände, keine Ersatz-Authentisierung. Metadatenänderungen erhöhen
-`metadata_revision`; bis zur Registrierung dieser Revision werden neue Uploads mit
-`REGISTRATION_PENDING` zurückgestellt. Bereits angenommene Uploads werden vorher geordnet
-abgeschlossen. Ein Gerät kann sich nicht durch Umbenennen aus einer Versandsperre lösen.
+Device states: `provisioning → active`, `registration_conflict` on identity conflicts,
+`revoked` on revocation. `active` requires a confirmed project. Contact age and import age
+are derived operating states, no substitute authentication. Metadata changes increase
+`metadata_revision`; until this revision is registered, new uploads are deferred with
+`REGISTRATION_PENDING`. Uploads already accepted are completed in order beforehand.
+A device cannot free itself from a send lock by renaming.
 
 ```mermaid
 stateDiagram-v2
     [*] --> receiving
-    receiving --> queued: Datei dauerhaft und DB-Commit
-    receiving --> failed: Streamfehler oder abgelaufene Reservierung
+    receiving --> queued: File durable and DB commit
+    receiving --> failed: Stream error or expired reservation
     queued --> validating
-    validating --> ready: Prüfung erfolgreich
-    validating --> failed: Schema oder Ressourcenlimit
-    ready --> sending: Dispatch reserviert und Zustand committed
-    sending --> processing: Verarbeitungstoken committed
-    sending --> delivery_unknown: Antwort oder Commit unklar
-    processing --> imported: Verarbeitung abgeschlossen
-    processing --> failed: Eindeutig bestätigter Importfehler
-    queued --> cancelled: Sperrung
-    ready --> cancelled: Sperrung
-    delivery_unknown --> ready: Administrative Wiederholung nach Klärung
+    validating --> ready: Check successful
+    validating --> failed: Schema or resource limit
+    ready --> sending: Dispatch reserved and state committed
+    sending --> processing: Processing token committed
+    sending --> delivery_unknown: Response or commit unclear
+    processing --> imported: Processing completed
+    processing --> failed: Unambiguously confirmed import error
+    queued --> cancelled: Revocation
+    ready --> cancelled: Revocation
+    delivery_unknown --> ready: Administrative retry after clarification
 ```
 
-Interne Zustände `receiving`, `validating` und `ready` erscheinen öffentlich als
-`receiving`, `validating` beziehungsweise `queued`, zusätzlich mit freigegebener Phase.
-Die erneute Annahme einer neuen Scan-ID bleibt bis zum terminalen Zustand gesperrt.
-Fehlgeschlagene Aufträge mit noch offenem externem Effekt gelten dabei nicht als terminal.
+Internal states `receiving`, `validating` and `ready` appear publicly as
+`receiving`, `validating` and `queued` respectively, additionally with a released phase.
+Accepting a new scan ID again stays blocked until the terminal state.
+Failed jobs with a still-open external effect do not count as terminal here.
 
-Claims nutzen kurze Transaktionen: fälligen Kandidaten mit `FOR UPDATE SKIP LOCKED` laden,
-Commit; anschließend unter Gerätesperre nochmals Eignung prüfen und Lease setzen. Der
-erste Kandidaten-Lookup ist nur ein Hinweis, kein Versandrecht. Leases laufen zunächst
-90 Sekunden und werden alle 20 Sekunden erneuert. Jedes Claim erhöht `lease_epoch`;
-Ergebnisupdates brauchen passende Job-ID, Owner und Epoche.
+Claims use short transactions: load a due candidate with `FOR UPDATE SKIP LOCKED`,
+commit; then check suitability again under the device lock and set a lease. The
+first candidate lookup is only a hint, no right to send. Leases initially run
+90 seconds and are renewed every 20 seconds. Every claim increases `lease_epoch`;
+result updates need matching job ID, owner and epoch.
 
-`SKIP LOCKED` eignet sich für konkurrierende Queue-Konsumenten; es ersetzt keine Reihenfolge
-oder fachliche Gerätesperre. Grundlage: [PostgreSQL SELECT](https://www.postgresql.org/docs/17/sql-select.html).
-Netzwerk-I/O hält weder Row-Lock noch offene DB-Transaktion. DB-interne Epochen verhindern
-veraltete Updates, können aber einen bereits gestarteten HTTP-Aufruf an DTrack nicht stoppen.
+`SKIP LOCKED` suits competing queue consumers; it replaces no ordering
+or functional device lock. Basis: [PostgreSQL SELECT](https://www.postgresql.org/docs/17/sql-select.html).
+Network I/O holds neither row lock nor an open DB transaction. DB-internal epochs prevent
+outdated updates but cannot stop an HTTP call to DTrack that has already started.
 
-Deshalb enthält `device_dispatch` ein persistentes Versandrecht mit folgender Regel:
+`device_dispatch` therefore contains a persistent send right with the following rule:
 
-- Registrierung und BOM-Weiterleitung teilen dieselbe Gerätesperre.
-- Vor dem HTTP-Aufruf speichert der Worker `sending`, Generation, Ziel und Dispatch-Epoche
-  in einer Transaktion und prüft Sperrstatus und Nutzlast erneut.
-- Bei Absturz oder Lease-Verlust in `sending` bleibt die Dispatch-Zeile als Barriere bestehen.
-  Der nächste Worker setzt `delivery_unknown` und sendet nicht erneut.
-- Ein verspäteter alter Worker darf einen erhaltenen Token als unveränderliche Versand-
-  Evidenz zum gleichen Auftrag melden, aber keine neuere Dispatch-Epoche übernehmen.
-- Der Resolver übernimmt einen belegten Token zur Statusprüfung oder fordert manuelle
-  Klärung. Einfaches Verstreichen einer Zeitspanne hebt die Barriere nicht auf.
+- Registration and BOM forwarding share the same device lock.
+- Before the HTTP call, the worker stores `sending`, generation, target and dispatch epoch
+  in one transaction and checks lock status and payload again.
+- On a crash or lease loss in `sending`, the dispatch row remains as a barrier.
+  The next worker sets `delivery_unknown` and does not send again.
+- A late old worker may report a received token as immutable send
+  evidence for the same job but may not take over a newer dispatch epoch.
+- The resolver takes over a documented token for status checking or requests manual
+  clarification. The mere passing of a period does not lift the barrier.
 
-Ein erneuter Versand nach unklarem Ausgang erfordert ausgeschlossenen alten Sender und
-geklärte DTrack-Verarbeitung. Falls das nicht belegbar ist, bleibt das Gerät blockiert.
-Eine administrative Fortsetzung unter verbleibender Unsicherheit ist nur als ausdrücklich
-auditiertes Risiko-Override möglich; dann ist die Reihenfolgegarantie aufgehoben. Der normale
-CLI-Pfad bietet dieses Override nicht an. Ein Retry mit erhaltener Barriere ist kein Ersatz
-für Fencing durch das Zielsystem.
+A renewed send after an unclear outcome requires the old sender to be excluded and
+DTrack processing clarified. If that cannot be demonstrated, the device stays blocked.
+An administrative continuation under remaining uncertainty is possible only as an explicitly
+audited risk override; the ordering guarantee is then suspended. The normal
+CLI path does not offer this override. A retry with a retained barrier is no substitute
+for fencing by the target system.
 
-Die gleiche Regel gilt für Projektanlage: Ein nach unklarem Request eindeutig gefundenes
-Projekt mit passendem Namen, Version und Asset-ID kann übernommen werden. Ein momentan
-nicht gefundenes Projekt beweist noch nicht, dass ein alter Request nicht später anlegt.
-Ohne solche Klärung wird kein zweiter Anlageversuch gestartet. Eindeutige negative Antworten
-und sicher vor dem Senden gescheiterte Verbindungen können dagegen begrenzt wiederholt werden.
+The same rule applies to project creation: a project found unambiguously after an unclear request,
+with matching name, version and asset ID, can be adopted. A project not
+found at the moment does not yet prove that an old request will not create it later.
+Without such clarification, no second creation attempt is started. Unambiguous negative responses
+and connections that failed demonstrably before sending, in contrast, can be retried in a limited way.
 
-## 10. DTrack-Adapter und Fehlerklassifikation
+## 10. DTrack adapter and error classification
 
-Der Adapter bietet nur `lookup_registration_target()`, `create_project()`,
-`update_project()`, `submit_bom()` und `get_bom_status()`. Er liefert typisierte Ergebnisse,
-keine rohen HTTP-Objekte an die Geräte-API. Upload- und Registrierungsclient besitzen
-getrennte Schlüssel. Berechtigungen werden gegen die laufende DTrack-Version überprüft.
+The adapter offers only `lookup_registration_target()`, `create_project()`,
+`update_project()`, `submit_bom()` and `get_bom_status()`. It returns typed results,
+no raw HTTP objects to the device API. Upload and registration clients have
+separate keys. Permissions are verified against the running DTrack version.
 
-| Situation | Verhalten |
+| Situation | Behavior |
 |---|---|
-| Read-only Lookup oder Token-Polling temporär nicht erreichbar | Backoff mit Jitter, keine neue Weiterleitung |
-| DNS-/Connectfehler nachweislich vor Versand | Begrenzter Retry, z. B. 5 s, 15 s, 45 s, danach Alarm |
-| BOM durch DTrack eindeutig abgewiesen | `failed`, unkritischer Fehlercode; keine Datenänderung behaupten |
-| 401/403 vom Backend | Globaler Betriebsalarm, keine Änderung an Geräte-Credentials |
-| Timeout/Abbruch nach möglichem Versand oder unklarer 5xx-Response | Barriere und `delivery_unknown` |
-| Token bekannt, `processing=true` | Nach fünf Sekunden weiter pollen; Lease nicht während Wartezeit halten |
-| Token bekannt, Abschluss nach 30 Minuten weiter unklar | Alarm und persistierendes `processing`; keine nächste SBOM |
-| Projekt nach Registrierung verschwunden | `PROJECT_MISSING`, administrativ neu zuordnen; kein AutoCreate |
+| Read-only lookup or token polling temporarily unreachable | Backoff with jitter, no new forwarding |
+| DNS/connect error demonstrably before sending | Limited retry, e.g. 5 s, 15 s, 45 s, then alarm |
+| BOM unambiguously rejected by DTrack | `failed`, non-critical error code; claim no data change |
+| 401/403 from the backend | Global operational alarm, no change to device credentials |
+| Timeout/abort after possible sending or unclear 5xx response | Barrier and `delivery_unknown` |
+| Token known, `processing=true` | Keep polling after five seconds; do not hold the lease during the wait |
+| Token known, completion still unclear after 30 minutes | Alarm and persisting `processing`; no next SBOM |
+| Project vanished after registration | `PROJECT_MISSING`, reassign administratively; no AutoCreate |
 
-HTTP-Startwerte: Connect 5 s, Schreibinaktivität 60 s, Leseinaktivität 30 s,
-Gesamtbudget BOM-Weiterleitung 300 s, kleine Backend-Responses maximal 1 MiB. Timeouttypen
-werden getrennt behandelt. Multipart streamt die vorhandene Datei und enthält nur serverseitiges
-Projekt und BOM. Backend-Redirects sind aus; nicht konfigurierte Proxyziele sind aus.
-Keine allgemeine Retry-Middleware darf POST-/PUT-Aufrufe automatisch wiederholen.
+HTTP starting values: connect 5 s, write inactivity 60 s, read inactivity 30 s,
+total budget for BOM forwarding 300 s, small backend responses at most 1 MiB. Timeout types
+are handled separately. Multipart streams the existing file and contains only the server-side
+project and BOM. Backend redirects are off; unconfigured proxy targets are off.
+No general retry middleware may automatically repeat POST/PUT calls.
 
-Der vorhandene Agent interpretiert `processing=false` als Ende des Imports. Ob dieser
-Status der eingesetzten DTrack-Version auch jeden Importfehler eindeutig unterscheidet,
-ist ein Integrationstest und Freigabekriterium. Ohne diesen Nachweis wird der öffentliche
-Zustand nur `processing_completed` genannt, mit `import_outcome=unknown`, und nicht
-`imported`. Ein bloß nicht mehr verarbeiteter Token darf kein falsches Erfolgssignal geben.
+The existing agent interprets `processing=false` as the end of the import. Whether this
+status of the DTrack version in use also distinguishes every import error unambiguously
+is an integration test and release criterion. Without this proof, the public
+state is called only `processing_completed`, with `import_outcome=unknown`, and not
+`imported`. A token that is merely no longer processing must give no false success signal.
 
-## 11. Rotation, Sperrung und Agent-Zustand
+## 11. Rotation, revocation and agent state
 
-Rotation besitzt drei Schritte: neues Credential lokal persistieren, mit altem Credential
-idempotent registrieren, mit neuem Credential über
-`POST /v1/device/credentials/{id}/confirm` bestätigen. Bis zur Bestätigung darf das neue
-Rotations-Credential nur eigenen Status und Bestätigung aufrufen, noch keine Uploads.
-Bestätigung begrenzt die Gültigkeit des alten Credentials auf spätestens 24 Stunden nach
-Registrierung des neuen. Das ursprüngliche Ablaufdatum des alten wird niemals verlängert.
-Unbestätigte Rotationen werden nach 24 Stunden beendet: das neue Credential wird widerrufen,
-das alte behält sein ursprüngliches Ablaufdatum. So verbraucht eine verlorene Rotation
-nicht dauerhaft den zweiten Slot. Das erste Credential einer normalen Aufnahme ist kein
-unbestätigtes Rotations-Credential; sein Zugriff folgt dem Gerätestatus.
+Rotation has three steps: persist a new credential locally, register it idempotently
+with the old credential, confirm it with the new credential via
+`POST /v1/device/credentials/{id}/confirm`. Until confirmation, the new
+rotation credential may call only own status and confirmation, no uploads yet.
+Confirmation limits the validity of the old credential to at most 24 hours after
+registration of the new one. The original expiry date of the old one is never extended.
+Unconfirmed rotations are ended after 24 hours: the new credential is revoked,
+the old one keeps its original expiry date. This way, a lost rotation
+does not permanently consume the second slot. The first credential of a normal onboarding is no
+unconfirmed rotation credential; its access follows the device status.
 
-Die Bestätigung benötigt das neue Credential selbst; ein altes Credential kann nicht dessen
-Besitz bestätigen. Bei verlorener Bestätigungsantwort kann das neue Credential weiterhin den
-Status prüfen und den identischen Confirm-Request wiederholen. Nach erfolgreicher Bestätigung
-und lokaler Umschaltung widerruft der Agent das alte Credential ausdrücklich. Ein bereits
-widerrufenes oder abgelaufenes Credential wird durch Wiederholung niemals wieder aktiv.
+Confirmation needs the new credential itself; an old credential cannot confirm its
+possession. If the confirmation response is lost, the new credential can still check
+the status and repeat the identical confirm request. After successful confirmation
+and local switch-over, the agent explicitly revokes the old credential. A credential already
+revoked or expired never becomes active again through repetition.
 
-Lokal werden getrennt gehalten:
+Kept separately locally:
 
 ```text
-/etc/patchwatch/bootstrap.json        # festes API-Ziel, CA und erlaubte lokale Scanbereiche
-/etc/patchwatch/device-credentials    # aktuelles und ggf. neues Credential, 0600
-/var/lib/patchwatch/enrollment.json   # Request-ID und Wiederaufnahmezustand, 0600
-/var/lib/patchwatch/config.json       # letztes gültiges Profil und Revision, 0600
-/var/lib/patchwatch/uploads/          # höchstens ein bereinigter, wiederholbarer Upload
-/var/lib/patchwatch/status.json       # letzter Scan, Upload-ID und bestätigter Import
+/etc/patchwatch/bootstrap.json        # fixed API target, CA and permitted local scan areas
+/etc/patchwatch/device-credentials    # current and, if applicable, new credential, 0600
+/var/lib/patchwatch/enrollment.json   # request ID and re-onboarding state, 0600
+/var/lib/patchwatch/config.json       # last valid profile and revision, 0600
+/var/lib/patchwatch/uploads/          # at most one sanitized, repeatable upload
+/var/lib/patchwatch/status.json       # last scan, upload ID and confirmed import
 ```
 
-Credentialdatei und Rotationszustand werden gemeinsam in einer atomar ersetzten Datei
-geführt. Verzeichnisse sind privat; auf macOS gelten entsprechende Eigentümer-/Modusrechte.
-Vorhandene Scan-Locks schützen auch Aufnahme, Rotation und lokale Zustandsänderung gegen
-parallele Agentprozesse. Ein gesperrtes Gerät startet keine weiteren Uploads. Bereits lokal
-erfasste Daten laufen nach ihrer Frist ab. Der Agent fällt nicht auf direkten DTrack-Upload zurück.
+Credential file and rotation state are kept together in one atomically replaced file.
+Directories are private; on macOS, corresponding owner/mode permissions apply.
+Existing scan locks also protect onboarding, rotation and local state change against
+parallel agent processes. A revoked device starts no further uploads. Data already
+collected locally expires after its period. The agent does not fall back to direct DTrack upload.
 
-Ein durch die Verwaltung gesperrter Zustand wird unter Gerätesperre mit Generation und
-Credential-Widerruf committed. Ein nachfolgender Worker-Versand ist untersagt. Bereits vor
-diesem Commit autorisierte oder gestartete Backend-Aufrufe können trotzdem ankommen;
-die Antwort auf den Sperrbefehl zeigt deshalb offene In-flight-Aufträge ausdrücklich an.
-Eine belastbare sofortige Rücknahme bereits versandter Daten ist nicht Teil der Sperrsemantik.
+A state revoked by the management is committed under the device lock with generation and
+credential revocation. A subsequent worker send is prohibited. Backend calls
+already authorized or started before this commit can still arrive;
+the response to the revocation command therefore shows open in-flight jobs explicitly.
+A reliable immediate recall of data already sent is not part of the revocation semantics.
 
-## 12. Deployment, Kapazität und Betrieb
+## 12. Deployment, capacity and operation
 
-Vorgeschlagene Pilotkonfiguration, keine gemessene Leistungszusage:
+Proposed pilot configuration, no measured performance commitment:
 
-| Rolle/Ressource | Startwert |
+| Role/resource | Starting value |
 |---|---|
-| Public API | 1 Prozess, 256 MiB Request / 512 MiB Limit, DB-Pool maximal 5 |
-| Management API | 1 Prozess, 128 MiB Request / 256 MiB Limit, Pool maximal 3 |
-| Worker inkl. Validator | 512 MiB Request / 3 GiB Limit, Pool maximal 5, ein Validator |
-| DTrack-Weiterleitung | Maximal zwei verschiedene Geräte parallel, je Gerät eine offene Operation |
-| Eingehende Streams | Maximal vier global, einer je Gerät |
-| Puffer | PVC 20 GiB, logisches Budget 10 GiB, mindestens 2 GiB physischer Freiraum |
-| Datenbank | Eigene DB/Benutzer im vorhandenen PostgreSQL, zusätzliches Budget messen |
-| API-Polling | Agent beachtet `Retry-After`, Jitter, maximal ein Statuspoll je fünf Sekunden |
+| Public API | 1 process, 256 MiB request / 512 MiB limit, DB pool at most 5 |
+| Management API | 1 process, 128 MiB request / 256 MiB limit, pool at most 3 |
+| Worker incl. validator | 512 MiB request / 3 GiB limit, pool at most 5, one validator |
+| DTrack forwarding | At most two different devices in parallel, one open operation per device |
+| Incoming streams | At most four globally, one per device |
+| Buffer | PVC 20 GiB, logical budget 10 GiB, at least 2 GiB physical free space |
+| Database | Own DB/user in the existing PostgreSQL, measure additional budget |
+| API polling | Agent respects `Retry-After`, jitter, at most one status poll per five seconds |
 
-10 GiB Nutzlastbudget reichen rechnerisch für rund 85 Uploads mit jeweils 120 MiB; laufende
-Reservierungen zählen mit. Ein Ausfall von DTrack bei Hunderten gleichzeitig aktiven Geräten
-kann den Puffer also füllen. `503 Retry-After` plus privater Agentpuffer ist bewusst Teil
-des Designs; ein unbeschränktes Sammeln aller Tagesinventare ist keine MVP-Anforderung.
+A 10 GiB payload budget suffices arithmetically for about 85 uploads of 120 MiB each; running
+reservations count as well. A DTrack outage with hundreds of simultaneously active devices
+can therefore fill the buffer. `503 Retry-After` plus a private agent buffer is deliberately part
+of the design; unbounded collection of all daily inventories is no MVP requirement.
 
-Ingress-Regeln: nur Gerätehost öffentlich, Managementhost ausschließlich intern, keine
-öffentlichen `/docs`, `/openapi.json`, `/metrics` oder Health-Details. Für Uploads wird
-Request-Buffering am Proxy deaktiviert oder dessen Speicher/Puffer separat budgetiert;
-sonst würden die API-Quoten nicht die vorgeschaltete Speicherung begrenzen. Default Bodylimit
-für kleine JSON-Routen 64 KiB, eigene Uploadroute 120 MiB. Idle-Limit 30 s, Gesamtlimit 300 s.
-Weitergereichte Proxyheader werden nur von konfigurierten Ingress-Adressen akzeptiert.
+Ingress rules: only the device host public, management host exclusively internal, no
+public `/docs`, `/openapi.json`, `/metrics` or health details. For uploads, request buffering
+at the proxy is disabled or its memory/buffer budgeted separately;
+otherwise the API quotas would not limit the upstream storage. Default body limit
+for small JSON routes 64 KiB, own upload route 120 MiB. Idle limit 30 s, total limit 300 s.
+Forwarded proxy headers are accepted only from configured ingress addresses.
 
-Liveness prüft ausschließlich lokalen Prozessfortschritt. Readiness prüft Schema-Kompatibilität,
-Datenbank und für die Public API den Pufferzugriff. DTrack-Ausfall macht die API nicht sofort
-unready; Aufnahme ist bis zur Quotenbelegung möglich. Der Worker meldet Heartbeat, älteste
-Aufträge und Barrieren. Metriken enthalten keine Geräte-IDs als Labels; Details gehören in
-die zugriffsgeschützte Statusansicht.
+Liveness checks only local process progress. Readiness checks schema compatibility,
+database and, for the public API, buffer access. A DTrack outage does not make the API immediately
+unready; onboarding is possible until quota exhaustion. The worker reports heartbeat, oldest
+jobs and barriers. Metrics contain no device IDs as labels; details belong in
+the access-protected status view.
 
-Rollout: Aufnahmen kurz drainen, Streams beenden, Worker keine neuen Sendungen starten lassen,
-laufende Sendungen abschließen oder als unklar hinterlassen, dann Pod ersetzen. Migrationen
-werden mit exklusivem Migrationslock und Checksum-Prüfung ausgeführt. Schemaänderungen folgen
-Expand/Migrate/Contract; ein Binary-Rollback ist nur im dokumentierten kompatiblen Schemafenster
-zulässig. Automatische destruktive Down-Migrationen sind nicht vorgesehen.
+Rollout: briefly drain onboardings, end streams, let the worker start no new sends,
+complete running sends or leave them as unclear, then replace the pod. Migrations
+run with an exclusive migration lock and checksum check. Schema changes follow
+expand/migrate/contract; a binary rollback is permitted only within the documented compatible schema window.
+Automatic destructive down migrations are not provided.
 
-TTL-Bereinigung entfernt nach 24 Stunden auch ungeklärte Nutzlasten, **aber nie deren externe
-Versandbarriere**. Der Auftrag bleibt `delivery_unknown` oder `processing` mit Zusatz
-`payload_expired`; das Gerät wird dadurch nicht wieder zum Versand freigegeben. Statusdaten
-werden erst nach Klärung terminaler Aufträge gemäß Frist gelöscht. Abweichungen vom
-Basiskonzept vermeiden so ein versehentliches Freigeben allein durch Speicherbereinigung.
+TTL cleanup removes even unresolved payloads after 24 hours, **but never their external
+send barrier**. The job stays `delivery_unknown` or `processing` with the addition
+`payload_expired`; the device is not released for sending again as a result. Status data
+is deleted only after clarification of terminal jobs per the period. Deviations from the
+base concept thus avoid accidental release through storage cleanup alone.
 
-Restore startet im administrativen Wartungsmodus mit extern gesperrtem Geräte-Ingress.
-Einladungen und Credentials werden entsprechend dem Basiskonzept ungültig gemacht; der
-Worker bleibt bis zum Abgleich möglicher externer Sendungen angehalten. Eine generische
-Readiness-Probe hebt diesen Wartungsmodus nicht auf. Fehlende Pufferdateien werden sichtbar
-markiert. Die erneute Aufnahme übernimmt nach Prüfung die vorhandenen Projektzuordnungen.
+Restore starts in administrative maintenance mode with the device ingress externally blocked.
+Invitations and credentials are invalidated according to the base concept; the
+worker stays stopped until possible external sends are reconciled. A generic
+readiness probe does not lift this maintenance mode. Missing buffer files are visibly
+marked. The renewed onboarding takes over the existing project assignments after checking.
 
-## 13. Verifikation und verbleibende Integrationsentscheidungen
+## 13. Verification and remaining integration decisions
 
-| Prüfebene | Wesentliche Nachweise |
+| Test level | Key evidence |
 |---|---|
-| Domain-/Autorisierungstests | Generation, Einladungskonflikt, Rotation, fremde IDs, sichere Fehlerantworten |
-| PostgreSQL-Integration mit zwei Verbindungen | Parallele Einlösung, Quoten, Unique-Indizes, Sperrreihenfolge, Lease-Epochen |
-| Prozess-/Dateisystemtests | Absturz nach fsync, Rename und Commit; Streamabbruch; TTL ohne Barrierenverlust |
-| Kontrollierter HTTP-Backend-Dummy | Antwortverlust nach Annahme, verspäteter Sender, Tokenverlust, 429/5xx ohne blindes Retry |
-| Echte DTrack-5.2.1-Instanz | Minimalrechte, Projekt-Reconciliation, Importfehler, Statussemantik, Tag-/UUID-Erhalt |
-| Ende-zu-Ende Linux/macOS | Aufnahme, Scan, Upload, Profilwechsel, Rotation, Migration, Sperrung |
-| Last- und Wiederherstellungstest | Große/komplexe SBOM, voller Puffer, DTrack-Ausfall, Rollout während Versand, Restore |
+| Domain/authorization tests | Generation, invitation conflict, rotation, foreign IDs, safe error responses |
+| PostgreSQL integration with two connections | Parallel redemption, quotas, unique indexes, lock order, lease epochs |
+| Process/file system tests | Crash after fsync, rename and commit; stream abort; TTL without loss of barriers |
+| Controlled HTTP backend dummy | Response loss after acceptance, late sender, token loss, 429/5xx without blind retry |
+| Real DTrack 5.2.1 instance | Minimal permissions, project reconciliation, import errors, status semantics, tag/UUID preservation |
+| End to end Linux/macOS | Onboarding, scan, upload, profile change, rotation, migration, revocation |
+| Load and recovery test | Large/complex SBOM, full buffer, DTrack outage, rollout during sending, restore |
 
-Vor der Implementierung werden nur noch die Lockdatei und die exakten DTrack-Endpunktrechte
-ermittelt. Vor der Produktivfreigabe müssen zusätzlich Validatorlimits, PVC-Synchronisations-
-eigenschaften, Importstatussemantik und Ressourcenbudgets nachgewiesen sein. Diese Punkte
-sind messbare Freigabekriterien; die übrige Architektur kann unabhängig davon umgesetzt werden.
+Before implementation, only the lock file and the exact DTrack endpoint permissions are
+determined. Before productive release, validator limits, PVC synchronization
+properties, import status semantics and resource budgets must additionally be demonstrated. These points
+are measurable release criteria; the remaining architecture can be implemented independently of them.

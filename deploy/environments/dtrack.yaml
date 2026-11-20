@@ -83,7 +83,7 @@ frontend:
     - {name: OIDC_CLIENT_ID, value: patchwatch}
     - {name: OIDC_SCOPE, value: 'openid profile email'}
     - {name: OIDC_FLOW, value: code}
-    - {name: OIDC_LOGIN_BUTTON_TEXT, value: 'Mit Keycloak anmelden'}
+    - {name: OIDC_LOGIN_BUTTON_TEXT, value: 'Sign in with Keycloak'}
 ingress:
   enabled: true
   ingressClassName: nginx

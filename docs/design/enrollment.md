@@ -1,355 +1,355 @@
-# Konzept: Enrollment- und Upload-Dienst
+# Concept: enrollment and upload service
 
-Stand: 14. November 2026. Architekturvorschlag, noch nicht implementiert.
-Ergänzt das [Konzept zur Agent-Verteilung](agent-distribution.md).
+As of: 14 November 2026. Architecture proposal, not yet implemented.
+Supplements the [agent distribution concept](agent-distribution.md).
 
-Der [technische Detailentwurf](enrollment-architecture.md) konkretisiert Stack, Laufzeitrollen,
-Datenmodell, Request-Verträge, Transaktionen, Worker-Sperren und Deployment. Er präzisiert
-insbesondere die asynchrone Validierung und Barrieren bei unklarem Backend-Ausgang.
+The [detailed technical design](enrollment-architecture.md) specifies the stack, runtime roles,
+data model, request contracts, transactions, worker locks and deployment. In particular, it refines
+the asynchronous validation and barriers for an unclear backend outcome.
 
-## Entscheidung und Umfang
+## Decision and scope
 
-Ein neuer Dienst `patchwatch-enrollment` übernimmt Geräteaufnahme, Konfigurationsausgabe,
-Gerätezugangsdaten und die Weiterleitung der bereinigten SBOM an Dependency-Track (DTrack).
-Jedes Gerät erhält eine eigene, einzeln sperrbare Berechtigung. DTrack-Schlüssel bleiben zentral.
-Der Server bestimmt das Zielprojekt jedes Uploads aus seiner Gerätezuordnung.
+A new service `patchwatch-enrollment` takes over device onboarding, configuration output,
+device credentials and the forwarding of the sanitized SBOM to Dependency-Track (DTrack).
+Every device receives its own individually revocable permission. DTrack keys stay central.
+The server determines the target project of every upload from its device assignment.
 
-Zum ersten produktiven Umfang gehören eine administrative CLI, eine versionierte HTTPS-API,
-eine PostgreSQL-Datenbank, ein Hintergrundworker und ein begrenzter persistenter Upload-Puffer.
-Eine Weboberfläche, SSO, Geräteattestierung, eine eigene PKI und ein Agent-Selbstupdater sind
-spätere Erweiterungen. Paketverteilung und Betriebssystemrechte bleiben Aufgaben von Ansible/MDM
-beziehungsweise der lokalen Administration. Zielgröße für den Pilot sind einige Hundert Geräte;
-Kapazitätsgrenzen sind anschließend anhand tatsächlicher SBOM-Größen zu messen.
+The first productive scope includes an administrative CLI, a versioned HTTPS API,
+a PostgreSQL database, a background worker and a bounded persistent upload buffer.
+A web interface, SSO, device attestation, a PKI of its own and an agent self-updater are
+later extensions. Package distribution and operating system permissions remain tasks of Ansible/MDM
+or local administration respectively. The target size for the pilot is a few hundred devices;
+capacity limits are then to be measured based on actual SBOM sizes.
 
-## Architektur und Vertrauensgrenzen
+## Architecture and trust boundaries
 
 ```mermaid
 flowchart LR
-    M[Administration / Ansible / MDM] -->|Einladung und Profil| E[Enrollment-API]
-    M -->|Paket und einmaliges Token| A[Agent]
-    A -->|HTTPS: Aufnahme, Profil, SBOM, Status| E
-    E --> P[(Eigene PostgreSQL-Datenbank)]
-    E --> Q[(Privater Upload-Puffer)]
-    W[Registrierungs- und Upload-Worker] --> P
+    M[Administration / Ansible / MDM] -->|Invitation and profile| E[Enrollment API]
+    M -->|Package and one-time token| A[Agent]
+    A -->|HTTPS: enrollment, profile, SBOM, status| E
+    E --> P[(Own PostgreSQL database)]
+    E --> Q[(Private upload buffer)]
+    W[Registration and upload worker] --> P
     W --> Q
-    W -->|Zentrale Service-Schlüssel| D[Dependency-Track]
+    W -->|Central service keys| D[Dependency-Track]
 ```
 
-- Geräte erreichen ausschließlich ihre Geräte-API. Sie können weder andere Geräte auflisten
-  noch DTrack-Abfragen oder administrative Aktionen durch den Dienst tunneln.
-- Management-Endpunkte sind nur über einen getrennten internen Zugang erreichbar. Im MVP nutzt
-  die CLI eine dedizierte Verwaltungsberechtigung aus der Geheimnisverwaltung; sie gilt niemals
-  als Geräteberechtigung. Jede Aktion wird einem Verwaltungsprinzipal zugeordnet.
-- Der Worker adressiert eine fest konfigurierte DTrack-URL. Vom Gerät gelieferte URLs,
-  Projekt-UUIDs oder Weiterleitungsziele werden nicht verwendet.
-- Die bestehende Notification-Bridge bleibt ein separater Dienst. Enrollment und Uploads
-  bekommen eigene Ressourcen, Zugangsdaten und Limits.
+- Devices reach only their device API. They can neither list other devices
+  nor tunnel DTrack queries or administrative actions through the service.
+- Management endpoints are reachable only via a separate internal access. In the MVP, the
+  CLI uses a dedicated management permission from the secret management; it never counts
+  as a device permission. Every action is assigned to a management principal.
+- The worker addresses a fixed configured DTrack URL. URLs, project UUIDs or
+  forwarding targets supplied by the device are not used.
+- The existing notification bridge remains a separate service. Enrollment and uploads
+  get their own resources, credentials and limits.
 
-Ein Enrollment-Token berechtigt zur Aufnahme, beweist aber keine Hardwareidentität. Wer es
-vor dem legitimen Gerät erlangt, kann die Einladung einlösen. Deshalb wird es gerätebezogen
-ausgegeben und über einen vertrauenswürdigen Kanal verteilt. Auch ein korrekt aufgenommenes
-Gerät kann eine falsche oder unvollständige SBOM liefern; Enrollment ersetzt keine Attestierung.
+An enrollment token authorizes onboarding but proves no hardware identity. Whoever obtains it
+before the legitimate device can redeem the invitation. It is therefore issued per device
+and distributed over a trusted channel. Even a correctly onboarded
+device can deliver a wrong or incomplete SBOM; enrollment replaces no attestation.
 
-## Geräteidentität und zentrale Profile
+## Device identity and central profiles
 
-| Merkmal | Bedeutung und Autorität |
+| Attribute | Meaning and authority |
 |---|---|
-| `device_id` | Interne, serverseitig erzeugte UUID; Grundlage der Autorisierung |
-| `host_id` | Bestehende stabile Asset-ID; bleibt bei Updates und bestätigten Migrationen erhalten |
-| `project_uuid` | Serverseitige Zuordnung zu genau einem DTrack-Projekt, Version `current` |
-| Hostname, OS, Distribution, Architektur | Validierte Angaben des Geräts; keine Authentisierungsmerkmale |
-| Team, Umgebung, Gerätegruppe | Durch Einladung beziehungsweise Administration festgelegt |
-| `profile_id` und `profile_version` | Freigegebene, versionierte Scan-Konfiguration |
+| `device_id` | Internal, server-generated UUID; basis of authorization |
+| `host_id` | Existing stable asset ID; is kept across updates and confirmed migrations |
+| `project_uuid` | Server-side assignment to exactly one DTrack project, version `current` |
+| Hostname, OS, distribution, architecture | Validated statements of the device; no authentication attributes |
+| Team, environment, device group | Defined by invitation or administration |
+| `profile_id` and `profile_version` | Approved, versioned scan configuration |
 
-Die Einladung kann eine erwartete Asset-ID und einen erwarteten Hostnamen enthalten. Abweichungen
-führen zu einem Konflikt, nicht zur Übernahme eines bestehenden Geräts. Neue Asset-IDs werden
-einmalig erzeugt; `UNIQUE(host_id)` und `UNIQUE(project_uuid)` verhindern doppelte Zuordnungen.
-Ein Hostname ist ein Anzeigename. Eine Kollision mit einem anderen Projekt wird entsprechend
-der bisherigen Registrierungslogik abgewiesen und administrativ aufgelöst.
+The invitation can contain an expected asset ID and an expected hostname. Deviations
+lead to a conflict, not to the takeover of an existing device. New asset IDs are generated
+once; `UNIQUE(host_id)` and `UNIQUE(project_uuid)` prevent duplicate assignments.
+A hostname is a display name. A collision with a different project is rejected according to
+the previous registration logic and resolved administratively.
 
-Profile enthalten erlaubte Scan-Wurzeln, Ausschlüsse, Erweiterungserfassung, Service-Erfassung,
-Timeout und Zeitplanung. Sie enthalten keine Shell-Befehle, frei wählbaren ausführbaren
-Dateien oder DTrack-Zugangsdaten. Der lokale Agent validiert Schema, Pfade und Grenzen erneut;
-ein Profil kann die bei Installation freigegebenen Zugriffsbereiche nicht stillschweigend
-erweitern. Die lokal installierten Syft- und Programmpfade bleiben unter lokaler Kontrolle.
+Profiles contain permitted scan roots, exclusions, extension collection, service collection,
+timeout and scheduling. They contain no shell commands, freely selectable executable
+files or DTrack credentials. The local agent validates schema, paths and limits again;
+a profile cannot silently extend the access areas released at installation.
+The locally installed Syft and program paths remain under local control.
 
-Serverseitige Tags entstehen aus Geräte-Metadaten und zentralen Zuordnungen. OS-/Distro-Angaben
-bleiben als Selbstauskunft gekennzeichnet. Hostname- und Metadatenänderungen werden authentisiert
-gemeldet und vom Registrierungsworker übernommen; Team-Änderungen benötigen Administration.
-`project_uuid` bleibt dabei gleich. Profile werden vor einem Scan abgerufen und atomar gespeichert;
-bei Ausfall gilt das letzte gültige Profil. Es gibt keine Fernbefehlsausführung.
+Server-side tags are derived from device metadata and central assignments. OS/distro statements
+stay marked as self-reported. Hostname and metadata changes are reported in authenticated form
+and adopted by the registration worker; team changes need administration.
+`project_uuid` stays the same. Profiles are fetched before a scan and stored atomically;
+on failure, the last valid profile applies. There is no remote command execution.
 
-## Aufnahmeablauf und Wiederholbarkeit
+## Onboarding flow and repeatability
 
-1. Die Administration erstellt eine Einladung für genau ein neues Gerät oder eine ausdrücklich
-   freigegebene Wiederaufnahme. Profil und organisatorische Tags sind bereits festgelegt.
-   Startwert für die Gültigkeit: 30 Minuten, konfigurierbar. Das Token wird einmal angezeigt,
-   serverseitig nur als Digest gespeichert und nie Bestandteil des Installationspakets.
-2. Ansible/MDM überträgt das Token als geschützte Datei. Ein vorgeschlagener neuer Befehl
-   `patchwatch-agent enroll --token-file <pfad>` liest es ein. Weder Prozessargumente noch
-   URLs enthalten das Token selbst. Der Dienstendpunkt und seine vertrauenswürdige CA werden
-   unabhängig vom Token über die Installation konfiguriert.
-3. Der Agent erzeugt lokal eine zufällige `enrollment_request_id` und eine zufällige
-   Geräteberechtigung mit 256 Bit Entropie. Er speichert beide vor der ersten Anfrage
-   atomar mit Modus `0600`. Diese Daten gehören nicht in ein geklontes Basisimage.
-4. `POST /v1/enrollments` übermittelt Geräte-Metadaten, Request-ID und die neue
-   Geräteberechtigung im HTTPS-Body. Das Einladungstoken steht im Authorization-Header.
-   Request-Bodies und Authentisierungsheader werden an keinem Proxy oder Dienst geloggt.
-5. Eine Datenbanktransaktion sperrt und prüft die Einladung, reserviert die Identität,
-   speichert ausschließlich den Digest der Geräteberechtigung, verbraucht die Einladung
-   und legt einen Registrierungsauftrag an. Die Antwort lautet `202 provisioning`.
-   DTrack wird erst nach dieser Transaktion angesprochen.
-6. Der Worker registriert das Gerät, persistiert `project_uuid` und schaltet den Zustand auf
-   `active`. Der Agent fragt `GET /v1/device` mit seiner Geräteberechtigung ab und erhält
-   Zustand, Profil und die eigene Gerätekennung. Während `provisioning` ist ausschließlich
-   das Lesen des eigenen Aufnahmezustands erlaubt.
-7. Der erste Scan lädt die bereinigte SBOM hoch. Erst nach bestätigtem Import wird
-   `last_imported_at` gesetzt und die Einrichtung als betriebsbereit angezeigt.
-   `active` allein bedeutet lediglich „Registrierung abgeschlossen“.
+1. The administration creates an invitation for exactly one new device or an explicitly
+   approved re-onboarding. Profile and organizational tags are already set.
+   Starting value for the validity: 30 minutes, configurable. The token is shown once,
+   stored on the server only as a digest and never part of the installation package.
+2. Ansible/MDM transfers the token as a protected file. A proposed new command
+   `patchwatch-agent enroll --token-file <path>` reads it. Neither process arguments nor
+   URLs contain the token itself. The service endpoint and its trusted CA are configured
+   independently of the token through the installation.
+3. The agent locally generates a random `enrollment_request_id` and a random
+   device credential with 256 bits of entropy. It stores both atomically with mode `0600`
+   before the first request. This data does not belong in a cloned base image.
+4. `POST /v1/enrollments` transmits device metadata, request ID and the new
+   device credential in the HTTPS body. The invitation token is in the Authorization header.
+   Request bodies and authentication headers are logged at no proxy or service.
+5. A database transaction locks and checks the invitation, reserves the identity,
+   stores only the digest of the device credential, consumes the invitation
+   and creates a registration job. The response is `202 provisioning`.
+   DTrack is contacted only after this transaction.
+6. The worker registers the device, persists `project_uuid` and switches the state to
+   `active`. The agent queries `GET /v1/device` with its device credential and receives
+   state, profile and its own device identifier. While `provisioning`, only
+   reading its own onboarding state is allowed.
+7. The first scan uploads the sanitized SBOM. Only after a confirmed import is
+   `last_imported_at` set and the setup shown as operational.
+   `active` alone merely means "registration completed".
 
-**Verlorene Antwort:** Die Geräteberechtigung ist dem Agenten schon vor dem ersten Request
-bekannt. Er fragt damit seinen Zustand ab. Ist die erste Transaktion nicht erfolgt,
-wiederholt er dieselbe Aufnahme mit derselben Request-ID und Berechtigung, solange die
-Einladung gültig ist. Ist sie erfolgt, erhält er seinen vorhandenen Zustand. Die Wiederholung
-derselben Anfrage darf keine zweite Aufnahme erzeugen; andere Nutzungen des verbrauchten
-Tokens werden abgewiesen. Ein unbekanntes Gerät erhält beim Statusabruf keine Informationen
-über andere Einladungen oder Geräte. Abgelaufene ungenutzte Einladungen brauchen Ersatz.
-Wiederholungen liefern nur den bestehenden Zustand; sie aktivieren weder gesperrte Geräte
-noch abgelaufene Credentials erneut.
+**Lost response:** The device credential is known to the agent even before the first request.
+It uses it to query its state. If the first transaction did not take place,
+it repeats the same onboarding with the same request ID and credential as long as the
+invitation is valid. If it did, it receives its existing state. Repeating
+the same request must not create a second onboarding; other uses of the consumed
+token are rejected. An unknown device receives no information about other invitations
+or devices on a status query. Expired unused invitations need a replacement.
+Repetitions deliver only the existing state; they reactivate neither revoked devices
+nor expired credentials.
 
-**DTrack-Teilfehler:** Pro Gerät gibt es nur einen Registrierungsauftrag in Bearbeitung.
-Ein persistierter Auftrag mit Lease wird nach Worker-Absturz wieder aufgenommen. Vor erneutem
-Anlegen prüft der Worker das Zielprojekt anhand erwarteten Namens, Version und exakter
-Asset-ID-Zuordnung. Ein nach einem Timeout bereits angelegtes passendes Projekt wird übernommen;
-ein fremdes oder mehrdeutiges Projekt führt zu `registration_conflict` und benötigt Klärung.
-Da PostgreSQL und DTrack keine gemeinsame Transaktion besitzen, ist dies eine Reconciliation,
-keine behauptete atomare Transaktion über beide Systeme.
+**DTrack partial failure:** There is only one registration job in progress per device.
+A persisted job with a lease is resumed after a worker crash. Before creating again,
+the worker checks the target project by expected name, version and exact
+asset ID assignment. A matching project already created after a timeout is adopted;
+a foreign or ambiguous project leads to `registration_conflict` and needs clarification.
+Since PostgreSQL and DTrack share no transaction, this is a reconciliation,
+not a claimed atomic transaction across both systems.
 
-## Zugangsdaten, Rotation und Sperrung
+## Credentials, rotation and revocation
 
-Für den MVP werden zufällige, opake Bearer-Berechtigungen über HTTPS verwendet. Ihr Format
-enthält eine öffentliche Credential-ID für den Datenbank-Lookup und ein 256-Bit-Geheimnis.
-Gespeichert wird dessen SHA-256-Digest; die Prüfung erfolgt zeitkonstant. Das gilt für zufällige
-Geheimnisse mit hoher Entropie, nicht als Passwortspeicherverfahren. Keine selbst entworfenen
-Signaturprotokolle und keine zustandslosen JWTs: Der Dienst prüft Gerätestatus und Gültigkeit
-bei jeder Anfrage, sodass eine Sperrung beim nächsten Autorisierungscheck greift.
+For the MVP, random, opaque bearer credentials over HTTPS are used. Their format
+contains a public credential ID for the database lookup and a 256-bit secret.
+Its SHA-256 digest is stored; verification is constant-time. This applies to random
+secrets with high entropy, not as a password storage method. No self-designed
+signature protocols and no stateless JWTs: the service checks device status and validity
+on every request so that a revocation takes effect at the next authorization check.
 
-Vorgeschlagene Startwerte: 90 Tage Gültigkeit, Rotation ab Tag 60, maximal 24 Stunden
-Überlappung. Bei Rotation erzeugt und persistiert der Agent die neue Berechtigung zuerst
-lokal und registriert sie mit der noch gültigen alten Berechtigung. Er bestätigt die neue
-Berechtigung durch einen erfolgreichen Statusabruf und entfernt erst dann die alte lokale
-Kopie. Wiederholte Rotationsanfragen sind über ihre Request-ID idempotent. Ein Gerät hat
-höchstens zwei gleichzeitig gültige Credentials. Abgelaufene oder gesperrte Credentials
-dürfen keine neuen erzeugen; lange offline gewesene Geräte benötigen eine Wiederaufnahme.
+Proposed starting values: 90 days validity, rotation from day 60, at most 24 hours
+overlap. On rotation, the agent first creates and persists the new credential
+locally and registers it with the still-valid old credential. It confirms the new
+credential through a successful status query and only then removes the old local
+copy. Repeated rotation requests are idempotent via their request ID. A device has
+at most two simultaneously valid credentials. Expired or revoked credentials
+may not create new ones; devices that were offline for a long time need re-onboarding.
 
-Eine Gerätesperrung widerruft sämtliche zugehörigen Credentials und stoppt wartende Uploads.
-Der Worker prüft den Status unmittelbar vor einer Weiterleitung erneut. Bereits an DTrack
-übertragene Daten können dadurch nicht zurückgerufen werden. Eine kompromittierte
-Geräteberechtigung wird gesperrt und durch eine administrative Wiederaufnahme ersetzt.
-Eine Wiederaufnahme erhält nach ausdrücklicher Freigabe Asset-ID und DTrack-Projekt, widerruft
-alte Credentials und erzeugt eine neue Zugangsgeneration. Eine bloß mitgesendete `host_id`
-oder ein bekannter Hostname genügt dafür nicht.
+A device revocation revokes all associated credentials and stops waiting uploads.
+The worker checks the status again immediately before forwarding. Data already
+transferred to DTrack cannot be recalled this way. A compromised
+device credential is revoked and replaced by an administrative re-onboarding.
+After explicit approval, a re-onboarding keeps asset ID and DTrack project, revokes
+old credentials and creates a new credential generation. A merely sent `host_id`
+or a known hostname does not suffice for this.
 
-HTTPS, Autorisierung je Endpunkt und der Ausschluss von Geheimnissen aus URLs orientieren
-sich an der [OWASP REST Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html).
-Bearer-Credentials bleiben bei Diebstahl nutzbar, bis sie gesperrt oder abgelaufen sind;
-hardwaregebundene Schlüssel beziehungsweise mTLS sind eine mögliche spätere Ausbaustufe.
+HTTPS, authorization per endpoint and the exclusion of secrets from URLs follow
+the [OWASP REST Security Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html).
+Bearer credentials remain usable when stolen until they are revoked or expired;
+hardware-bound keys or mTLS are a possible later extension stage.
 
-## Upload und Importstatus
+## Upload and import status
 
-Der Agent erzeugt weiterhin lokal die datensparsam bereinigte CycloneDX-SBOM. Er sendet
-sie an `POST /v1/device/uploads` mit seiner Geräteberechtigung und einer vor dem Senden
-persistierten `scan_id`. Der Server bestimmt einen Inhaltsdigest und bindet die Scan-ID
-an Gerät, Inhalt und eine monotone Upload-Sequenz. Gleiche ID und gleicher Inhalt liefern
-denselben Auftrag; gleiche ID mit anderem Inhalt ergibt `409 Conflict`.
+The agent continues to create the data-minimized sanitized CycloneDX SBOM locally. It sends
+it to `POST /v1/device/uploads` with its device credential and a `scan_id` persisted
+before sending. The server determines a content digest and binds the scan ID
+to device, content and a monotonic upload sequence. The same ID and same content yield
+the same job; the same ID with different content results in `409 Conflict`.
 
-Die API akzeptiert nur CycloneDX-JSON in einer unterstützten Schema-Version. Startlimit:
-120 MiB für die reine JSON-Nutzlast, damit unter dem bestehenden 128-MiB-Multipartlimit
-Reserve bleibt. Das tatsächliche DTrack- und Ingress-Limit ist im Integrationstest zu bestätigen.
-Ingress, Parser, Puffer und Worker erhalten konsistente Größen-, Zeit- und Parallelitätsgrenzen.
-Komprimierte Uploads sind im MVP ausgeschlossen. Der Dienst prüft Schema, Referenzen,
-Komponentenzahl und die bestehende Datenminimierung; unbekannte beziehungsweise nicht
-erlaubte Felder werden abgewiesen. Eine leere Inventur ist nur bei zentral freigegebenem
-Profil erlaubt. Fremde Projektparameter und Ziel-URLs sind nicht Teil des API-Vertrags.
+The API accepts only CycloneDX JSON in a supported schema version. Starting limit:
+120 MiB for the pure JSON payload so that reserve remains under the existing 128 MiB multipart limit.
+The actual DTrack and ingress limit is to be confirmed in the integration test.
+Ingress, parser, buffer and worker receive consistent size, time and concurrency limits.
+Compressed uploads are excluded in the MVP. The service checks schema, references,
+component count and the existing data minimization; unknown or not
+permitted fields are rejected. An empty inventory is allowed only with a
+centrally approved profile. Foreign project parameters and target URLs are not part of the API contract.
 
-Vor `202 Accepted` wird die vollständige Nutzlast in einem privaten persistenten Puffer
-gesichert und der Auftrag in PostgreSQL angelegt. Die vollständige Schema- und Inhaltsprüfung
-erfolgt danach asynchron vor der Weiterleitung; `202` bestätigt noch keine gültige SBOM.
-Ein Dateiname wird ausschließlich aus
-serverseitigen IDs gebildet. Schreiben in temporäre Datei, Synchronisieren und atomare
-Umbenennung erfolgen vor dem Commit des Auftrags. Verwaiste Dateien nach einem Absturz
-werden bei der Bereinigung entfernt; ein Auftrag mit fehlender Datei schlägt sichtbar fehl.
+Before `202 Accepted`, the complete payload is secured in a private persistent buffer
+and the job is created in PostgreSQL. The complete schema and content check
+takes place afterwards, asynchronously, before forwarding; `202` does not yet confirm a valid SBOM.
+A file name is formed exclusively from
+server-side IDs. Writing to a temporary file, syncing and atomic
+renaming take place before the commit of the job. Orphaned files after a crash
+are removed during cleanup; a job with a missing file fails visibly.
 
-Der Worker verarbeitet Uploads desselben Geräts nacheinander. Er baut die DTrack-Anfrage
-selbst auf: ausschließlich serverseitiges `project_uuid`, `autoCreate=false`, keine vom
-Agenten übernommenen Projekt-Tags oder Zielparameter. Der DTrack-Verarbeitungstoken bleibt
-intern; der Agent sieht nur die eigene Upload-ID und einen begrenzten Status.
-Der UUID-basierte Upload ist durch die [DTrack-Integrationsdokumentation](https://docs.dependencytrack.org/usage/cicd/)
-beschrieben; die konkrete Statusauswertung wird gegen die eingesetzte Version 5.2.1 getestet.
+The worker processes uploads of the same device one after another. It builds the DTrack request
+itself: exclusively the server-side `project_uuid`, `autoCreate=false`, no project tags or
+target parameters taken over from the agent. The DTrack processing token stays
+internal; the agent sees only its own upload ID and a limited status.
+The UUID-based upload is described by the [DTrack integration documentation](https://docs.dependencytrack.org/usage/cicd/);
+the concrete status evaluation is tested against the version 5.2.1 in use.
 
-| Uploadzustand | Bedeutung |
+| Upload state | Meaning |
 |---|---|
-| `queued` | Dauerhaft angenommen, noch nicht an DTrack gesendet |
-| `sending` | Weiterleitung läuft |
-| `processing` | DTrack hat einen Verarbeitungstoken geliefert |
-| `imported` | DTrack meldet die Verarbeitung als abgeschlossen; CVE-Matching kann nachlaufen |
-| `failed` | Definitiver Fehler, mit unkritischem Fehlercode und Wiederholbarkeitshinweis |
-| `delivery_unknown` | DTrack könnte angenommen haben, aber die Antwort beziehungsweise der Token fehlt |
-| `cancelled` | Vor Weiterleitung administrativ oder durch Gerätesperrung gestoppt |
+| `queued` | Durably accepted, not yet sent to DTrack |
+| `sending` | Forwarding in progress |
+| `processing` | DTrack has delivered a processing token |
+| `imported` | DTrack reports processing as completed; CVE matching can lag behind |
+| `failed` | Definitive error, with a non-critical error code and a retryability note |
+| `delivery_unknown` | DTrack might have accepted, but the response or the token is missing |
+| `cancelled` | Stopped before forwarding administratively or by device revocation |
 
-Nach einem Verbindungsabbruch während der DTrack-Weiterleitung kann keine exakt einmalige
-Verarbeitung zugesichert werden. `delivery_unknown` blockiert zunächst weitere Uploads
-dieses Geräts, damit ein verspäteter alter Import keinen neueren überschreibt. Im MVP klärt
-die Administration den Zustand anhand DTrack und gibt eine Wiederholung oder Fortsetzung frei.
-Eine Wiederholung desselben Inhalts kann einen erneuten Import auslösen und wird auditiert.
-Bei unbekanntem Abschluss nach Verarbeitungstoken wird weiter gepollt beziehungsweise ein
-Alarm ausgelöst; ein Timeout wird nicht als bestätigter Import ausgegeben.
+After a connection abort during DTrack forwarding, no exactly-once
+processing can be guaranteed. `delivery_unknown` first blocks further uploads
+of this device so that a late old import does not overwrite a newer one. In the MVP, the
+administration clarifies the state based on DTrack and approves a retry or continuation.
+Repeating the same content can trigger a renewed import and is audited.
+With an unknown completion after the processing token, polling continues or an
+alarm is raised; a timeout is not reported as a confirmed import.
 
-Ein Agent startet keinen zweiten Scan-Upload, solange sein vorheriger Auftrag offen ist.
-Quoten begrenzen offene Aufträge und Pufferplatz pro Gerät sowie global. Bei ausgeschöpfter
-Kapazität antwortet die API mit `429` oder `503` und `Retry-After`, vor einer Annahme.
-Upload-Slots und maximaler Pufferbedarf werden bereits vor dem Lesen des Request-Bodys
-reserviert; abgebrochene Übertragungen geben die Reservierung und temporäre Dateien frei.
-Ein begrenzt aufbewahrter lokaler, bereinigter Upload ermöglicht Wiederholungen ohne neuen
-Vollscan. Er bleibt privat und wird nach Bestätigung oder einer dokumentierten Frist gelöscht.
+An agent starts no second scan upload while its previous job is open.
+Quotas limit open jobs and buffer space per device and globally. When capacity is
+exhausted, the API responds with `429` or `503` and `Retry-After`, before acceptance.
+Upload slots and maximum buffer demand are reserved before reading the request body;
+aborted transfers release the reservation and temporary files.
+A locally retained, sanitized upload kept for a limited time enables retries without a new
+full scan. It stays private and is deleted after confirmation or a documented period.
 
-## API-Skizze
+## API sketch
 
-Alle Pfade sind Vorschläge; vor Implementierung werden sie als OpenAPI-Vertrag festgeschrieben.
+All paths are proposals; before implementation they are fixed as an OpenAPI contract.
 
-| Endpunkt | Berechtigung | Aufgabe |
+| Endpoint | Permission | Task |
 |---|---|---|
-| `POST /v1/admin/invitations` | Verwaltung | Einmalige Einladung erzeugen; auch freigegebene Wiederaufnahme |
-| `DELETE /v1/admin/invitations/{id}` | Verwaltung | Ungenutzte Einladung widerrufen |
-| `GET /v1/admin/devices` | Verwaltung | Geräte, Aufnahmefehler und Importalter anzeigen |
-| `POST /v1/admin/devices/{id}/revoke` | Verwaltung | Gerät sperren und wartende Aufträge stoppen |
-| `PUT /v1/admin/devices/{id}/profile` | Verwaltung | Versioniertes Profil zuweisen |
-| `POST /v1/admin/uploads/{id}/resolve` | Verwaltung | Unklaren Versand mit Begründung auflösen |
-| `POST /v1/enrollments` | Einladung | Aufnahme starten beziehungsweise identisch wiederholen |
-| `GET /v1/device` | Gerät | Eigener Zustand, Metadaten, Profilversion und Importzeit |
-| `PATCH /v1/device/metadata` | Aktives Gerät | Eigene technische Metadatenänderung melden |
-| `GET /v1/device/config` | Aktives Gerät | Eigene Konfiguration mit ETag/Version abrufen |
-| `POST /v1/device/credentials` | Aktives Gerät | Neue Berechtigung für Rotation registrieren |
-| `POST /v1/device/credentials/{id}/confirm` | Neues Geräte-Credential | Besitz bestätigen und Rotationsüberlappung beginnen |
-| `DELETE /v1/device/credentials/{id}` | Aktives Gerät | Eigene alte Berechtigung widerrufen |
-| `POST /v1/device/uploads` | Aktives Gerät | SBOM für das eigene Projekt einstellen |
-| `GET /v1/device/uploads/{id}` | Aktives Gerät | Ausschließlich eigenen Importstatus lesen |
+| `POST /v1/admin/invitations` | Management | Create a one-time invitation; also approved re-onboarding |
+| `DELETE /v1/admin/invitations/{id}` | Management | Revoke an unused invitation |
+| `GET /v1/admin/devices` | Management | Show devices, onboarding errors and import age |
+| `POST /v1/admin/devices/{id}/revoke` | Management | Revoke a device and stop waiting jobs |
+| `PUT /v1/admin/devices/{id}/profile` | Management | Assign a versioned profile |
+| `POST /v1/admin/uploads/{id}/resolve` | Management | Resolve an unclear delivery with justification |
+| `POST /v1/enrollments` | Invitation | Start onboarding or repeat it identically |
+| `GET /v1/device` | Device | Own state, metadata, profile version and import time |
+| `PATCH /v1/device/metadata` | Active device | Report own technical metadata change |
+| `GET /v1/device/config` | Active device | Fetch own configuration with ETag/version |
+| `POST /v1/device/credentials` | Active device | Register a new credential for rotation |
+| `POST /v1/device/credentials/{id}/confirm` | New device credential | Confirm possession and begin rotation overlap |
+| `DELETE /v1/device/credentials/{id}` | Active device | Revoke own old credential |
+| `POST /v1/device/uploads` | Active device | Submit an SBOM for the own project |
+| `GET /v1/device/uploads/{id}` | Active device | Read exclusively the own import status |
 
-Gerätepfade enthalten keine frei auswählbare `device_id`. Auch Upload- und Credential-IDs
-werden immer zusammen mit dem authentisierten Gerät geprüft. Profile werden nur in der
-dem Gerät zugewiesenen Version ausgeliefert. Fehlerantworten enthalten feste Codes wie
-`INVITATION_EXPIRED`, `IDENTITY_CONFLICT`, `DEVICE_REVOKED`, `PROFILE_INVALID` oder
-`UPLOAD_TOO_LARGE` und eine Korrelations-ID, keine DTrack-Response-Bodies oder Geheimnisse.
-Aufnahme und Rotation bekommen `Cache-Control: no-store`. Alle Endpunkte besitzen
-explizite Request-Schemas; unbekannte Felder werden zurückgewiesen.
+Device paths contain no freely selectable `device_id`. Upload and credential IDs
+are likewise always checked together with the authenticated device. Profiles are delivered only in the
+version assigned to the device. Error responses contain fixed codes such as
+`INVITATION_EXPIRED`, `IDENTITY_CONFLICT`, `DEVICE_REVOKED`, `PROFILE_INVALID` or
+`UPLOAD_TOO_LARGE` and a correlation ID, no DTrack response bodies or secrets.
+Onboarding and rotation get `Cache-Control: no-store`. All endpoints have
+explicit request schemas; unknown fields are rejected.
 
-## Speicherung, Rechte und Betrieb
+## Storage, permissions and operation
 
-Persistiert werden `devices`, `credentials`, `invitations`, `profiles`, `registration_jobs`,
-`upload_jobs` und `audit_events`. Dazu gehören Zustände, Gültigkeit, Zuordnungen, Request-IDs,
-Profilversionen, Leases und letzte Kontakt-/Importzeiten. Constraints sichern eindeutige
-Identitäten und Request-IDs; Transaktionen sichern Einladungsverbrauch und Auftragsannahme.
-Eine eigene Datenbank mit eigenem Benutzer trennt den Dienst von DTrack; keine Zugriffe auf
-DTrack-interne Tabellen. Bestehende PostgreSQL-Infrastruktur kann dafür genutzt werden.
+Persisted are `devices`, `credentials`, `invitations`, `profiles`, `registration_jobs`,
+`upload_jobs` and `audit_events`. These include states, validity, assignments, request IDs,
+profile versions, leases and last contact/import times. Constraints ensure unique
+identities and request IDs; transactions ensure invitation consumption and job acceptance.
+A database of its own with a user of its own separates the service from DTrack; no access to
+DTrack-internal tables. Existing PostgreSQL infrastructure can be used for this.
 
-DTrack erhält zwei dedizierte Service-Prinzipale: Registrierung für Projekt-/Tag-Verwaltung
-und Upload für BOM-Upload. Geplant sind `VIEW_PORTFOLIO`, `PORTFOLIO_MANAGEMENT` und gegebenenfalls
-`TAG_MANAGEMENT` für Registrierung sowie `BOM_UPLOAD` für Upload. Die exakten Rechte für jeden
-genutzten Endpunkt, ACLs und Token-Polling werden gegen die OpenAPI der installierten Version
-mit Positiv- und Negativtests bestätigt. `PROJECT_CREATION_UPLOAD`, `ACCESS_MANAGEMENT` und
-`SYSTEM_CONFIGURATION` werden nicht vorsorglich vergeben. Die [DTrack-Rechteübersicht](https://docs.dependencytrack.org/administration/users-and-permissions/)
-beschreibt die grundsätzlichen Rollen; sie ersetzt diesen Endpunkt-Test nicht.
+DTrack receives two dedicated service principals: registration for project/tag management
+and upload for BOM upload. Planned are `VIEW_PORTFOLIO`, `PORTFOLIO_MANAGEMENT` and, if applicable,
+`TAG_MANAGEMENT` for registration and `BOM_UPLOAD` for upload. The exact permissions for every
+endpoint used, ACLs and token polling are confirmed against the OpenAPI of the installed version
+with positive and negative tests. `PROJECT_CREATION_UPLOAD`, `ACCESS_MANAGEMENT` and
+`SYSTEM_CONFIGURATION` are not granted as a precaution. The [DTrack permissions overview](https://docs.dependencytrack.org/administration/users-and-permissions/)
+describes the basic roles; it does not replace this endpoint test.
 
-Für den Pilot genügen eine Service-Instanz mit API und Worker, PostgreSQL und ein privates PVC.
-Die Anwendung läuft ohne root und mit begrenzten Ressourcen; Workerverarbeitung ist über Leases
-abgesichert. Mehrere Replikate setzen einen gemeinsam nutzbaren Puffer beziehungsweise
-Objektspeicher und getestete Lease-/Failover-Logik voraus. Der lokale Puffer darf dabei
-nicht versehentlich pro Replikat getrennt sein.
+For the pilot, one service instance with API and worker, PostgreSQL and a private PVC suffice.
+The application runs without root and with limited resources; worker processing is secured via leases.
+Multiple replicas require a shareable buffer or
+object storage and tested lease/failover logic. The local buffer must
+not accidentally be separate per replica.
 
-Helm und Compose erhalten einen eigenen Service, Secrets, Speicher und Healthchecks.
-Netzwerkregeln erlauben externe Gerätezugriffe nur zur Geräte-API, Managementzugriffe nur
-aus der Verwaltung und Backend-Zugriffe nur auf PostgreSQL und DTrack. Der öffentliche
-DTrack-Zugang für Administratoren bleibt eine gesonderte Entscheidung. Enrollment nutzt
-einen eigenen Hostnamen beziehungsweise klar getrennte Ingress-Routen; Backend-Zugriffe
-werden nach dem vorhandenen Vertrauensmodell abgesichert. Geräte-TLS wird immer geprüft.
+Helm and Compose get a service of their own, secrets, storage and health checks.
+Network rules allow external device access only to the device API, management access only
+from the administration and backend access only to PostgreSQL and DTrack. The public
+DTrack access for administrators remains a separate decision. Enrollment uses
+a hostname of its own or clearly separated ingress routes; backend access is
+secured according to the existing trust model. Device TLS is always verified.
 
-Audit protokolliert Einladungserstellung/-verbrauch, Profiländerung, Registrierung, Rotation,
-Sperrung und manuelle Fehlerauflösung mit Zeit, Akteur und Ziel-ID. Keine Tokens, vollständigen
-SBOMs, Benutzerpfade oder unbereinigten Backend-Fehler in Logs. Vorgeschlagene Fristen:
-abgeschlossene Upload-Nutzlasten sofort löschen, andere nach spätestens 24 Stunden und dann
-noch nicht versandte Aufträge sichtbar fehlschlagen lassen. Bei unklarem Versand oder offener
-DTrack-Verarbeitung bleibt die Versandsperre auch ohne Payload erhalten; Bereinigung darf
-keinen neuen Versand freigeben. Status-/Idempotenzdaten terminaler Aufträge 90 Tage, Audit 180 Tage.
-Gesperrte Geräte bleiben bis zur administrativen Löschung als Identitätsreservierung bestehen.
-Diese Fristen sind Betriebsparameter und vor Produktivbetrieb abzustimmen.
+Audit logs invitation creation/consumption, profile change, registration, rotation,
+revocation and manual error resolution with time, actor and target ID. No tokens, complete
+SBOMs, user paths or unsanitized backend errors in logs. Proposed periods:
+delete completed upload payloads immediately, others after 24 hours at the latest, and then
+let not-yet-sent jobs fail visibly. With an unclear delivery or open
+DTrack processing, the sending lock remains even without a payload; cleanup must not
+release a new delivery. Status/idempotency data of terminal jobs 90 days, audit 180 days.
+Revoked devices remain as an identity reservation until administrative deletion.
+These periods are operating parameters and to be agreed before productive operation.
 
-Metriken erfassen Aufnahmefehler, aktive/gesperrte Geräte, Queue-Alter, Pufferbelegung,
-abgelaufene Leases, `delivery_unknown`, Profilfehler und Alter des letzten bestätigten Imports.
-Ein Heartbeat ersetzt keinen Importnachweis. Ausfall des Enrollment-Dienstes verzögert Uploads;
-er beeinflusst die bestehenden DTrack-Auswertungen nicht. Ein DTrack-Ausfall wird nur bis zu
-den festgelegten Quoten gepuffert und darf Speicher nicht unbegrenzt belegen.
+Metrics capture onboarding errors, active/revoked devices, queue age, buffer occupancy,
+expired leases, `delivery_unknown`, profile errors and age of the last confirmed import.
+A heartbeat replaces no import proof. A failure of the enrollment service delays uploads;
+it does not affect the existing DTrack evaluations. A DTrack outage is buffered only up to
+the defined quotas and must not occupy storage without limit.
 
-Datenbank und Secrets werden gesichert; die kurzlebige Upload-Nutzlast wird im MVP nicht
-gesichert. Beim Restore werden fehlende Nutzlasten als verloren markiert und erneut angefordert.
-Ein Restore kann veraltete Sperrungen, verbrauchte Einladungen und Auftragszustände zurückbringen.
-Deshalb zunächst Gerätezugang sperren, alle restaurierten Einladungen ungültig machen,
-Geräteberechtigungen im MVP vollständig widerrufen und eine kontrollierte Wiederaufnahme
-durchführen. Projekte und Asset-IDs bleiben erhalten. Unklare Backend-Aufträge werden vor
-Wiederaufnahme des Workers abgeglichen. Ein Restore-Test ist Teil der Abnahme.
+Database and secrets are backed up; the short-lived upload payload is not
+backed up in the MVP. On restore, missing payloads are marked as lost and requested again.
+A restore can bring back outdated revocations, consumed invitations and job states.
+Therefore first block device access, invalidate all restored invitations,
+fully revoke device credentials in the MVP and perform a controlled re-onboarding.
+Projects and asset IDs are kept. Unclear backend jobs are reconciled before the
+worker resumes. A restore test is part of the acceptance.
 
-## Anpassungen im Repository und Migration
+## Changes in the repository and migration
 
-| Bereich | Erforderliche Änderung |
+| Area | Required change |
 |---|---|
-| `patchwatch/agent/` (`runner.py`, `cli.py`) | Transportmodus `enrollment`, Aufnahme, Profilabruf, Rotation und lokaler Status |
-| `patchwatch/core/sbom.py` | Scanner/Bereinigung beibehalten; Uploadtransport vom direkten DTrack-Client trennen |
-| `patchwatch/core/tags.py` | Explizite Zielgeräte-Metadaten für zentrale Registrierung unterstützen |
-| `patchwatch/dtrack/register.py` | Wiederverwendbare Registrierung mit Reconciliation statt lokal erkannter Server-Metadaten |
-| Neuer Enrollment-Service | API, Datenmodell, Migrationen, Autorisierung, Puffer und Worker |
-| `patchwatch/dtrack/setup.py` | Dedizierte DTrack-Service-Teams mit geprüften Minimalrechten |
-| Helm, Compose, CI | Deployment, Secrets, Backup, Netzwerkregeln, Image und Integrationstests |
-| Agent-Pakete und Dokumentation | Enrollment-CLI, sichere Tokenübergabe, Diagnose und Betriebsabläufe |
+| `patchwatch/agent/` (`runner.py`, `cli.py`) | Transport mode `enrollment`, onboarding, profile fetch, rotation and local status |
+| `patchwatch/core/sbom.py` | Keep scanner/sanitizing; separate upload transport from the direct DTrack client |
+| `patchwatch/core/tags.py` | Support explicit target device metadata for central registration |
+| `patchwatch/dtrack/register.py` | Reusable registration with reconciliation instead of locally detected server metadata |
+| New enrollment service | API, data model, migrations, authorization, buffer and worker |
+| `patchwatch/dtrack/setup.py` | Dedicated DTrack service teams with verified minimal permissions |
+| Helm, Compose, CI | Deployment, secrets, backup, network rules, image and integration tests |
+| Agent packages and documentation | Enrollment CLI, secure token handover, diagnostics and operating flows |
 
-Bestandsgeräte werden in Wellen migriert: Administration importiert die geprüfte Zuordnung
-aus `host_id` und `project_uuid` und erstellt dafür eine Wiederaufnahme-Einladung. Ein
-unregistriertes Altgerät wird erst eindeutig einem Projekt zugeordnet. Der Agent stoppt
-zunächst direkte geplante Uploads, führt die Aufnahme durch und bestätigt einen Import über
-den neuen Transport. Danach entfernt die Verwaltung den alten lokalen DTrack-Schlüssel
-und aktiviert den neuen Zeitplan. Bei Fehlern bleibt der Migrationszustand sichtbar;
-ein Rückweg vor Schlüsselwiderruf wird ausdrücklich durch die Verwaltung ausgelöst.
+Existing devices are migrated in waves: the administration imports the verified assignment
+from `host_id` and `project_uuid` and creates a re-onboarding invitation for it. An
+unregistered legacy device is first unambiguously assigned to a project. The agent first
+stops direct scheduled uploads, performs the onboarding and confirms an import via
+the new transport. Afterwards the management removes the old local DTrack key
+and enables the new schedule. On errors, the migration state stays visible;
+a way back before key revocation is explicitly triggered by the management.
 
-Während der Migration bleiben direkte und neue Geräte technisch nebeneinander betreibbar.
-Der alte gemeinsame Agent-Schlüssel wird erst nach vollständiger Umstellung widerrufen;
-bis dahin ist die neue Isolation gegenüber Besitzern dieses alten Schlüssels nicht vollständig.
-CI behält seinen bereits getrennten CI-Upload-Key. Ein fehlgeschlagener Enrollment-Upload
-führt niemals automatisch zum Rückfall auf einen alten gemeinsamen Schlüssel.
+During the migration, direct and new devices can technically be operated side by side.
+The old shared agent key is revoked only after full conversion;
+until then, the new isolation is not complete against holders of this old key.
+CI keeps its already separate CI upload key. A failed enrollment upload
+never automatically leads to a fallback to an old shared key.
 
-## Lieferstufen und Abnahme
+## Delivery stages and acceptance
 
-1. **Vertrag und Durchstich:** OpenAPI, Zustandsmodell und Bedrohungsannahmen festlegen.
-   DTrack-Minimalrechte, Profilvalidierung und Crash-Reconciliation in einer Testinstanz
-   prüfen. Ergebnis: ein Gerät wird registriert und ein bestehendes Projekt bleibt erhalten.
-2. **Produktiver Mindestumfang:** Einladungen, Geräteberechtigungen, Rotation, Sperrung,
-   Profile, persistenter Puffer, Importstatus und administrative CLI implementieren.
-   Agenttransport und Migration ergänzen; Helm-/Compose-Betrieb und Restore testen.
-3. **Pilot und Ausbau:** Kleine Linux-/macOS-Gruppe aufnehmen, Fehlerfälle erproben,
-   Quoten und Aufbewahrung messen. Danach breiter Rollout; Weboberfläche, SSO, mTLS und
-   mehrere Replikate nur nach eigenem Bedarf und Entwurf ergänzen.
+1. **Contract and spike:** Fix OpenAPI, state model and threat assumptions.
+   Verify DTrack minimal permissions, profile validation and crash reconciliation in a test instance.
+   Result: a device is registered and an existing project is kept.
+2. **Productive minimum scope:** Implement invitations, device credentials, rotation, revocation,
+   profiles, persistent buffer, import status and administrative CLI.
+   Add agent transport and migration; test Helm/Compose operation and restore.
+3. **Pilot and extension:** Onboard a small Linux/macOS group, trial failure cases,
+   measure quotas and retention. Then broader rollout; add web interface, SSO, mTLS and
+   multiple replicas only according to a need and design of their own.
 
-Vor Produktivfreigabe müssen folgende Szenarien nachgewiesen sein:
+Before productive release, the following scenarios must be demonstrated:
 
-- Zwei gleichzeitige Einlösungen einer Einladung erzeugen höchstens ein Gerät; dieselbe
-  Aufnahme bleibt nach verlorener Antwort wiederholbar.
-- Eine kopierte `host_id`, fremde Upload-ID oder fremde Credential-ID gewährt keinen Zugriff.
-- Ein Gerät kann weder Zielprojekt noch Team-Tags ändern oder ein DTrack-Projekt automatisch anlegen.
-- Ein Worker-Absturz nach DTrack-Projektanlage erzeugt beim Neustart kein zweites Projekt.
-- Derselbe Scan wird als derselbe Auftrag erkannt; geänderter Inhalt mit gleicher ID wird abgewiesen.
-- Ein verlorener DTrack-Response wird als unklar behandelt; neuere Uploads überholen ihn nicht.
-- Sperrung, Rotation mit verlorener Antwort und abgelaufene Berechtigungen verhalten sich wie beschrieben.
-- Übergröße, langsame Uploads, voller Puffer und ungültige SBOMs belegen keine unbegrenzten Ressourcen.
-- Profiländerung, Serverausfall, Bestandsmigration und Restore erhalten Asset-ID und Projektzuordnung.
-- Quellcode-, Log- und Artefaktprüfung findet keine Gerätegeheimnisse oder DTrack-Schlüssel
-  in Installationspaketen, CLI-Argumenten oder regulären Logs.
+- Two simultaneous redemptions of an invitation create at most one device; the same
+  onboarding stays repeatable after a lost response.
+- A copied `host_id`, foreign upload ID or foreign credential ID grants no access.
+- A device can neither change the target project or team tags nor automatically create a DTrack project.
+- A worker crash after DTrack project creation creates no second project on restart.
+- The same scan is recognized as the same job; changed content with the same ID is rejected.
+- A lost DTrack response is treated as unclear; newer uploads do not overtake it.
+- Revocation, rotation with a lost response and expired credentials behave as described.
+- Oversize, slow uploads, full buffer and invalid SBOMs occupy no unlimited resources.
+- Profile change, server outage, existing-device migration and restore preserve asset ID and project assignment.
+- Source code, log and artifact review finds no device secrets or DTrack keys
+  in installation packages, CLI arguments or regular logs.
 
-Die vorgeschlagenen API-Pfade, Fristen und Limits sind konkrete Entwurfsentscheidungen für
-die Umsetzung; sie behaupten keine bereits vorhandenen Fähigkeiten des Agenten oder DTrack.
+The proposed API paths, periods and limits are concrete design decisions for
+the implementation; they claim no already existing capabilities of the agent or DTrack.

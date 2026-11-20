@@ -323,37 +323,37 @@ def inline(value, max_length=300):
 def render(result, limit=20):
     """Bounded comment; untrusted package names cannot inject quick actions or mentions."""
     v, p, lic = result["vulnerabilities"], result["violations"], result["licenses"]
-    lines = ["| Befunde | Neu | Behoben / entfallen | Unverändert |", "|---|---:|---:|---:|",
-             f"| Schwachstellen | {len(v['new'])} | {len(v['fixed'])} | {v['unchanged']} |",
-             f"| Policy-Verstöße | {len(p['new'])} | {len(p['resolved'])} | {p['unchanged']} |", "",
-             "Verglichen wird der Zielbranch **ohne diesen MR** mit seinem berechneten **Merge-Ergebnis**.",
-             "Die folgenden Änderungen würden beim Merge eintreten.", ""]
+    lines = ["| Findings | New | Fixed / dropped | Unchanged |", "|---|---:|---:|---:|",
+             f"| Vulnerabilities | {len(v['new'])} | {len(v['fixed'])} | {v['unchanged']} |",
+             f"| Policy violations | {len(p['new'])} | {len(p['resolved'])} | {p['unchanged']} |", "",
+             "Compares the target branch **without this MR** with its computed **merge result**.",
+             "The following changes would occur on merge.", ""]
 
     def section(title, rows):
         lines.extend(["**" + title + "**", *["- " + inline(x, max_length=300 if limit else None) for x in rows[:limit]]])
         if not rows:
-            lines.append("Keine.")
+            lines.append("None.")
         elif limit and len(rows) > limit:
-            lines.append(f"- … {len(rows) - limit} weitere Einträge im vollständigen Bericht.")
+            lines.append(f"- … {len(rows) - limit} more entries in the full report.")
         lines.append("")
 
     def vulnerability(x):
         return f"{x['severity']}: {x['id']} ({x['component']})"
 
-    section("Neue Schwachstellen", [vulnerability(x) for x in v['new']])
-    section("Behobene / entfallende Schwachstellen", [vulnerability(x) for x in v['fixed']])
-    section("Neue Lizenzen je Paket", [f"{x['component']}: {', '.join(x['licenses'])}" for x in lic['added']])
-    section("Entfallende Lizenzen je Paket", [f"{x['component']}: {', '.join(x['licenses'])}" for x in lic['removed']])
-    section("Geänderte Lizenzen", [f"{x['component']}: {', '.join(x['from']) or '?'} → {', '.join(x['to']) or '?'}"
+    section("New vulnerabilities", [vulnerability(x) for x in v['new']])
+    section("Fixed / dropped vulnerabilities", [vulnerability(x) for x in v['fixed']])
+    section("New licenses per package", [f"{x['component']}: {', '.join(x['licenses'])}" for x in lic['added']])
+    section("Dropped licenses per package", [f"{x['component']}: {', '.join(x['licenses'])}" for x in lic['removed']])
+    section("Changed licenses", [f"{x['component']}: {', '.join(x['from']) or '?'} → {', '.join(x['to']) or '?'}"
                                    for x in lic['changed']])
-    section("Erstmals im Inventar enthaltene Lizenzen", lic['newLicenses'])
-    section("Vollständig aus dem Inventar entfallende Lizenzen", lic['droppedLicenses'])
-    section("Neue fehlende Lizenzangaben", lic['unresolved'])
-    section("Neue Policy-Verstöße", [f"{x['state']}: {x['policy']} ({x['component']})" for x in p['new']])
-    section("Entfallende Policy-Verstöße", [f"{x['state']}: {x['policy']} ({x['component']})" for x in p['resolved']])
+    section("Licenses appearing in the inventory for the first time", lic['newLicenses'])
+    section("Licenses dropping out of the inventory entirely", lic['droppedLicenses'])
+    section("New missing license information", lic['unresolved'])
+    section("New policy violations", [f"{x['state']}: {x['policy']} ({x['component']})" for x in p['new']])
+    section("Dropped policy violations", [f"{x['state']}: {x['policy']} ({x['component']})" for x in p['resolved']])
     if limit:
-        lines.append(f"Vorschau: maximal {limit} Einträge je Abschnitt; lange Texte sind gekürzt. Vollständige Details im verlinkten Bericht.")
-    lines.append("Momentaufnahme: Zwei gleiche Abfragen garantieren keinen abgeschlossenen Scan aller Analyzer.")
+        lines.append(f"Preview: at most {limit} entries per section; long texts are truncated. Full details in the linked report.")
+    lines.append("Snapshot: two identical queries do not guarantee that all analyzers have finished scanning.")
     return "\n".join(lines)
 
 
@@ -452,7 +452,7 @@ class Worker:
         return match[0] if match else None
 
     def annotate_report(self, iid, url):
-        self.annotations[iid] = {"external_link": {"label": f"MR !{int(iid)} · {self.component or 'default'} · vollständiger Bericht (ZIP)", "url": url}}
+        self.annotations[iid] = {"external_link": {"label": f"MR !{int(iid)} · {self.component or 'default'} · full report (ZIP)", "url": url}}
         self.write_annotations()
 
     def attach_report(self, iid, result):
@@ -461,8 +461,8 @@ class Worker:
         directory.mkdir(parents=True, exist_ok=True)
         (directory / "patchwatch-delta.json").write_text(json.dumps(result, indent=2) + "\n")
         (directory / "patchwatch-delta.md").write_text(
-            f"# PatchWatch · {self.name}\n\nMR: {result['headSha']}\n\nZielbranch: {result['targetSha']}\n\n"
-            f"Merge-Baum: {result['mergedTree']}\n\n" + render(result, limit=None))
+            f"# PatchWatch · {self.name}\n\nMR: {result['headSha']}\n\nTarget branch: {result['targetSha']}\n\n"
+            f"Merge tree: {result['mergedTree']}\n\n" + render(result, limit=None))
         filename = f"patchwatch-mr-{int(iid)}-{self.component or 'default'}-{result['headSha'][:12]}.zip"
         archive = directory / filename
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as bundle:
@@ -499,10 +499,10 @@ class Worker:
         note = self.note(mr["iid"])
         previous_url = self.previous_report_url(note['body']) if note else None
         if previous_url and previous_url not in content:
-            content += (f"\n\n[Letzten vollständigen Bericht herunterladen](<{previous_url}>)"
-                        " · vorheriger Auswertungsstand, siehe SHAs und Zeitpunkt im Archiv.")
+            content += (f"\n\n[Download the latest full report](<{previous_url}>)"
+                        " · previous evaluation, see the SHAs and timestamp in the archive.")
         title = "PatchWatch" + (" · " + self.component if self.component else "")
-        body = self.marker + f"\n### {title}\nMR-Stand · `{mr['sha']}`\nZielbranch ohne MR · `{target_sha}`\n\n" + content
+        body = self.marker + f"\n### {title}\nMR head · `{mr['sha']}`\nTarget branch without MR · `{target_sha}`\n\n" + content
         if note:
             if note["body"] != body:
                 self.gl.call(path + f"/{int(note['id'])}", {"body": body}, "PUT")
@@ -517,7 +517,7 @@ class Worker:
         notes = list(self.gl.all(f"projects/{self.project}/merge_requests/{mr['iid']}/notes"))
         requested = any(n.get("author", {}).get("id") == self.bot and marker in n.get("body", "") for n in notes)
         active = any(p.get("status") in ACTIVE for p in pipelines)
-        content = "**Ausstehend:** Der Zielbranch hat sich geändert. Das Merge-Ergebnis muss neu gescannt werden."
+        content = "**Pending:** the target branch has changed. The merge result has to be scanned again."
         if requested or active:
             self.publish(mr, target_sha, content + ("\n" + marker if requested else ""))
             return
@@ -542,7 +542,7 @@ class Worker:
                 self.refresh_scan(mr, target_sha, pipelines)
                 return
             if pair["status"] == "conflict":
-                self.publish(mr, target_sha, "**Merge-Konflikt:** Kein eindeutiges Merge-Ergebnis. Konflikte auflösen und MR-Pipeline erneut starten; es wird kein Änderungsbericht behauptet.")
+                self.publish(mr, target_sha, "**Merge conflict:** no unambiguous merge result. Resolve the conflicts and restart the MR pipeline; no change report is claimed.")
                 return
             fingerprint = hashlib.sha256(f"v{REPORT_VERSION}/comment-{COMMENT_VERSION}:{sha}:{target_sha}:{pair['mergedTree']}:{current_job['id']}".encode()).hexdigest()
             done = f"<!-- patchwatch-result:{fingerprint} -->"
@@ -582,20 +582,20 @@ class Worker:
             report_url = self.attach_report(mr['iid'], result)
             # Use the trusted configured URL; encode the API-provided identifier as one path segment.
             link = self.url + "/projects/" + quote(projects[1]["uuid"], safe="")
-            content = (f"**[Vollständigen Bericht herunterladen (ZIP: Markdown + JSON)](<{report_url}>)**\n"
-                       "GitLab-Anhang zu diesem Auswertungsstand; unabhängig von der Laufzeit der CI-Artefakte.\n\n"
+            content = (f"**[Download the full report (ZIP: Markdown + JSON)](<{report_url}>)**\n"
+                       "GitLab attachment for this evaluation; independent of the retention of CI artifacts.\n\n"
                        f"Merge-Ergebnis (Git-Baum) · `{pair['mergedTree']}`\n\n"
                        f"Vergleich: `{inline(projects[1]['version'])}` gegen dTrack-Version `{inline(projects[0]['version'])}` "
-                       f"({'Inventar des Zielbranches' if source == 'branch' else 'MR-Scan des Zielbranches'})\n\n" + render(result) + f"\n\n[dTrack öffnen](<{link}>)")
+                       f"({'Target branch inventory' if source == 'branch' else 'MR scan of the target branch'})\n\n" + render(result) + f"\n\n[Open dTrack](<{link}>)")
             if result["settled"]:
                 content += "\n" + done
             else:
-                content = "**Analyse unvollständig; wird im nächsten Worker-Lauf erneut geprüft.**\n\n" + content
+                content = "**Analysis incomplete; will be checked again in the next worker run.**\n\n" + content
             self.publish(mr, target_sha, content)
         except Pending as notice:
-            self.publish(mr, target_sha, "**Ausstehend:** " + str(notice))
+            self.publish(mr, target_sha, "**Pending:** " + str(notice))
         except (OSError, ValueError, KeyError, TypeError, AttributeError, RuntimeError, urllib.error.URLError):
-            self.publish(mr, target_sha, "**Auswertung fehlgeschlagen.** Keine Freigabe; Details im Worker-Log. Nächster Lauf versucht es erneut.")
+            self.publish(mr, target_sha, "**Evaluation failed.** No approval; see the worker log for details. The next run will try again.")
             raise
 
     def sync_branch(self, branch, sha):

@@ -1,139 +1,138 @@
-# Hostnamen, Tags und sichtbare Findings
+# Hostnames, tags and visible findings
 
-## Identität eines Rechners
+## Identity of a machine
 
-Ein Rechner erscheint als Projekt mit seinem **Hostname**, z. B. `workstation-01`, und der
-festen Version `current`. Der Agent erkennt den Hostnamen automatisch. `hostname` in der
-Konfiguration ist ein optionaler expliziter Override, z. B. für eine zentrale Vorbereitung.
-Es wird kein `devhost-`-Präfix und keine zufällige UUID mehr als Anzeigename verwendet.
+A machine appears as a project with its **hostname**, e.g. `workstation-01`, and the
+fixed version `current`. The agent detects the hostname automatically. `hostname` in the
+configuration is an optional explicit override, e.g. for central preparation.
+No `devhost-` prefix and no random UUID is used as the display name any more.
 
-`host_id` bleibt als stabile Asset-ID erhalten und steht im Tag `asset-id:<id>`. Nach der
-Registrierung adressieren Uploads die **Projekt-UUID** aus `project_uuid`. Ein Namenswechsel
-oder wiederholter Scan legt dadurch kein zweites Inventar an. Ein neuer Upload erzeugt keine
-neue Projektversion; `current` wird bei der Registrierung als neueste Version markiert.
+`host_id` is kept as the stable asset ID and is in the tag `asset-id:<id>`. After
+registration, uploads address the **project UUID** from `project_uuid`. A name change
+or repeated scan therefore creates no second inventory. A new upload creates no
+new project version; `current` is marked as the latest version during registration.
 
-Die zentrale Registrierung benötigt administrative Zugangsdaten, der laufende Agent behält
-nur `BOM_UPLOAD` und `PROJECT_CREATION_UPLOAD`:
+The central registration needs administrative credentials; the running agent keeps
+only `BOM_UPLOAD` and `PROJECT_CREATION_UPLOAD`:
 
 ```sh
-DT_ADMIN_PASSWORD_FILE=/sicherer/pfad/admin_password \
+DT_ADMIN_PASSWORD_FILE=/secure/path/admin_password \
   python3 -m patchwatch.dtrack.register --config ~/.config/patchwatch/agent.json
-# Bei Systeminstallation: --config /etc/patchwatch/agent.json, als Besitzer der Datei ausführen.
+# For a system installation: --config /etc/patchwatch/agent.json, run as the owner of the file.
 ```
 
-Alternativ `DT_ADMIN_API_KEY_FILE` verwenden. Die Zugangsdaten werden nicht in die
-Agent-Konfiguration geschrieben. Der Befehl aktualisiert Name, Tags, Aktivstatus und
-`isLatest` und speichert nur die Projekt-UUID lokal. Vorhandene UUIDs, Komponenten, Findings,
-Analysen und Ticket-Deduplizierung bleiben erhalten. Das frühere Projekt
-`devhost-<host_id>` wird automatisch gefunden und umbenannt. Bei nicht eindeutiger Zuordnung
-kann ein Administrator mit `--project-uuid <uuid>` ausdrücklich das Ziel bestimmen.
-Namenskollisionen werden abgewiesen; Projekte werden nicht automatisch zusammengeführt.
+Alternatively, use `DT_ADMIN_API_KEY_FILE`. The credentials are not written into the
+agent configuration. The command updates name, tags, active status and
+`isLatest` and stores only the project UUID locally. Existing UUIDs, components, findings,
+analyses and ticket deduplication are kept. The former project
+`devhost-<host_id>` is found and renamed automatically. If the assignment is ambiguous,
+an administrator can explicitly determine the target with `--project-uuid <uuid>`.
+Name collisions are rejected; projects are not merged automatically.
 
-Bei Änderung des Hostnamens oder der Tags die Registrierung erneut ausführen. Das ist
-bewusst eine administrative Aufgabe: DTrack 4.14 ignoriert Tag-Änderungen eines bestehenden
-Projekts durch einen reinen Upload-Key. Wir erweitern deshalb den auf den Rechnern liegenden
-Schlüssel nicht um globale Schreibrechte. Ein gelöschtes registriertes Projekt muss neu
-zugeordnet werden; ein UUID-Upload legt nicht stillschweigend ein Ersatzprojekt an.
+When the hostname or tags change, run the registration again. This is
+deliberately an administrative task: DTrack 4.14 ignores tag changes of an existing
+project made by a pure upload key. We therefore do not extend the key stored on the machines
+with global write permissions. A deleted registered project must be
+reassigned; a UUID upload does not silently create a replacement project.
 
-## Tag-Konvention
+## Tag convention
 
-Projekt-Tags verwenden `schlüssel:wert`, kleingeschrieben, ohne Leerzeichen und Kommas.
-Jeder Schlüssel hat genau einen Wert. Doppelte identische Tags werden entfernt, widersprüchliche
-Werte oder ungültige Tags vor dem Scan abgewiesen. Passwörter und URLs gehören nicht in Tags.
+Project tags use `key:value`, lowercase, without spaces and commas.
+Every key has exactly one value. Duplicate identical tags are removed; contradictory
+values or invalid tags are rejected before the scan. Passwords and URLs do not belong in tags.
 
-| Tag | Herkunft |
+| Tag | Origin |
 |---|---|
-| `managed-by:patchwatch` | Kennzeichnet von Patchwatch verwaltete Projekte |
-| `asset-type:workstation` | Rechnersoftware-Inventar |
+| `managed-by:patchwatch` | Marks projects managed by Patchwatch |
+| `asset-type:workstation` | Machine software inventory |
 | `host:workstation-01` | Hostname |
-| `asset-id:<host_id>` | Stabile Asset-Kennung |
-| `os:linux` / `os:darwin` | Betriebssystem erkannt vom Agenten |
-| `distro:ubuntu` | Linux-Distribution aus `/etc/os-release`, sofern verfügbar |
-| `agent-scope:user` / `agent-scope:system` | Berechtigungsumfang der Installation |
-| `team:platform` | Optional, ausdrücklich konfigurierter Eigentümer |
-| `environment:development` | Optional, ausdrücklich konfigurierte Umgebung |
-| `asset-group:developer-workstations` | Optional, konfigurierte Rechnergruppe |
-| `asset-type:application`, `source:gitlab-ci`, `gitlab-project-id:<id>` | Projekte aus dem [GitLab-CI-Template](ci-integration.md) statt Rechnern; `team:`/`environment:` dort aus den Template-Inputs |
+| `asset-id:<host_id>` | Stable asset identifier |
+| `os:linux` / `os:darwin` | Operating system detected by the agent |
+| `distro:ubuntu` | Linux distribution from `/etc/os-release`, if available |
+| `agent-scope:user` / `agent-scope:system` | Permission scope of the installation |
+| `team:platform` | Optional, explicitly configured owner |
+| `environment:development` | Optional, explicitly configured environment |
+| `asset-group:developer-workstations` | Optional, configured machine group |
+| `asset-type:application`, `source:gitlab-ci`, `gitlab-project-id:<id>` | Projects from the [GitLab CI template](ci-integration.md) instead of machines; `team:`/`environment:` there from the template inputs |
 
-Ein Team wird **nicht** aus Benutzernamen oder Hostnamen geraten. Die Beispielkonfiguration
-enthält daher keine fiktive Teamzuordnung. Erkannte Tags dürfen nicht durch widersprüchliche
-Konfigurationswerte überschrieben werden. Die früheren Präfixe `agent:` und `host-group:`
-werden beim Einlesen zu `agent-scope:` bzw. `asset-group:` normalisiert.
+A team is **not** guessed from user names or hostnames. The example configuration
+therefore contains no fictitious team assignment. Detected tags must not be overwritten by contradictory
+configuration values. The former prefixes `agent:` and `host-group:`
+are normalized to `agent-scope:` and `asset-group:` when read.
 
-Der registrierte Tag-Satz entspricht der Agent-Konfiguration plus den erkannten Merkmalen.
-Zentral ergänzte Team-/Umgebungs-Tags müssen deshalb auch in der Konfiguration stehen, bevor
-die Registrierung erneut ausgeführt wird. Änderungen gelten nach erfolgreicher Registrierung.
-Bridge-Routen können `team:*`, `environment:*` oder `asset-group:*` als Filter verwenden.
-Die Patchwatch-Notification-Regel verarbeitet nur Projekte mit `managed-by:patchwatch`.
-Der Monitor identifiziert Rechner anhand von `managed-by:patchwatch` zusammen mit
-`asset-type:workstation`; alte `devhost-*`-Projekte werden während Migrationen weiter erkannt.
-DTrack 4.14 ordnet diese Tags dem **Projekt** zu, nicht jeder einzelnen Paketkopie.
+The registered tag set corresponds to the agent configuration plus the detected attributes.
+Team/environment tags added centrally must therefore also be in the configuration before
+the registration is run again. Changes apply after a successful registration.
+Bridge routes can use `team:*`, `environment:*` or `asset-group:*` as filters.
+The Patchwatch notification rule processes only projects with `managed-by:patchwatch`.
+The monitor identifies machines by `managed-by:patchwatch` together with
+`asset-type:workstation`; old `devhost-*` projects continue to be recognized during migrations.
+DTrack 4.14 assigns these tags to the **project**, not to every individual package copy.
 
-## Wo sind Komponenten und Findings sichtbar?
+## Where are components and findings visible?
 
-- **Projekte → Hostname → Komponenten / Audit:** tatsächlicher Bestand und Findings des Rechners.
-- **Globale Komponenten:** projektübergreifende Suchmaske. Name wie `stdlib`, `certifi` oder `bash`
-  eingeben und „Suchen“ ausführen. Eine leere Suchansicht ist kein leeres Inventar. Die Registrierung
-  markiert `current` als neueste Version, damit der Filter „nur neueste Projektversionen“ greift.
-- **Dashboard:** aggregierte Portfolio-Metriken. Diese werden separat von Projekt-Findings
-  berechnet und können nach einem großen Import zeitlich nachlaufen.
+- **Projects → hostname → Components / Audit:** actual inventory and findings of the machine.
+- **Global components:** cross-project search mask. Enter a name such as `stdlib`, `certifi` or `bash`
+  and run "Search". An empty search view is not an empty inventory. The registration
+  marks `current` as the latest version so that the "latest project versions only" filter applies.
+- **Dashboard:** aggregated portfolio metrics. These are calculated separately from project findings
+  and can lag behind in time after a large import.
 
-Die Einrichtung und die Registrierung fordern einen Portfolio-Refresh über die offizielle
-API an. DTrack aktualisiert diese Metriken regulär jede Stunde. Eine vollständige Berechnung
-kann bei großen Inventaren dauern. Im Dashboard kann auch der Aktualisieren-Knopf verwendet
-werden. Der tägliche Monitor vergleicht bekannte Projektzahlen und Finding-Zahlen mit den
-Portfolio-Zählern; nach 75 Minuten Import-/Aggregations-Toleranz meldet er fehlende Zähler
-als Betriebsfehler. Das Monitoring benötigt weiterhin nur `VIEW_PORTFOLIO`.
+The setup and the registration request a portfolio refresh via the official
+API. DTrack updates these metrics regularly every hour. A complete calculation
+can take a while for large inventories. In the dashboard, the refresh button can also be used.
+The daily monitor compares known project counts and finding counts with the
+portfolio counters; after 75 minutes of import/aggregation tolerance, it reports missing counters
+as an operational error. Monitoring still needs only `VIEW_PORTFOLIO`.
 
-## Was ist gewährleistet, was nicht?
+## What is guaranteed, what is not?
 
-Erkannte und gespeicherte Findings sind am Projekt und über dessen Audit-Ansicht sichtbar.
-Die Trivy-Anbindung wurde mit einem echten Finding (`CVE-2021-44228`, `TRIVY_ANALYZER`)
-Ende zu Ende geprüft. Für den Entwickler-PC wurden auch `CVE-2026-111943` und das certifi-
-Advisory `GHSA-6q48-6c7w-9gw2` in DTrack nachgewiesen.
+Detected and stored findings are visible on the project and in its audit view.
+The Trivy integration was verified end to end with a real finding (`CVE-2021-44228`, `TRIVY_ANALYZER`).
+For the developer PC, `CVE-2026-111943` and the certifi
+advisory `GHSA-6q48-6c7w-9gw2` were also demonstrated in DTrack.
 
-Eine **vollständige Erkennung jeder Schwachstelle** lässt sich nicht garantieren: Erfassung,
-PURL-/Distro-Metadaten, aktuelle Datenbanken und erfolgreiche Analyzer-Läufe sind Voraussetzungen.
-Ein Versionsfund kann außerdem durch einen Distributionspatch oder den tatsächlich verwendeten
-Trust Store bereits entschärft sein. Solche Bewertungen gehören nachvollziehbar ins Finding-Audit;
-Findings nicht pauschal anhand eines alten Versionsstrings unterdrücken.
+A **complete detection of every vulnerability** cannot be guaranteed: collection,
+PURL/distro metadata, current databases and successful analyzer runs are prerequisites.
+A version hit can also already be mitigated by a distribution patch or the trust store
+actually used. Such assessments belong traceably in the finding audit;
+do not suppress findings wholesale based on an old version string.
 
-Die Severity-Grenze `HIGH`/`CRITICAL` betrifft standardmäßig nur die **Benachrichtigungs-Bridge**.
-Auch `MEDIUM`- und `LOW`-Findings bleiben in DTrack sichtbar. Eine CVE kann über einen Alias wie
-GHSA geführt werden; in der Audit-Ansicht beide Kennungen berücksichtigen. Ein grüner Upload-
-Timer allein bestätigt weder fehlerfreie Analyzer noch eine aktuelle Schwachstellendatenbank.
+The severity limit `HIGH`/`CRITICAL` by default concerns only the **notification bridge**.
+`MEDIUM` and `LOW` findings also remain visible in DTrack. A CVE can be tracked via an alias such as
+GHSA; consider both identifiers in the audit view. A green upload
+timer alone confirms neither error-free analyzers nor a current vulnerability database.
 
 
-## Dienste und Erweiterungen
+## Services and extensions
 
-IDE-/Browser-Erweiterungen erscheinen als Paketkomponenten mit technischer ID und Version;
-gleiche Installationen werden innerhalb desselben Ökosystems zusammengeführt. Die
-[Agent-Anleitung](agent.md#ide--und-browser-erweiterungen) beschreibt die unterstützten Produkte.
-Statische Dienste aus Compose-Dateien erscheinen dagegen unter **Services**. Sie belegen
-keinen laufenden Prozess und ersetzen keinen Image-Scan; siehe [Service-Erfassung](services.md).
+IDE/browser extensions appear as package components with technical ID and version;
+identical installations are merged within the same ecosystem. The
+[agent guide](agent.md#ide-and-browser-extensions) describes the supported products.
+Static services from Compose files, in contrast, appear under **Services**. They prove
+no running process and replace no image scan; see [service collection](services.md).
 
-## Dependency Graph
+## Dependency graph
 
-Der Agent erhält Paket-Abhängigkeiten aus Syfts CycloneDX-Ausgabe und passt die Referenzen
-an die deduplizierten Komponenten an. Referenzen bleiben auf ihre Scan-Quelle beschränkt;
-Dateikomponenten, unbekannte Ziele und Selbstkanten werden nicht übernommen.
-Der stabile Host-Knoten verbindet die Wurzeln der vom Scanner erkannten Teilgraphen.
-Paket-zu-Paket-Kanten stammen ausschließlich aus dem Scanner. Isolierte Pakete ohne erkannte
-Beziehungen bleiben vollständig in der Komponententabelle, erhalten aber keine erfundene
-Host-Abhängigkeit. Ein Inventar ganz ohne erkannte Beziehungen kann deshalb weiterhin einen
-leeren Graphen haben. Syft ermittelt aus einem Dateisystem nicht für jedes Ökosystem einen
-vollständigen Laufzeitgraphen.
+The agent obtains package dependencies from Syft's CycloneDX output and adapts the references
+to the deduplicated components. References stay limited to their scan source;
+file components, unknown targets and self-edges are not taken over.
+The stable host node connects the roots of the subgraphs detected by the scanner.
+Package-to-package edges come exclusively from the scanner. Isolated packages without detected
+relationships stay completely in the component table but receive no invented
+host dependency. An inventory without any detected relationships can therefore still have an
+empty graph. Syft does not determine a complete runtime graph for every ecosystem from a file system.
 
-Eine direkte Host-Kante zu jedem der über 11.000 Pakete wurde verworfen: Neben der falschen
-Aussage über direkte Abhängigkeiten verursachte das große Projektfeld in DTrack 4.14 beim
-Laden aller Komponenten einen Java-Heap-Überlauf. Die Verankerung erkannter Teilgraphen
-vermeidet diese Vervielfachung und lässt auch getrennte Zyklen erreichbar.
+A direct host edge to each of the more than 11,000 packages was discarded: besides the wrong
+statement about direct dependencies, the large project field caused a Java heap overflow in DTrack 4.14
+when loading all components. Anchoring detected subgraphs
+avoids this multiplication and also keeps separate cycles reachable.
 
-Die früheren Agent-Versionen haben `dependencies` beim Bereinigen verworfen. Bereits
-importierte Projekte bekommen den Graphen erst durch einen erneuten Upload mit der aktuellen
-Agent-Version. **Projekt → Dependency Graph** danach neu laden. Bei großen Host-Inventaren
-zunächst eine einzelne Komponente untersuchen; Tausende Knoten können die Darstellung
-unübersichtlich machen. Eine leere UI trotz erneuten Imports über die API-Ausgabe
-`GET /api/v1/bom/cyclonedx/project/{uuid}` auf tatsächlich vorhandene `dependsOn`-Kanten prüfen;
-die Anzahl der `dependencies`-Datensätze allein reicht nicht, da DTrack auch leere Einträge
-exportiert. Der Compliance-Bericht zählt Verankerungen am Host und Paket-Abhängigkeiten getrennt.
+Earlier agent versions discarded `dependencies` during sanitizing. Projects already
+imported get the graph only through a renewed upload with the current
+agent version. Reload **Project → Dependency Graph** afterwards. For large host inventories,
+first examine a single component; thousands of nodes can make the display
+confusing. For an empty UI despite a renewed import, check the API output
+`GET /api/v1/bom/cyclonedx/project/{uuid}` for actually present `dependsOn` edges;
+the number of `dependencies` records alone is not sufficient, since DTrack also exports empty
+entries. The compliance report counts anchorings at the host and package dependencies separately.

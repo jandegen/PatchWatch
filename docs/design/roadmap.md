@@ -1,27 +1,27 @@
-# Offene TODOs
+# Open TODOs
 
-## NeuVector-Anbindung – offen, ausdrücklich noch nicht umgesetzt
+## NeuVector integration – open, explicitly not yet implemented
 
-Die statische [Compose-Service-Erfassung](../usage/services.md) ist umgesetzt. Sie liest lokale
-Dienstdefinitionen, beobachtet aber keine laufenden Workloads oder Kommunikationsbeziehungen.
+The static [Compose service collection](../usage/services.md) is implemented. It reads local
+service definitions but does not observe running workloads or communication relationships.
 
-Ziel für einen späteren Ausbau: Kubernetes-Serviceinventar durch NeuVector-Metadaten
-und optional beobachtete Dienstabhängigkeiten ergänzen und als CycloneDX-Services
-an Dependency-Track übertragen.
+Goal for a later extension: supplement the Kubernetes service inventory with NeuVector metadata
+and optionally observed service dependencies and transfer it as CycloneDX services
+to Dependency-Track.
 
-- [ ] API-Vertrag der eingesetzten NeuVector-Version prüfen; ausschließlich lesenden Zugang vorsehen.
-- [ ] Workloads über Cluster, Namespace und Controller stabil zuordnen; kurzlebige Pod-IDs vermeiden.
-- [ ] Kubernetes-Services/Ingresses mit erkannten Protokollen und Ports zusammenführen.
-- [ ] `services.generated.yaml` mit optionalen manuellen Overrides zusammenführen.
-- [ ] Beobachtete Kommunikationsbeziehungen separat opt-in gestalten und Datenumfang abstimmen;
-      keine Nutzungsstatistiken, Payloads oder Zugangsdaten übernehmen.
-- [ ] Optional einen eigenen Bridge-Eingang für NeuVector-Webhooks mit eigener Authentifizierung
-      und Deduplizierung entwerfen; keine NeuVector-Payloads an den bestehenden DTrack-Eingang senden.
-- [ ] Löschfristen, verschwundene Dienste, RBAC, Tests und Betriebsaufwand festlegen.
+- [ ] Check the API contract of the NeuVector version in use; provide read-only access exclusively.
+- [ ] Assign workloads stably via cluster, namespace and controller; avoid short-lived pod IDs.
+- [ ] Merge Kubernetes services/ingresses with detected protocols and ports.
+- [ ] Merge `services.generated.yaml` with optional manual overrides.
+- [ ] Make observed communication relationships a separate opt-in and agree on the data scope;
+      do not adopt usage statistics, payloads or credentials.
+- [ ] Optionally design a separate bridge input for NeuVector webhooks with its own authentication
+      and deduplication; send no NeuVector payloads to the existing DTrack input.
+- [ ] Define retention periods, vanished services, RBAC, tests and operating effort.
 
-Status: Es gibt keinen NeuVector-Collector, keine API-Zugangsdaten, keine aktivierten Webhooks
-und keinen automatischen Service-Export aus NeuVector in Patchwatch. Die Umsetzung ist zugunsten der
-nativen Trivy-Anbindung in Dependency-Track zurückgestellt.
+Status: there is no NeuVector collector, no API credentials, no enabled webhooks
+and no automatic service export from NeuVector into Patchwatch. The implementation is deferred in favor of the
+native Trivy integration in Dependency-Track.
 
-Referenzen: [REST API](https://open-docs.neuvector.com/automation/automation/),
+References: [REST API](https://open-docs.neuvector.com/automation/automation/),
 [Network Activity](https://open-docs.neuvector.com/navigation/navigation/).

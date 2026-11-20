@@ -146,9 +146,9 @@ class Feedback(unittest.TestCase):
         body = self.gl.notes[0]['body']
         self.assertIn(HEAD, body)
         self.assertIn(BASE, body)
-        self.assertIn("Momentaufnahme", body)
+        self.assertIn("Snapshot", body)
         self.assertIn("patchwatch-result:", body)
-        self.assertIn("Vollständigen Bericht herunterladen", body)
+        self.assertIn("Download the full report", body)
         self.assertIn("https://gitlab.example/team/app/uploads/", body)
         self.assertEqual(len(self.gl.uploads), 1)
         with zipfile.ZipFile(Path(self.folder.name) / '42' / self.gl.uploads[0][1]) as report:
@@ -169,9 +169,9 @@ class Feedback(unittest.TestCase):
         url = self.worker.previous_report_url(self.gl.notes[0]['body'])
         self.gl.status = 'running'
         self.worker.process(self.gl.mr)
-        self.assertIn('Ausstehend', self.gl.notes[0]['body'])
+        self.assertIn('Pending', self.gl.notes[0]['body'])
         self.assertIn(url, self.gl.notes[0]['body'])
-        self.assertIn('vorheriger Auswertungsstand', self.gl.notes[0]['body'])
+        self.assertIn('previous evaluation', self.gl.notes[0]['body'])
 
     def test_cached_report_still_appears_in_a_new_jobs_annotations(self):
         self.worker.process(self.gl.mr)
@@ -191,7 +191,7 @@ class Feedback(unittest.TestCase):
         self.gl.status = "failed"
         self.worker.process(self.gl.mr)
         self.upload.assert_not_called()
-        self.assertIn("Ausstehend", self.gl.notes[0]['body'])
+        self.assertIn("Pending", self.gl.notes[0]['body'])
 
     def test_fork_closed_and_merged_mrs_are_skipped(self):
         for change in ({"source_project_id": 456}, {"state": "closed"}, {"state": "merged"}):
@@ -209,7 +209,7 @@ class Feedback(unittest.TestCase):
         self.gl.pipeline_source[10] = "push"
         self.worker.process(self.gl.mr)
         self.upload.assert_not_called()
-        self.assertIn("Ausstehend", self.gl.notes[0]['body'])
+        self.assertIn("Pending", self.gl.notes[0]['body'])
 
     def test_head_changed_during_analysis_does_not_publish_stale_result(self):
         def change(*args):
@@ -237,7 +237,7 @@ class Feedback(unittest.TestCase):
     def test_incomplete_analysis_retries_without_completed_marker(self):
         self.snapshot.return_value = EMPTY, False
         self.worker.process(self.gl.mr)
-        self.assertIn("Analyse unvollständig", self.gl.notes[0]['body'])
+        self.assertIn("Analysis incomplete", self.gl.notes[0]['body'])
         self.assertNotIn("patchwatch-result:", self.gl.notes[0]['body'])
         self.worker.process(self.gl.mr)
         self.assertEqual(self.upload.call_count, 4)
@@ -247,7 +247,7 @@ class Feedback(unittest.TestCase):
         self.upload.side_effect = RuntimeError("do not expose secret-body")
         with patch("builtins.print") as log:
             self.assertEqual(self.worker.run(), 1)
-        self.assertIn("Auswertung fehlgeschlagen", self.gl.notes[0]['body'])
+        self.assertIn("Evaluation failed", self.gl.notes[0]['body'])
         self.assertNotIn("secret-body", self.gl.notes[0]['body'])
         self.assertNotIn("secret-body", str(log.call_args))
 
@@ -263,7 +263,7 @@ class Feedback(unittest.TestCase):
         self.gl.bom['components'] = [{"name": {"bad": "shape"}}]
         self.assertEqual(self.worker.run(), 1)
         self.upload.assert_not_called()
-        self.assertIn("Auswertung fehlgeschlagen", self.gl.notes[0]['body'])
+        self.assertIn("Evaluation failed", self.gl.notes[0]['body'])
 
     def test_default_component_marker_is_distinct(self):
         component = mr.Worker(self.gl, self.dt, "https://dt", "key", 123, "scan", component="default")
@@ -285,7 +285,7 @@ class Feedback(unittest.TestCase):
         self.assertIn("CVE-NEW", body)
         self.assertIn("gone: MIT", body)
         self.assertIn("added: MIT", body)
-        self.assertIn("Behobene / entfallende Schwachstellen", body)
+        self.assertIn("Fixed / dropped vulnerabilities", body)
         data = json.loads((Path(self.folder.name) / "42/patchwatch-delta.json").read_text())
         self.assertEqual(data['licenses']['newLicenses'], [])  # MIT was already present elsewhere.
         self.assertEqual(data['licenses']['droppedLicenses'], [])
@@ -299,7 +299,7 @@ class Feedback(unittest.TestCase):
         self.upload.assert_not_called()
         starts = [w for w in self.gl.writes if w[0].endswith('/pipelines')]
         self.assertEqual(len(starts), 1)
-        self.assertIn("Ausstehend", self.gl.notes[0]['body'])
+        self.assertIn("Pending", self.gl.notes[0]['body'])
         self.assertNotIn("patchwatch-result:", self.gl.notes[0]['body'])
 
     def test_running_pipeline_prevents_duplicate_rescan(self):
@@ -313,7 +313,7 @@ class Feedback(unittest.TestCase):
         self.gl.pair['status'] = 'conflict'
         self.worker.process(self.gl.mr)
         self.upload.assert_not_called()
-        self.assertIn("Merge-Konflikt", self.gl.notes[0]['body'])
+        self.assertIn("Merge conflict", self.gl.notes[0]['body'])
         self.assertNotIn("patchwatch-result:", self.gl.notes[0]['body'])
 
     def test_artifact_cannot_claim_a_different_source_or_pipeline(self):
@@ -335,7 +335,7 @@ class Feedback(unittest.TestCase):
         self.gl.parents = [BASE, "e" * 40]
         self.worker.process(self.gl.mr)
         self.upload.assert_not_called()
-        self.assertIn("Ausstehend", self.gl.notes[0]['body'])
+        self.assertIn("Pending", self.gl.notes[0]['body'])
 
     def test_removing_all_packages_is_a_valid_one_sided_empty_inventory(self):
         self.gl.pair['merged'] = {"bomFormat": "CycloneDX", "components": []}
@@ -557,7 +557,7 @@ class ProducerAndTransport(unittest.TestCase):
         self.assertIn(license, full)
         self.assertNotIn('CVE-29', preview)
         self.assertIn('CVE-29', full)
-        self.assertNotIn('weitere Einträge', full)
+        self.assertNotIn('more entries', full)
 
     def test_mr_policies_mirror_ci_rules_without_production_or_distribution_scope(self):
         original = load()

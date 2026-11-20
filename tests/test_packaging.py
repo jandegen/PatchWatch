@@ -79,6 +79,26 @@ class Artifacts(unittest.TestCase):
         again = build.build_pyz(self.out / "again" / build.PYZ_NAME)
         self.assertEqual(again.read_bytes(), self.pyz.read_bytes())
 
+    def test_templates_archive(self):
+        archive = build.build_templates(self.out / build.TEMPLATES_NAME, "ghcr.io/acme/patchwatch/ci:v1.2.3")
+        with tarfile.open(archive) as tar:
+            names = {m.name.removeprefix("./") for m in tar.getmembers() if m.isfile()}
+            content = {n: tar.extractfile("./" + n).read() for n in names}
+            self.assertTrue(all(m.uid == 0 and m.gid == 0 for m in tar.getmembers()))
+        templates = {f"ci-templates/{p.name}" for p in (ROOT / "ci-templates").glob("*.yml")}
+        self.assertEqual(names, templates | {"VERSION", "IMAGE"})
+        self.assertEqual(content["VERSION"].decode().strip(), __version__)
+        self.assertEqual(content["IMAGE"], b"ghcr.io/acme/patchwatch/ci:v1.2.3\n")
+        for name in templates:  # shipped unchanged
+            self.assertEqual(content[name], (ROOT / name).read_bytes())
+        self.assertEqual(build.build_templates(self.out / "again" / build.TEMPLATES_NAME,
+                                               "ghcr.io/acme/patchwatch/ci:v1.2.3").read_bytes(), archive.read_bytes())
+
+    def test_templates_archive_without_image_has_no_image_file(self):
+        archive = build.build_templates(self.out / "plain" / build.TEMPLATES_NAME)
+        with tarfile.open(archive) as tar:
+            self.assertNotIn("./IMAGE", tar.getnames())
+
     @staticmethod
     def members(deb):
         """The members of the ``ar`` container of a .deb file by name."""

@@ -1,96 +1,96 @@
-# Installation auf Kubernetes
+# Installation on Kubernetes
 
-Vor dem ersten Deployment die [Umgebungsparameter](customization.md) anpassen. Die Befehle werden im Repository-Wurzelverzeichnis ausgeführt.
+Before the first deployment, adapt the [environment parameters](customization.md). Commands are run in the repository root directory.
 
 
-Vorausgesetzt werden ein erreichbarer Kubernetes-Cluster, `kubectl`, Helm,
-Helmfile mit Diff-Plugin, ein Ingress-Controller und persistenter Speicher. Die
-Anleitungen verwenden Namespace `patchwatch` und die Releases `patchwatch` und
-`dtrack`. Eine DNS-Adresse wie `patchwatch.example.org` muss auf den Ingress zeigen.
-TLS kann über cert-manager und einen eigenen Issuer oder über ein bereitgestelltes
-TLS-Secret eingerichtet werden. Dieses Projekt installiert keine Cluster-Controller.
+The prerequisites are a reachable Kubernetes cluster, `kubectl`, Helm,
+Helmfile with the diff plugin, an ingress controller and persistent storage. The
+guides use the namespace `patchwatch` and the releases `patchwatch` and
+`dtrack`. A DNS address such as `patchwatch.example.org` must point to the ingress.
+TLS can be set up through cert-manager and an issuer of your own or through a provided
+TLS secret. This project does not install cluster controllers.
 
-StorageClass, Ingress-Klasse, NetworkPolicy-Selektoren, Zertifikate und URLs gemäß
-[Anpassungsübersicht](customization.md) festlegen. `ndots:1` reduziert unerwünschte
-DNS-Suchdomain-Erweiterungen; beim offiziellen Chart ergänzt der Helm-Postrenderer
-diese Pod-Einstellung per `kubectl kustomize`.
+Define the StorageClass, ingress class, NetworkPolicy selectors, certificates and URLs per the
+[customization overview](customization.md). `ndots:1` reduces unwanted
+DNS search domain expansion; with the official chart, the Helm post-renderer
+adds this pod setting via `kubectl kustomize`.
 
-## Bereitstellung über GitLab CI
+## Deployment via GitLab CI
 
-Die Pipeline testet jeden Merge Request und `main`. Auf `main` baut sie anschließend das
-Bridge-Image mit dem vollständigen Commit-SHA als Tag und deployt automatisch per Helmfile.
-Ein `resource_group` verhindert konkurrierende Deployments. Fehler in Tests oder Rendering
-blockieren Build und Deployment. Deployment-Zugangsdaten werden nur dem geschützten
-Production-Environment zur Verfügung gestellt. Fork-/MR-Pipelines erhalten sie nicht.
+The pipeline tests every merge request and `main`. On `main` it then builds the
+bridge image tagged with the full commit SHA and deploys automatically via Helmfile.
+A `resource_group` prevents concurrent deployments. Errors in tests or rendering
+block build and deployment. Deployment credentials are made available only to the protected
+production environment. Fork/MR pipelines do not receive them.
 
-Einmalig mit vorhandenem Cluster-Admin- und `glab`-Login:
+One-time, with an existing cluster admin and `glab` login:
 
 ```sh
-export GITLAB_PROJECT_ID=1234  # durch die numerische ID des eigenen Patchwatch-Projekts ersetzen
+export GITLAB_PROJECT_ID=1234  # replace with the numeric ID of your own Patchwatch project
 export KUBE_NAMESPACE=patchwatch
 bash scripts/bootstrap-cluster.sh
 python3 scripts/setup-ci.py --project "$GITLAB_PROJECT_ID"
 ```
 
-`main` muss in GitLab geschützt sein. Die Einrichtung legt folgende **geschützte**
-Projektvariablen mit Environment-Scope `production` an:
+`main` must be protected in GitLab. The setup creates the following **protected**
+project variables with environment scope `production`:
 
-| Variable | Typ | Zweck |
+| Variable | Type | Purpose |
 |---|---|---|
-| `KUBE_CONFIG` | File | ServiceAccount `patchwatch-ci`, Rechte ausschließlich im Namespace |
-| `REGISTRY_PULL_USERNAME` | Masked | Projekt-Deploy-Token-Benutzer |
-| `REGISTRY_PULL_TOKEN` | Masked | Dauerhaftes `read_registry`-Token für spätere Image-Pulls |
+| `KUBE_CONFIG` | File | ServiceAccount `patchwatch-ci`, permissions exclusively in the namespace |
+| `REGISTRY_PULL_USERNAME` | Masked | Project deploy token user |
+| `REGISTRY_PULL_TOKEN` | Masked | Long-lived `read_registry` token for later image pulls |
 
-Die Runner-Tags und Docker-in-Docker-Konfiguration in `.gitlab-ci.yml` müssen
-zur eigenen Runner- und Registry-Installation passen. Installationsspezifische
-Registry-Ausnahmen und private CA-Mounts vorher ersetzen oder entfernen.
-Registry, GitLab und Zertifikatskette müssen aus Runner, DinD und Kubernetes-Nodes
-erreichbar bzw. vertrauenswürdig sein. Als CI-Variable `PUBLIC_URL` die eigene
-öffentliche HTTPS-URL setzen; auch `deploy.environment.url` in der Pipeline anpassen.
+The runner tags and Docker-in-Docker configuration in `.gitlab-ci.yml` must
+match your own runner and registry installation. Replace or remove installation-specific
+registry exceptions and private CA mounts beforehand.
+The registry, GitLab and certificate chain must be reachable and trusted from the runner, DinD and Kubernetes nodes.
+Set your own public HTTPS URL as the CI variable `PUBLIC_URL`; also adapt
+`deploy.environment.url` in the pipeline.
 
-CI erzeugt einen separaten Trivy-Token in `patchwatch-trivy` und aktiviert den
-[nativen Trivy-Analyzer](../configuration/trivy.md). Datenbank-Passwort, Webhook-Token und Admin-Passwort entstehen einmalig in
-`patchwatch-secrets`. Bestehende Werte bleiben bei Folgedeployments erhalten. Die Werte stehen
-nicht in Helm-Values oder Git. Zusätzlich entsteht das Team `ci-upload` mit eigenem Schlüssel `ci_upload_key` (in `patchwatch-provisioning`) für das [GitLab-CI-Template](../usage/ci-integration.md); die Pipeline baut dafür ein zweites Image `ci` aus `Dockerfile.ci`. Anschließend werden PostgreSQL, Bridge, Dependency-Track,
-Frontend, TLS-Ingress, NetworkPolicies, Backup- und Monitoring-CronJobs ausgerollt.
-Die Ersteinrichtung läuft über einen lokalen, authentifizierten Kubernetes-Port-Forward.
-Dabei werden `admin/admin` ersetzt, Upload-/Leseteams, OSV-Ecosystems, EPSS, die
-[Security-/Lizenzregeln](../configuration/policies.md) samt Lizenzgruppe und separaten MR-Regelkopien sowie die
-Webhook-Regel angelegt. Die generierten API-Schlüssel liegen in `patchwatch-provisioning`; der Monitor bekommt
-den Leseschlüssel in `patchwatch-monitor-key` (`VIEW_PORTFOLIO` und
-`VIEW_POLICY_VIOLATION` und `VIEW_VULNERABILITY`, gemeinsam mit Compliance- und Delta-Berichten). CI protokolliert keine Schlüssel.
+CI creates a separate Trivy token in `patchwatch-trivy` and enables the
+[native Trivy analyzer](../configuration/trivy.md). The database password, webhook token and admin password are created once in
+`patchwatch-secrets`. Existing values are kept on subsequent deployments. The values are not
+in Helm values or Git. In addition, the team `ci-upload` is created with its own key `ci_upload_key` (in `patchwatch-provisioning`) for the [GitLab CI template](../usage/ci-integration.md); for this, the pipeline builds a second image `ci` from `Dockerfile.ci`. Afterwards PostgreSQL, the bridge, Dependency-Track,
+the frontend, TLS ingress, NetworkPolicies, and backup and monitoring CronJobs are rolled out.
+The initial setup runs over a local, authenticated Kubernetes port-forward.
+It replaces `admin/admin` and creates upload/read teams, OSV ecosystems, EPSS, the
+[security/license rules](../configuration/policies.md) including the license group and separate MR rule copies, and the
+webhook rule. The generated API keys are in `patchwatch-provisioning`; the monitor gets
+the read key in `patchwatch-monitor-key` (`VIEW_PORTFOLIO` and
+`VIEW_POLICY_VIOLATION` and `VIEW_VULNERABILITY`, together with compliance and delta reports). CI does not log any keys.
 
-Das Team `project-versions` erhält `VIEW_PORTFOLIO` und `PORTFOLIO_MANAGEMENT` für den serverseitigen
-Latest-Abgleich. Der Schlüssel bleibt in `patchwatch-provisioning` (`versions_key`) und im separaten
-Secret `patchwatch-versions-key`. Der CronJob `patchwatch-versions` läuft alle fünf Minuten mit dem
-Bridge-Image; Zeitplan und Secret sind über `versions.schedule` und `versions.existingSecret` konfigurierbar,
-mit `versions.enabled: false` lässt er sich deaktivieren. Bei der ersten Installation entsteht das Secret
-nach dem Helm-Rollout während der Einrichtung. CI-Upload-Schlüssel behalten ihre bisherigen Rechte.
-Der Abgleich läuft zusätzlich bei jeder Einrichtung. Regeln und Herkunftsinformationen:
-[CI-Integration](../usage/ci-integration.md#3-was-in-patchwatch-erscheint).
+The team `project-versions` receives `VIEW_PORTFOLIO` and `PORTFOLIO_MANAGEMENT` for the server-side
+latest synchronization. The key stays in `patchwatch-provisioning` (`versions_key`) and in the separate
+secret `patchwatch-versions-key`. The CronJob `patchwatch-versions` runs every five minutes with the
+bridge image; schedule and secret are configurable via `versions.schedule` and `versions.existingSecret`,
+and it can be disabled with `versions.enabled: false`. On the first installation the secret is created
+after the Helm rollout during the setup. CI upload keys keep their previous permissions.
+The synchronization additionally runs on every setup. Rules and provenance information:
+[CI integration](../usage/ci-integration.md#3-what-appears-in-patchwatch).
 
-Admin-Passwort ausschließlich lokal anzeigen und anschließend im Passwortmanager ablegen:
+Display the admin password only locally and then store it in the password manager:
 
 ```sh
 kubectl -n patchwatch get secret patchwatch-secrets -o jsonpath='{.data.admin_password}' | base64 -d
 ```
 
-Die deklarative Konfiguration besteht aus `helmfile.yaml.gotmpl`,
-`deploy/environments/infra.yaml`, `deploy/environments/dtrack.yaml` und dem eigenen
-Infra-Chart. Dependency-Track nutzt das **offizielle Chart 2.9.0 mit Anwendung 5.2.1**.
-Zusätzlich zu den oben genannten Secrets legt `deploy.sh` einmalig `patchwatch-dtrack-kek` (der
-Key-Encryption-Key des v5-Secret-Managers, **mit in jede Cluster-Sicherung**) an und leitet
-`patchwatch-dtrack-db` (Benutzer und Passwort im Format des Charts) aus `patchwatch-secrets` ab.
-Der API-Server erreicht ausgehend nur öffentliche Adressen sowie Bridge und Trivy
+The declarative configuration consists of `helmfile.yaml.gotmpl`,
+`deploy/environments/infra.yaml`, `deploy/environments/dtrack.yaml` and the own
+infra chart. Dependency-Track uses the **official chart 2.9.0 with application 5.2.1**.
+In addition to the secrets mentioned above, `deploy.sh` creates `patchwatch-dtrack-kek` once (the
+key-encryption key of the v5 secret manager, **to be included in every cluster backup**) and derives
+`patchwatch-dtrack-db` (user and password in the chart's format) from `patchwatch-secrets`.
+Outbound, the API server reaches only public addresses plus the bridge and Trivy
 (`DT_OUTBOUND_ALLOWED_DESTINATIONS` in `deploy/environments/dtrack.yaml`).
 
-## Manuell ausrollen
+## Manual rollout
 
-Ohne GitLab CI ein Bridge-Image aus dem freizugebenden Commit bauen und unter
-einer unveränderlichen Referenz in der eigenen Registry veröffentlichen. Die Nodes
-benötigen Lesezugriff; bei privater Registry das Secret `gitlab-registry` vorab
-anlegen oder `imagePullSecrets` an die eigene Pull-Secret-Konfiguration anpassen.
-Nach dem Namespace-/RBAC-Bootstrap denselben Deployment-Pfad ausführen:
+Without GitLab CI, build a bridge image from the commit to be released and publish it under
+an immutable reference in your own registry. The nodes
+need read access; with a private registry, create the secret `gitlab-registry` beforehand
+or adapt `imagePullSecrets` to your own pull secret configuration.
+After the namespace/RBAC bootstrap, run the same deployment path:
 
 ```sh
 export PUBLIC_URL=https://patchwatch.example.org
@@ -98,8 +98,8 @@ export BRIDGE_IMAGE="registry.example.org/platform/patchwatch/bridge:$(git rev-p
 bash scripts/deploy.sh
 ```
 
-Bei Fehlschlag setzt Helm jeweils das betroffene Release atomar zurück. Das ist **keine**
-Rücknahme von Datenbankmigrationen oder Konfigurationsänderungen der API. Vor Upgrades Backup
-und Restore prüfen. Die beiden Releases sind abhängig und können getrennte Revisionsstände haben.
-CI erhält keinen Zugriff auf andere Namespaces. Der langlebige CI-ServiceAccount-Token ist
-bewusst namespacebeschränkt; bei Rotation Secret `patchwatch-ci-token` und `KUBE_CONFIG` ersetzen.
+On failure, Helm atomically rolls back the affected release. This is **not** a
+rollback of database migrations or configuration changes of the API. Check backup
+and restore before upgrades. The two releases are interdependent and can have separate revision states.
+CI gets no access to other namespaces. The long-lived CI ServiceAccount token is
+deliberately restricted to the namespace; on rotation, replace the secret `patchwatch-ci-token` and `KUBE_CONFIG`.

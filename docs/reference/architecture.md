@@ -1,109 +1,109 @@
-# Architektur, Datenfluss und Grenzen
+# Architecture, data flow and limits
 
-## Zielsetzung
+## Objectives
 
-**Problem:** Auf Entwickler-Rechnern wird Software aus vielen Quellen installiert: Paketmanager, Homebrew, globale npm-/pip-Installs, IDE-Plugins, Container-Images und manuell entpackte Binaries. Ohne Inventar bleibt unklar, welche Versionen im Einsatz sind. Wird eine neue CVE veröffentlicht, lässt sich nicht beantworten, wer betroffen ist.
+**Problem:** On developer machines, software is installed from many sources: package managers, Homebrew, global npm/pip installs, IDE plugins, container images and manually unpacked binaries. Without an inventory it stays unclear which versions are in use. When a new CVE is published, it cannot be answered who is affected.
 
-**Ziele:**
+**Goals:**
 
-- Ein aktuelles, maschinenlesbares Inventar der eingesetzten Software pro Rechner (SBOM im CycloneDX-Format).
-- Kontinuierlicher Abgleich gegen Schwachstellendaten. Neue CVEs lösen Meldungen aus, ohne dass neu gescannt werden muss.
-- Automatische Benachrichtigung der zuständigen Teams, bei Bedarf mit JIRA-Ticket.
-- Geringer Betriebsaufwand: ein zentraler Dienst, ein schlanker Agent, ausschließlich Open-Source-Komponenten.
-- Datenschutzkonforme Erfassung, die nur Software-Inventar (Name, Version, Quelle, Pfad) umfasst und keine Nutzungsdaten.
+- A current, machine-readable inventory of the software in use per machine (SBOM in CycloneDX format).
+- Continuous matching against vulnerability data. New CVEs trigger notifications without a rescan being necessary.
+- Automatic notification of the responsible teams, with a JIRA ticket where needed.
+- Low operating effort: one central service, one lean agent, exclusively open-source components.
+- Privacy-compliant collection that covers only the software inventory (name, version, source, path) and no usage data.
 
-**Nicht-Ziele:**
+**Non-goals:**
 
-- Überwachung von Mitarbeitenden, Nutzungsdauer oder Verhalten.
-- Ersatz für ein vollwertiges Endpoint-Security- oder MDM-Produkt.
-- Automatisches Patchen. Das Projekt erkennt und meldet.
+- Monitoring of employees, usage time or behavior.
+- Replacement for a full endpoint security or MDM product.
+- Automatic patching. The project detects and reports.
 
-## Abgrenzung
+## Scope
 
-| Bereich | Von diesem Projekt abgedeckt |
+| Area | Covered by this project |
 |---|---|
-| OS-Pakete (deb, rpm, apk) | Ja |
-| Sprach-Ökosysteme (npm, PyPI, Go, Maven, Cargo, …) | Ja, sofern lesbar im Dateisystem |
-| Container-Images | Optional, per Syft auf Image-Ebene |
-| Dienste aus Compose-Dateien | Statisches Inventar aus Namen und Image-Referenzen; keine Laufzeiterkennung |
-| Binaries ohne Paketmanager | Teilweise, abhängig von der Syft-Erkennung |
-| IDE- und Browser-Extensions | Ja, für unterstützte Editoren und Browser unter Linux/macOS; [Umfang und Grenzen](../usage/agent.md#ide--und-browser-erweiterungen) |
-| Laufzeit-Verhalten, Nutzungsstatistiken | Nein, bewusst ausgeschlossen |
+| OS packages (deb, rpm, apk) | Yes |
+| Language ecosystems (npm, PyPI, Go, Maven, Cargo, …) | Yes, as long as readable in the file system |
+| Container images | Optional, via Syft at image level |
+| Services from Compose files | Static inventory from names and image references; no runtime detection |
+| Binaries without a package manager | Partially, depending on Syft detection |
+| IDE and browser extensions | Yes, for supported editors and browsers on Linux/macOS; [scope and limits](../usage/agent.md#ide-and-browser-extensions) |
+| Runtime behavior, usage statistics | No, deliberately excluded |
 
-## Architektur
+## Architecture
 
 ```
-Dev-Rechner                    Zentraler Stack                   Ausgang
+Dev machine                    Central stack                     Output
 ┌────────────────┐   SBOM    ┌──────────────────────┐  Webhook  ┌────────────────┐
 │ Syft           │  (HTTPS)  │ Dependency-Track     │ ────────► │ JIRA / Slack / │
-│ + Timer        │ ────────► │ API-Server + Postgres│           │ Teams          │
+│ + timer        │ ────────► │ API server + Postgres│           │ Teams          │
 │ (CycloneDX)    │           └──────────▲───────────┘           └────────────────┘
 └────────────────┘                      │
-                                        │ laufende Synchronisation
+                                        │ continuous synchronization
                           OSV · GitHub Advisories · NVD · OSS Index
 ```
 
-**Datenfluss:**
+**Data flow:**
 
-1. Der Agent erzeugt per Syft ein SBOM der konfigurierten Quellen und ergänzt installierte IDE-/Browser-Erweiterungen aus lokalen Metadaten. Doppelte Erweiterungseinträge werden zusammengeführt.
-2. Das SBOM wird per HTTPS an die Dependency-Track-API übertragen. Pro Host existiert ein Projekt.
-3. Dependency-Track gleicht die Komponenten laufend mit den Schwachstellenquellen ab.
-4. Neue Findings und Policy-Verstöße lösen Notifications per Webhook aus.
-5. Eine Bridge oder ein Workflow-Tool erzeugt daraus JIRA-Tickets oder Chat-Nachrichten.
+1. The agent creates an SBOM of the configured sources with Syft and adds installed IDE/browser extensions from local metadata. Duplicate extension entries are merged.
+2. The SBOM is transferred to the Dependency-Track API over HTTPS. There is one project per host.
+3. Dependency-Track continuously matches the components against the vulnerability sources.
+4. New findings and policy violations trigger notifications via webhook.
+5. A bridge or a workflow tool turns them into JIRA tickets or chat messages.
 
-## Komponenten
+## Components
 
-| Komponente | Rolle | Lizenz |
+| Component | Role | License |
 |---|---|---|
-| [Syft](https://github.com/anchore/syft) | SBOM-Erzeugung auf dem Rechner | Apache 2.0 |
-| [Dependency-Track](https://dependencytrack.org) | SBOM-Verwaltung, Schwachstellen-Matching, Policies, Notifications | Apache 2.0 |
-| PostgreSQL | Datenbank für Dependency-Track | PostgreSQL License |
-| Kubernetes, Helm/Helmfile | Betrieb des zentralen Dienstes | n/a |
-| Patchwatch-Bridge (Python/SQLite) | Persistente Zustellung an JIRA, Slack und Teams | Apache 2.0 |
+| [Syft](https://github.com/anchore/syft) | SBOM generation on the machine | Apache 2.0 |
+| [Dependency-Track](https://dependencytrack.org) | SBOM management, vulnerability matching, policies, notifications | Apache 2.0 |
+| PostgreSQL | Database for Dependency-Track | PostgreSQL License |
+| Kubernetes, Helm/Helmfile | Operation of the central service | n/a |
+| Patchwatch bridge (Python/SQLite) | Persistent delivery to JIRA, Slack and Teams | Apache 2.0 |
 
-**Schwachstellenquellen:** OSV und GitHub Advisories liefern für Ökosystem-Pakete (npm, PyPI, Go, Maven) die präziseren Treffer. NVD/CPE wird ergänzend genutzt, erzeugt aber mehr False Positives und False Negatives. Für OS-Pakete sind Distro-Advisories maßgeblich.
+**Vulnerability sources:** OSV and GitHub Advisories provide the more precise hits for ecosystem packages (npm, PyPI, Go, Maven). NVD/CPE is used additionally, but produces more false positives and false negatives. For OS packages, distro advisories are authoritative.
 
-## Datenschutz und Mitbestimmung
+## Privacy and co-determination
 
-In Deutschland unterliegt die Einführung technischer Einrichtungen, die zur Überwachung von Verhalten oder Leistung geeignet sind, der Mitbestimmung (§ 87 Abs. 1 Nr. 6 BetrVG). Vor dem Rollout sind Datenschutzbeauftragte und Betriebsrat einzubinden.
+In Germany, the introduction of technical systems suited to monitoring behavior or performance is subject to co-determination (§ 87 (1) no. 6 BetrVG). Involve the data protection officer and the works council before the rollout.
 
-**Datensparsamkeit als Designprinzip:**
+**Data minimization as a design principle:**
 
-- Erfasst werden Paketname, Version, Quelle, Dateipfad und erkannte Lizenzkennungen sowie Hostname, Asset-ID und die
-  zur Zuordnung ausdrücklich vorgesehenen Inventar-Tags.
-- Nicht übertragen werden Nutzungszeiten, Startzeitpunkte, Dauer, Dateiinhalte, Browser-Historie
-  oder Erweiterungsberechtigungen. Scanner lesen lokale Paket- und Erweiterungsmetadaten; absolute
-  Fundorte können Benutzernamen enthalten. Scan-Wurzeln und `extension_homes` entsprechend festlegen.
-- Das SBOM wird nach dem Upload lokal gelöscht.
-- Zugriff auf Dependency-Track erfolgt rollenbasiert, Aufbewahrungsfristen werden dokumentiert.
+- Collected are package name, version, source, file path and detected license identifiers as well as hostname, asset ID and the
+  inventory tags explicitly intended for assignment.
+- Not transferred are usage times, start times, duration, file contents, browser history
+  or extension permissions. Scanners read local package and extension metadata; absolute
+  locations can contain user names. Define scan roots and `extension_homes` accordingly.
+- The SBOM is deleted locally after the upload.
+- Access to Dependency-Track is role-based; retention periods are documented.
 
-Empfehlung: Das Verfahren in einer Betriebsvereinbarung bzw. im Verzeichnis der Verarbeitungstätigkeiten beschreiben, inklusive Zweck, Datenumfang und Löschkonzept.
+Recommendation: describe the procedure in a works agreement or in the record of processing activities, including purpose, data scope and deletion concept.
 
-## Bekannte Einschränkungen
+## Known limitations
 
-- **Matching-Qualität:** CPE-basiertes Matching ist ungenau. Ökosystem-native Quellen sind deutlich zuverlässiger.
-- **Blinde Flecken:** Binaries ohne Paketmanager und Tools außerhalb der Scan-Wurzeln werden nur teilweise
-  oder gar nicht erkannt. Erweiterungen werden in den unterstützten Standardpfaden erfasst; Safari,
-  andere IDEs und abweichende Profilpfade sind nicht abgedeckt. Eine erfasste Erweiterung garantiert
-  noch kein CVE-Matching. Windows wird derzeit nicht unterstützt.
-- **Scan-Last:** Ein Vollscan von `/` kann auf großen Rechnern lange dauern.
-- **Zeitverzug:** Findings erscheinen erst, wenn die Schwachstellendatenbanken die CVE aufgenommen haben und der Host einmal ein SBOM geliefert hat.
+- **Matching quality:** CPE-based matching is imprecise. Ecosystem-native sources are significantly more reliable.
+- **Blind spots:** Binaries without a package manager and tools outside the scan roots are detected only partially
+  or not at all. Extensions are collected in the supported default paths; Safari,
+  other IDEs and deviating profile paths are not covered. A collected extension does not
+  yet guarantee CVE matching. Windows is currently not supported.
+- **Scan load:** A full scan of `/` can take a long time on large machines.
+- **Delay:** Findings appear only once the vulnerability databases have included the CVE and the host has delivered an SBOM once.
 
-## Code-Struktur
+## Code structure
 
-Das Python-Paket `patchwatch` ist in Schichten gegliedert. Importe zeigen nur nach unten;
-`tests/test_boundaries.py` prüft das und stellt sicher, dass auch Importe innerhalb von Funktionen
-auflösbar sind.
+The Python package `patchwatch` is organized in layers. Imports point downwards only;
+`tests/test_boundaries.py` checks this and ensures that imports inside functions
+are resolvable as well.
 
-| Schicht | Inhalt | Darf importieren |
+| Layer | Contents | May import |
 |---|---|---|
-| `core` | HTTP-Client mit Redirect-Sperre, Tag-Schema, SBOM-Reduktion und Upload, Compose-Services, SBOM-Qualität | nur Standardbibliothek |
-| `agent` | `config` (validiertes Profil), `scanner` (Syft), `extensions` (IDE-/Browser-Erweiterungen), `runner` (ein Lauf), `profile` (Erstprofil), `cli` | `core` |
-| `dtrack` | `client` (REST-Client, Admin-Login), `setup` (Einrichtung), `policies`, `groups`, `versions`, `scopes`, `register`, `monitor`, `compliance`, `legacy` | `core` |
-| `ci` | `pipeline` (CI-Job), `bsi` (BSI-Prüfung), `mr` (Merge-Request- und Branch-Feedback), `delta` | `core`, `dtrack` |
-| `bridge` | Webhook-Empfänger, Deduplizierung und Zustellung | `core` |
+| `core` | HTTP client with redirect block, tag schema, SBOM reduction and upload, Compose services, SBOM quality | standard library only |
+| `agent` | `config` (validated profile), `scanner` (Syft), `extensions` (IDE/browser extensions), `runner` (one run), `profile` (initial profile), `cli` | `core` |
+| `dtrack` | `client` (REST client, admin login), `setup` (setup), `policies`, `groups`, `versions`, `scopes`, `register`, `monitor`, `compliance`, `legacy` | `core` |
+| `ci` | `pipeline` (CI job), `bsi` (BSI check), `mr` (merge request and branch feedback), `delta` | `core`, `dtrack` |
+| `bridge` | Webhook receiver, deduplication and delivery | `core` |
 
-Der Agent bildet damit eine eigenständig auslieferbare Einheit (`agent` + `core`): Das Zipapp aus
-`packaging/build.py` enthält ausschließlich diese beiden Pakete. Aufruf der Werkzeuge:
-`python3 -m patchwatch.<schicht>.<modul>`, für Agent und CI-Job `python3 -m patchwatch.agent` bzw.
-`python3 -m patchwatch.ci`.
+The agent thus forms an independently deliverable unit (`agent` + `core`): the zipapp from
+`packaging/build.py` contains only these two packages. Invoke the tools with
+`python3 -m patchwatch.<layer>.<module>`, for the agent and CI job `python3 -m patchwatch.agent` and
+`python3 -m patchwatch.ci` respectively.
