@@ -268,7 +268,7 @@ release-github-images:
 
 # GitHub Release for the tag the mirror pushed: agent packages, checksums and the project SBOM. With
 # GITHUB_GHCR_TOKEN set, internal registry names in the SBOM are replaced by the public ghcr.io names (both
-# images then resolve on ghcr.io). Files are scanned against
+# images then resolve on ghcr.io; project, commit and pipeline links point to GitHub). Files are scanned against
 # MIRROR_FORBIDDEN_PATTERNS first, see scripts/publish-github-release.py. The macOS .pkg is not published.
 release-github:
   stage: deploy
@@ -283,6 +283,7 @@ release-github:
   script:
     - version="${CI_COMMIT_TAG#v}"
     - slug="${GITHUB_MIRROR_URL#https://github.com/}"; slug="${slug%.git}"; slug="$(echo "$slug" | tr 'A-Z' 'a-z')"
+    - path="${GITHUB_MIRROR_URL#https://github.com/}"; path="${path%.git}"
     - notes="Agent packages and the project SBOM (CycloneDX 1.6). Checksums in SHA256SUMS."
     - set --
     - |
@@ -290,4 +291,9 @@ release-github:
         notes="Bridge image: ghcr.io/$slug/bridge:$version. $notes"
         set -- --rewrite "$CI_REGISTRY_IMAGE=ghcr.io/$slug" --rewrite "$CI_REGISTRY=ghcr.io"
       fi
+    # The SBOM carries the GitLab project, commit and pipeline links; the order matters (specific before general).
+    - |
+      set -- "$@" --rewrite "$CI_PROJECT_URL/-/commit/=https://github.com/$path/commit/" \
+        --rewrite "$CI_PIPELINE_URL=https://github.com/$path/releases/tag/$CI_COMMIT_TAG" \
+        --rewrite "$CI_PROJECT_URL=https://github.com/$path" --rewrite "$CI_PROJECT_PATH=$path"
     - python scripts/publish-github-release.py --tag "$CI_COMMIT_TAG" --name "PatchWatch $CI_COMMIT_TAG" --notes "$notes" "$@" dist/* patchwatch-sbom.cdx.json

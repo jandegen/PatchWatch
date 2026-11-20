@@ -1,7 +1,7 @@
 apiVersion: v2
 name: patchwatch
-version: 1.0.8
-appVersion: '1.0.8'
+version: 1.0.9
+appVersion: '1.0.9'
 description: PostgreSQL, durable notification bridge, backups and inventory monitoring for Patchwatch
 kubeVersion: '>=1.27.0-0'
 type: application
