@@ -2,12 +2,14 @@
 # Release pipeline: runs for tags vX.Y.Z only. See docs/operations/release.md.
 #   verify-release -> release-bridge-image, release-packages, release-pkg-macos (optional)
 #   -> release (GitLab release with asset links) -> mirror-github
+#   -> release-github-images (bridge and CI image to ghcr.io), release-github (GitHub Release with assets)
 #   release-sbom-parent (prepare), release-sbom-bridge, release-sbom-ci-image (scan): upload the released images to PatchWatch/dTrack
 #   as version vX.Y.Z (profile distribution, delta report against the previous release). The third-party
 #   images (sbom-* in ci/components.yml) run on tags too. release-sbom-project writes one CycloneDX SBOM of the
 #   whole project (repository + all images) that the release lists as an asset.
 # CI/CD variables: PATCHWATCH_MACOS_RUNNER=true (enables the .pkg job, needs a runner tagged "macos"),
-# GITHUB_MIRROR_URL and GITHUB_MIRROR_TOKEN (both optional; without them the mirror job is skipped).
+# GITHUB_MIRROR_URL and GITHUB_MIRROR_TOKEN (both optional; without them the GitHub jobs are skipped),
+# GITHUB_GHCR_TOKEN (optional; without it the bridge and CI image are not published to ghcr.io).
 
 # Release inventories in PatchWatch (Dependency-Track): one version vX.Y.Z per own image, so the release
 # shows up with licences, vulnerabilities, policy result and the delta to the previous release.
@@ -134,8 +136,7 @@ release-pkg-macos:
 release-sbom-project:
   stage: scan
   rules: !reference [.release-rules, rules]
-  image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA
-  needs: [release-bridge-image]
+  image: $CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA  # no needs: the stage order guarantees build-ci-image and the bridge image are done
   timeout: 30m
   variables:
     PATCHWATCH_SCAN_PATHS: .
@@ -220,3 +221,73 @@ mirror-github:
     - git tag "$CI_COMMIT_TAG"
     - |
       git -c "http.extraHeader=Authorization: Basic $auth" push origin HEAD "refs/tags/$CI_COMMIT_TAG"
+
+.github-rules:
+  rules:
+    - if: '$GITHUB_MIRROR_URL == null || $GITHUB_MIRROR_TOKEN == null'
+      when: never
+    - !reference [.release-rules, rules]
+
+# Copies the released images (same digest, no rebuild) from the GitLab registry to ghcr.io/<owner>/<repo>/bridge
+# and .../ci (the job image of ci-templates/sbom.yml, so others can include the CI templates with it).
+# Needs GITHUB_GHCR_TOKEN (classic PAT, write:packages; ghcr.io does not accept fine-grained tokens). Content,
+# config and manifest of each image are scanned against MIRROR_FORBIDDEN_PATTERNS first, nothing is pushed on
+# a hit. The first push creates each package as private: set it to public once and link it to the repository.
+release-github-images:
+  stage: deploy
+  rules:
+    - if: '$GITHUB_GHCR_TOKEN == null'
+      when: never
+    - !reference [.github-rules, rules]
+  needs: [mirror-github, release-bridge-image, build-ci-image]
+  image:
+    name: gcr.io/go-containerregistry/crane:debug
+    entrypoint: [""]
+  script:
+    - test -n "$MIRROR_FORBIDDEN_PATTERNS" || { echo "MIRROR_FORBIDDEN_PATTERNS is required"; exit 1; }
+    - slug="${GITHUB_MIRROR_URL#https://github.com/}"; slug="${slug%.git}"; slug="$(echo "$slug" | tr 'A-Z' 'a-z')"
+    - version="${CI_COMMIT_TAG#v}"
+    - printf '%s' "$CI_REGISTRY_PASSWORD" | crane auth login "$CI_REGISTRY" --username "$CI_REGISTRY_USER" --password-stdin
+    # Release tags of the bridge image are X.Y.Z, X.Y, latest; of the CI image vX.Y.Z and vX (see build-ci-image).
+    - bridge_tags="$version ${version%.*} latest $CI_COMMIT_SHA"
+    - ci_tags="$CI_COMMIT_TAG ${CI_COMMIT_TAG%%.*} $CI_COMMIT_SHA"
+    - |
+      for name in bridge ci; do
+        mkdir "rootfs-$name"
+        crane export "$CI_REGISTRY_IMAGE/$name:$CI_COMMIT_SHA" - | tar -x -C "rootfs-$name"
+        crane config "$CI_REGISTRY_IMAGE/$name:$CI_COMMIT_SHA" > "rootfs-$name/.image-config.json"
+        crane manifest "$CI_REGISTRY_IMAGE/$name:$CI_COMMIT_SHA" > "rootfs-$name/.image-manifest.json"
+        if grep -raiE -l "$MIRROR_FORBIDDEN_PATTERNS" "rootfs-$name"; then
+          echo "Installation-specific data found in the files above; refusing to publish the $name image."; exit 1
+        fi
+      done
+    - printf '%s' "$GITHUB_GHCR_TOKEN" | crane auth login ghcr.io --username x-access-token --password-stdin
+    - |
+      for tag in $bridge_tags; do crane copy "$CI_REGISTRY_IMAGE/bridge:$CI_COMMIT_SHA" "ghcr.io/$slug/bridge:$tag"; done
+      for tag in $ci_tags; do crane copy "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHA" "ghcr.io/$slug/ci:$tag"; done
+
+# GitHub Release for the tag the mirror pushed: agent packages, checksums and the project SBOM. With
+# GITHUB_GHCR_TOKEN set, internal registry names in the SBOM are replaced by the public ghcr.io names (both
+# images then resolve on ghcr.io). Files are scanned against
+# MIRROR_FORBIDDEN_PATTERNS first, see scripts/publish-github-release.py. The macOS .pkg is not published.
+release-github:
+  stage: deploy
+  rules: !reference [.github-rules, rules]
+  needs:
+    - mirror-github
+    - release-packages
+    - release-sbom-project
+    - job: release-github-images
+      optional: true
+  image: python:3.14.0-alpine3.22
+  script:
+    - version="${CI_COMMIT_TAG#v}"
+    - slug="${GITHUB_MIRROR_URL#https://github.com/}"; slug="${slug%.git}"; slug="$(echo "$slug" | tr 'A-Z' 'a-z')"
+    - notes="Agent packages and the project SBOM (CycloneDX 1.6). Checksums in SHA256SUMS."
+    - set --
+    - |
+      if [ -n "$GITHUB_GHCR_TOKEN" ]; then
+        notes="Bridge image: ghcr.io/$slug/bridge:$version. $notes"
+        set -- --rewrite "$CI_REGISTRY_IMAGE=ghcr.io/$slug" --rewrite "$CI_REGISTRY=ghcr.io"
+      fi
+    - python scripts/publish-github-release.py --tag "$CI_COMMIT_TAG" --name "PatchWatch $CI_COMMIT_TAG" --notes "$notes" "$@" dist/* patchwatch-sbom.cdx.json

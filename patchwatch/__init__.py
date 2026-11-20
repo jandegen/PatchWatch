@@ -14,4 +14,4 @@ Layers (imports only point downwards; ``tests/test_boundaries.py`` enforces this
 Every command is runnable as ``python -m patchwatch.<layer>.<module>``; ``python -m patchwatch.agent``
 and ``python -m patchwatch.ci`` run the agent and the CI job.
 """
-__version__ = "1.0.6"
+__version__ = "1.0.8"

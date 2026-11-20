@@ -2,8 +2,8 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "patchwatch-1.0.6",
-  "documentNamespace": "https://spdx.org/spdxdocs/patchwatch-1.0.6-25c31b44944fdd536e83ee86e67ebe07541cd607",
+  "name": "patchwatch-1.0.8",
+  "documentNamespace": "https://spdx.org/spdxdocs/patchwatch-1.0.8-836c16e0ec160d8f9d4c5d03c915180d903b9499",
   "creationInfo": {
     "created": "2026-11-13T00:00:00Z",
     "creators": [
@@ -15,11 +15,11 @@
     {
       "name": "patchwatch",
       "SPDXID": "SPDXRef-Patchwatch",
-      "versionInfo": "1.0.6",
+      "versionInfo": "1.0.8",
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": true,
       "packageVerificationCode": {
-        "packageVerificationCodeValue": "25c31b44944fdd536e83ee86e67ebe07541cd607",
+        "packageVerificationCodeValue": "836c16e0ec160d8f9d4c5d03c915180d903b9499",
         "packageVerificationCodeExcludedFiles": [
           "./patchwatch.spdx.json"
         ]
@@ -481,11 +481,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "4b4f94d8d056dbd782e8ba301870106c5d330353"
+          "checksumValue": "f16334ec7eae7ae34d30769dfc9c20377ab5a926"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "cdea0e64458f0ada1f4070140c8229e5ecd4fd346f92c73aafc44e4217b199b9"
+          "checksumValue": "c7e7b0231a56d6da500423ec689ee147cbdc0e577ef79c6efacb4a836d4b238c"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -557,11 +557,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "51eb7a78e3bcfe570c3b133239357725cf79e3b4"
+          "checksumValue": "6387e15bde31c044d23311861e7affb62680f33d"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "ec39ce85d6efb4a818f51446cbf6a1de71e5dafbd824935be54279774546c2b5"
+          "checksumValue": "39c37922541165f66a88562488311fc14f0159114d283c6c9d537ca31f9033dc"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -728,11 +728,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "be91f95dfaef35d823bd14b7fc160af31e8c8240"
+          "checksumValue": "3b0a0b86f84b4a687fa1c22fb21ba8e0b9e23b73"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "0c04004b6910d058a2b0c9dff9548f1b6412d7b79a0863200d911b0de8819ad9"
+          "checksumValue": "21d20ec0051912723a196cf1dca9937489b4577bd2b87b90eb77f5f6f2db1e2f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1298,11 +1298,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "16931c3c52e4f5e6ebd7d532899beaa3b9d21fff"
+          "checksumValue": "78470ae1a5080b22aa724cfaa32632547b075397"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "47727bc91add2eb5376d94ceef9e5870559dd896302c91ce59b297732f3a6605"
+          "checksumValue": "a00692b29793f6623483158798988c1c50c8c22c6f7289a0b6b3fbabd4becd4f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1336,11 +1336,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "8e14eb74b4164b5948f205cb693a84a2c7f2d3d5"
+          "checksumValue": "ee4e8ae8b78edf1badd589c7bcd9200031993fa7"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "17f0c619f38f2d068386a256b90c673b9f2b23c7e36d1debe21b1b512619cb73"
+          "checksumValue": "b7c89f7f95143584cc6679a7eb1b3c876c5b02fbc56eb3c0c8a0ad7e03a6ffd9"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1355,11 +1355,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "089ec47692bf5b6f9422bfcc7d03fc86458d3542"
+          "checksumValue": "0f3cff4e0a99097df4f4a7badf520e51b6f468d5"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "8aef4fafef1842b693b1dc1064d554f5fa7aca766b424e376731908b71cbe15c"
+          "checksumValue": "84fbb48f3cbccc5bf24f1fdfc37cad8c1ab5c3e9175e9ae0bb5732f47f7322eb"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1393,11 +1393,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "60c0bf07fb0a71c45ff6b2f16fe96243c2d95b0f"
+          "checksumValue": "f0324dfb8f7d0af392155a31eb0c27f19b45995b"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "35b17c30e3f1d69708301d4c47258a491a6f75e49581292aab6ea77be6b73b85"
+          "checksumValue": "566588626a9703e9f71f5efd27a4ce2cd193e1261a7870dd463bab9bc73b7577"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -1526,11 +1526,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "0bb9195e9ef0a5cd047b8c3060746131635fb7e6"
+          "checksumValue": "d2d319d4e150cbe98af09f101277941894c2efb8"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "341d8f556f7c6dbebae5ba5429e1773eb4fa3e42c3d3d87a4aaf4ada073b34d3"
+          "checksumValue": "e1a3ed9b48fb8d443271d3b2f8d1cd62577a27fa7ad3b6d5077aa824d0b74375"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2286,11 +2286,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "7e4f10f47a043321cfa3a093e7cb4f5888e1c794"
+          "checksumValue": "9013e43f7852b73fe8e7dcdb6a743c07c724c651"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "0743d3ac92afb98ec21a1f96d6e666e6c6bdcf48141a9b7d68f9f52611834c30"
+          "checksumValue": "005e71ac91feaf81ccdae679e686ce60938da7800eb52f80aa9114827df2474e"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2433,6 +2433,25 @@
       "copyrightText": "NOASSERTION"
     },
     {
+      "SPDXID": "SPDXRef-File-b03f12fed0f3e3c28f6c25f2",
+      "fileName": "./scripts/publish-github-release.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "5b3db7a12bf545174ca04ecb0d2e7ed6149597b9"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "efa40b0e8cc4f682be7eaf8a0ad57dab60d8c9d8c1ed3445344d6aea38ff5aa4"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
       "SPDXID": "SPDXRef-File-c3bef09c7a052ebb5b3793f4",
       "fileName": "./scripts/setup-ci.py",
       "checksums": [
@@ -2462,6 +2481,25 @@
         {
           "algorithm": "SHA256",
           "checksumValue": "f5832bebc24daee325c455a676dda160e9ecc8cb02cadcde2350d05f5b899bd0"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-93a8a1e10ea650102f21f415",
+      "fileName": "./scripts/setup-release-mirror.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "3244c3d528afe8d62e36f0d291feb6f4a739fd8f"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8e111728ef3595ec072d8cb810b13b4545c85a04a53b136cf48bf975142eb56a"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2514,11 +2552,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "e229eb221ad7899f96cdbbede14c825449e41065"
+          "checksumValue": "ecd3bea2c631c1133a94868c5f026f0df4c1b570"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "425a69d2e92ab86791c12f6c8e6653722f0e6d0ff35cc4c438afe1cfbf4bfc62"
+          "checksumValue": "b5b835751da8c61f584578a7d11f04dc76b7004510b642d2fdce9de814009047"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2709,6 +2747,25 @@
         {
           "algorithm": "SHA256",
           "checksumValue": "3f536a770affc8668f0b8127503b1b74ab52c74c9ba4341eea9874232532fcb9"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-7f0e789d2d067cc0a4a1fada",
+      "fileName": "./tests/test_github_release.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "33cf28deb1abe080662f0c9bf52b6e0c120a7518"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f52d3660fa472615b0a76669bb6c088ae4a6dbc8b9bae34550e7202b0ccfc3c9"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -2937,6 +2994,25 @@
         {
           "algorithm": "SHA256",
           "checksumValue": "76d0b6203d0802d490bf0b1a63a7bfc11e1fa5b3644d65a61b44a7398d1d28f7"
+        }
+      ],
+      "licenseConcluded": "Apache-2.0",
+      "licenseInfoInFiles": [
+        "Apache-2.0"
+      ],
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-File-8fb26d7379ee35dac57acb79",
+      "fileName": "./tests/test_release_mirror_setup.py",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "2f7572f8603a93e90694587b3862b517ca52cf93"
+        },
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b9545269cf6a60d34950012eb13121228de09ab8b92e2d1a28beaed86a6e693f"
         }
       ],
       "licenseConcluded": "Apache-2.0",
@@ -3662,12 +3738,22 @@
     {
       "spdxElementId": "SPDXRef-Patchwatch",
       "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-b03f12fed0f3e3c28f6c25f2"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-File-c3bef09c7a052ebb5b3793f4"
     },
     {
       "spdxElementId": "SPDXRef-Patchwatch",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-File-7b92b31459ebaeacf1ff2a14"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-93a8a1e10ea650102f21f415"
     },
     {
       "spdxElementId": "SPDXRef-Patchwatch",
@@ -3737,6 +3823,11 @@
     {
       "spdxElementId": "SPDXRef-Patchwatch",
       "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-7f0e789d2d067cc0a4a1fada"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-File-99cf94dd4571b0782931c649"
     },
     {
@@ -3793,6 +3884,11 @@
       "spdxElementId": "SPDXRef-Patchwatch",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-File-4682147ca75340613cbb9d69"
+    },
+    {
+      "spdxElementId": "SPDXRef-Patchwatch",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-File-8fb26d7379ee35dac57acb79"
     },
     {
       "spdxElementId": "SPDXRef-Patchwatch",

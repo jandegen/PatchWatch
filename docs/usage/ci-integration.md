@@ -78,6 +78,10 @@ ein und erhalten damit kompatible Verbesserungen; ein inkompatibler Wechsel wird
 sollten in GitLab als **geschützte Tags** konfiguriert sein. Bis die erste Tag-Pipeline fertig ist,
 existiert das Standard-Image `ci:v1` noch nicht.
 
+Die Release-Pipeline kopiert das Image außerdem nach GitHub (`ghcr.io/<owner>/<repo>/ci:v1`, siehe
+[Release](../operations/release.md)). Wer das Template von dort einbindet, übergibt dieses Image als
+`image`-Input und braucht keine eigene Registry.
+
 Für `branches`, `services` und `detect_services` müssen sowohl das Template als auch das Job-Image
 die Inputs unterstützen. Ältere Stände von `v1` enthalten `services` und `detect_services` noch nicht;
 `branches` ist nicht in allen älteren Ständen enthalten. Für einen eigenen Fork

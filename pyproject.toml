@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "patchwatch"
-version = "1.0.6"
+version = "1.0.8"
 description = "Developer software inventory and Dependency-Track notification bridge"
 requires-python = ">=3.12"
 license = "Apache-2.0"

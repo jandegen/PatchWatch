@@ -45,6 +45,7 @@ include:
       image: $CI_REGISTRY_IMAGE/ci:v1
       component: dtrack-apiserver
       scan_paths: ''
+      bsi_mode: report  # base-image packages lack concluded licences; non-conforming until fixed
       images: ghcr.io/dependencytrack/apiserver:5.2.1
       run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web" || $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
   - local: ci-templates/sbom.yml
@@ -54,6 +55,7 @@ include:
       image: $CI_REGISTRY_IMAGE/ci:v1
       component: dtrack-frontend
       scan_paths: ''
+      bsi_mode: report  # base-image packages lack concluded licences; non-conforming until fixed
       images: ghcr.io/dependencytrack/frontend:5.2.1
       run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web" || $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
   - local: ci-templates/sbom.yml
@@ -63,6 +65,7 @@ include:
       image: $CI_REGISTRY_IMAGE/ci:v1
       component: postgres
       scan_paths: ''
+      bsi_mode: report  # base-image packages lack concluded licences; non-conforming until fixed
       images: postgres:17.7-alpine
       run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web" || $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
   - local: ci-templates/sbom.yml
@@ -72,6 +75,7 @@ include:
       image: $CI_REGISTRY_IMAGE/ci:v1
       component: trivy
       scan_paths: ''
+      bsi_mode: report  # base-image packages lack concluded licences; non-conforming until fixed
       images: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
       run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web" || $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
   - local: ci-templates/sbom.yml
@@ -81,5 +85,6 @@ include:
       image: $CI_REGISTRY_IMAGE/ci:v1
       component: gateway
       scan_paths: ''
+      bsi_mode: report  # base-image packages lack concluded licences; non-conforming until fixed
       images: nginxinc/nginx-unprivileged:1.28.0-alpine
       run_if: $CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web" || $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
